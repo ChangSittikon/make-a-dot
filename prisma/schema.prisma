@@ -178,8 +178,12 @@ model Project {
   ownerId     String
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
 
-  status       String @default("DRAFT") // DRAFT, OPEN, IN_PROGRESS, COMPLETED, CANCELLED
+  status       String @default("DRAFT") // DRAFT, SIMULATION, HOT_MISSION, ACTIVE, COMPLETED, CANCELLED
   budgetSatang Int    @default(0) // งบประมาณรวม (สตางค์)
+
+  // Project Blueprint — แผนภาพรวมโปรเจกต์ (JSON)
+  // e.g. {"vision": "...", "milestones": [...], "roles": [...], "successMetrics": "..."}
+  projectBlueprint String? // JSON String
 
   // Location สำหรับ Heat Map
   province  String?
@@ -426,6 +430,10 @@ model IdeaDot {
   description String   // Details
   status      String   @default("DRAFT") // "DRAFT", "IMPLEMENTED", "ARCHIVED"
   
+  // Technical Bridge — JSON สำหรับเชื่อม Dot กับ Feature จริงในระบบ
+  // e.g. {"linkedModel": "QuestionFlow", "linkedId": "xxx", "apiEndpoint": "/api/flow"}
+  technicalBridge String? // JSON String
+
   // Hierarchy (Folder/Sub-folder) support
   parentId    String?
   parent      IdeaDot?  @relation("DotHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
@@ -434,3 +442,94 @@ model IdeaDot {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ============================================================
+// PHASE 1: QUESTION FLOW ENGINE (เครื่องยนต์คำถาม Quantum Match)
+// ============================================================
+
+model QuestionFlow {
+  id          String   @id @default(cuid())
+  industryId  String?  // ถ้า null = Global flow
+  
+  title       String   // ชื่อชุดคำถาม เช่น "ค้นหาพาร์ทเนอร์ดนตรี"
+  description String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+
+  options     FlowOption[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FlowOption {
+  id             String       @id @default(cuid())
+  flowId         String
+  flow           QuestionFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  label          String       // ข้อความตัวเลือก เช่น "ฉันเป็น Freelancer"
+  icon           String?      // FontAwesome icon
+  order          Int          @default(0)
+
+  // เชื่อมกับ IdeaDot Code — ทำให้รู้ว่า Option นี้ mapping กับ Dot ไหน
+  relatedDotCode String?      // e.g., "DOT007"
+
+  // Vector weight สำหรับ Algorithm
+  vectorWeight   String?      // JSON: {"budget": 10, "sweat": -5}
+
+  // Branch ไปคำถามถัดไป (ถ้า null = ไปผลลัพธ์เลย)
+  nextFlowId     String?
+
+  createdAt      DateTime @default(now())
+}
+
+// ============================================================
+// PHASE 1: EQUITY SPLIT (ระบบแบ่งสัดส่วน)
+// ============================================================
+
+model EquitySplit {
+  id          String  @id @default(cuid())
+  projectId   String  @unique
+  
+  // สูตรการแบ่ง (JSON) — ยืดหยุ่นรองรับทุกรูปแบบ
+  // e.g. [{"userId": "xxx", "percentage": 5000, "role": "OWNER"}, ...]
+  splitFormula String  // JSON String (basis points: 5000 = 50%)
+
+  splitType    String  @default("EQUAL") // EQUAL, CUSTOM, CONTRIBUTION_BASED, HYBRID
+  
+  // สถานะการยืนยัน
+  status       String  @default("DRAFT") // DRAFT, PROPOSED, ALL_AGREED, LOCKED
+  agreedAt     DateTime?
+  lockedAt     DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ============================================================
+// PHASE 1: AGENT LOG (บันทึกกิจกรรม AI Agent)
+// ============================================================
+
+model AgentLog {
+  id          String   @id @default(cuid())
+
+  // ประเภทกิจกรรม
+  action      String   // เช่น "CODE_EDIT", "DB_PUSH", "GIT_COMMIT", "SCHEMA_UPDATE"
+  
+  // รายละเอียด
+  details     String?  // อธิบายว่าทำอะไร
+  payload     String?  // JSON — ข้อมูลเพิ่มเติม (diff, affected files, etc.)
+  
+  // สถานะ
+  status      String   @default("SUCCESS") // SUCCESS, FAILED, PENDING
+  errorMsg    String?  // ถ้า status = FAILED
+  
+  // ระยะเวลา (milliseconds)
+  durationMs  Int?
+
+  // ไฟล์ที่เกี่ยวข้อง (JSON array)
+  affectedFiles String? // JSON: ["src/app/page.tsx", "prisma/schema.prisma"]
+
+  createdAt   DateTime @default(now())
+}
+
