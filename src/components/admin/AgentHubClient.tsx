@@ -145,7 +145,8 @@ export default function AgentHubClient({
                    desc: ruleDesc, 
                    content: ruleContent,
                    type: isSkill ? 'skill' : 'rule',
-                   filename: editingItem.filename 
+                   filename: editingItem.filename,
+                   sectionIndex: editingItem.sectionIndex,
                 })
              });
           } else {
@@ -395,15 +396,23 @@ export default function AgentHubClient({
                       <div className="flex-1 pr-8">
                         <h4 className="font-bold text-sm text-gray-900">{item.title}</h4>
                         <p className="text-xs text-gray-600 mt-1 line-clamp-3">{item.desc}</p>
-                        {item.filename && (
-                          <div className="mt-3 flex items-center gap-1 text-[10px] text-gray-400">
-                            <i className="fa-regular fa-file"></i>
-                            <span className="font-mono">{item.filename}</span>
-                          </div>
-                        )}
+                        <div className="mt-3 flex items-center gap-3 flex-wrap">
+                          {item.filename && (
+                            <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                              <i className="fa-regular fa-file"></i>
+                              <span className="font-mono">{item.filename}</span>
+                            </div>
+                          )}
+                          {item.createdAt && (
+                            <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                              <i className="fa-regular fa-clock"></i>
+                              <span>{new Date(item.createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {item.filename && activeSkillsTab !== 'docs' && (
+                    {activeSkillsTab !== 'docs' && (
                       <button 
                         onClick={() => openEditRule(idx, item)}
                         className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 rounded-xl opacity-0 group-hover:opacity-100 transition hover:bg-blue-50 hover:text-blue-600"

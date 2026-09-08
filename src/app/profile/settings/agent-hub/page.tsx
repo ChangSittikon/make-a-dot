@@ -58,17 +58,25 @@ export default async function AgentHubPage() {
   if (user?.role !== 'ADMIN') redirect('/');
 
   // 1. Read Agent Skills & Rules
-  const initialRules = [];
+  const initialRules: any[] = [];
   try {
-    const geminiPath = require('path').join(process.cwd(), 'GEMINI.md');
+    const geminiPath = path.join(process.cwd(), 'GEMINI.md');
     if (fs.existsSync(geminiPath)) {
       const content = fs.readFileSync(geminiPath, 'utf8');
+      const stat = fs.statSync(geminiPath);
       const sections = content.split('## ').slice(1);
-      sections.forEach(sec => {
+      sections.forEach((sec, idx) => {
         const lines = sec.trim().split('\n');
         const title = lines[0].trim();
         const desc = lines.slice(1).join('\n').trim();
-        initialRules.push({ title, desc });
+        initialRules.push({
+          title,
+          desc,
+          content: desc,
+          filename: 'GEMINI.md',
+          sectionIndex: idx,
+          createdAt: stat.mtime.toISOString(),
+        });
       });
     }
   } catch (e) {}

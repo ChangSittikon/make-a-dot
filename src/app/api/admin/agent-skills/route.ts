@@ -82,9 +82,36 @@ ${desc}
       }
       
       // New specific file edit
-      const { title, desc, type, filename } = body;
+      const { title, desc, content: bodyContent, type, filename, sectionIndex } = body;
       if (!filename || !title || !desc || !type) {
         return NextResponse.json({ error: 'Invalid update payload' }, { status: 400 });
+      }
+
+      // Special case: editing a section inside GEMINI.md
+      if (filename === 'GEMINI.md') {
+        const geminiPath = path.join(process.cwd(), 'GEMINI.md');
+        if (!fs.existsSync(geminiPath)) {
+          return NextResponse.json({ error: 'GEMINI.md not found' }, { status: 404 });
+        }
+        const raw = fs.readFileSync(geminiPath, 'utf8');
+        // Split by ## headings (keep the first non-## block as header)
+        const parts = raw.split(/^## /m);
+        const header = parts[0]; // Everything before first ##
+        const sections = parts.slice(1); // Each ## section
+        
+        if (sectionIndex !== undefined && sectionIndex < sections.length) {
+          // Replace only the targeted section
+          sections[sectionIndex] = `${title}\n${bodyContent || desc}\n`;
+        } else {
+          // Fallback: match by title
+          const idx = sections.findIndex(s => s.split('\n')[0].trim() === title);
+          if (idx !== -1) sections[idx] = `${title}\n${bodyContent || desc}\n`;
+        }
+        
+        const newFile = header + sections.map(s => `## ${s}`).join('');
+        fs.writeFileSync(geminiPath, newFile, 'utf8');
+        logActivity('Agent Rule Updated', `อัปเดตกฎ: ${title}`);
+        return NextResponse.json({ success: true });
       }
       
       const dir = type === 'skill' ? 'skills' : 'rules';
@@ -94,7 +121,7 @@ ${desc}
          return NextResponse.json({ error: 'File not found' }, { status: 404 });
       }
       
-      const newContent = body.content || `# ${title}\n${desc}`;
+      const newContent = bodyContent || `# ${title}\n${desc}`;
       const content = `---
 name: ${title}
 description: ${desc}
