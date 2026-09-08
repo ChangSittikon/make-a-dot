@@ -1,0 +1,297 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BreathingDot } from "@/components/flow/BreathingDot";
+import { Chip } from "@/components/flow/Chip";
+import { CardOption } from "@/components/flow/CardOption";
+import { ResultCard } from "@/components/flow/ResultCard";
+import Link from "next/link";
+import { BottomTabBar } from "@/components/shared/BottomTabBar";
+
+interface Option {
+  id: string;
+  label: string;
+  icon?: string | null;
+  targetNodeId?: string | null;
+}
+
+interface Node {
+  id: string;
+  type: string;
+  question: string;
+  options: Option[];
+}
+
+interface Industry {
+  id: string;
+  name: string;
+  domainDirector?: {
+    displayName: string;
+    avatarUrl: string | null;
+  };
+}
+
+const panelVariants = {
+  enter: { opacity: 0, y: 20 },
+  active: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+};
+
+// Dummy results for the end of the flow
+const dummyResults = [
+  { name: "คุณเอ (Producer)", tags: "พร้อมรับงาน, มีสตูดิโอ", avatarUrl: "https://i.pravatar.cc/150?img=11", verified: true },
+  { name: "ทีม ABC", tags: "รับจ้างผลิตวิดีโอ", avatarUrl: "https://i.pravatar.cc/150?img=47" },
+];
+
+export function FlowApp({ session, children }: { session: any, children?: React.ReactNode }) {
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [industry, setIndustry] = useState<Industry | null>(null);
+  const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
+  
+  const [displayedText, setDisplayedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+  const [showOptions, setShowOptions] = useState(false);
+  const [selections, setSelections] = useState<string[]>([]);
+  
+  const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch logic tree on mount
+  useEffect(() => {
+    fetch('/api/industries', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(inds => {
+        if (inds.length > 0) {
+          setIndustry(inds[0]);
+          return fetch(`/api/flow/${inds[0].id}`, { cache: 'no-store' });
+        }
+        throw new Error("No industries found");
+      })
+      .then(res => res.json())
+      .then((data: Node[]) => {
+        setNodes(data);
+        const startNode = data.find(n => n.type === 'START') || data[0];
+        if (startNode) {
+          setCurrentNodeId(startNode.id);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const currentNode = nodes.find(n => n.id === currentNodeId);
+
+  // Typing effect
+  const typeText = useCallback((text: string) => {
+    setIsTyping(true);
+    setShowOptions(false);
+    setDisplayedText("");
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        setDisplayedText(text.slice(0, i + 1));
+        i++;
+      } else {
+        clearInterval(interval);
+        setIsTyping(false);
+        setShowOptions(true);
+      }
+    }, 30);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Trigger typing when current node changes
+  useEffect(() => {
+    if (currentNode && !showResults) {
+      const timer = setTimeout(() => {
+        typeText(currentNode.question || "...");
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [currentNode, showResults, typeText]);
+
+  const handleSelect = useCallback(
+    (option: Option) => {
+      if (isTyping) return;
+
+      setSelections(prev => [...prev, option.label]);
+
+      const targetNode = nodes.find(n => n.id === option.targetNodeId);
+
+      if (!targetNode || targetNode.type === 'RESULT' || !option.targetNodeId) {
+        // End of flow
+        setShowOptions(false);
+        setTimeout(() => {
+          setDisplayedText("");
+          setShowResults(true);
+          typeText(targetNode?.question || "นี่คือผลลัพธ์หรือจุดที่ใช่สำหรับคุณ!");
+        }, 300);
+      } else {
+        // Go to next question
+        setShowOptions(false);
+        setCurrentNodeId(targetNode.id);
+      }
+    },
+    [isTyping, nodes, typeText]
+  );
+
+  const resetFlow = () => {
+    const startNode = nodes.find(n => n.type === 'START') || nodes[0];
+    setCurrentNodeId(startNode?.id || null);
+    setSelections([]);
+    setShowResults(false);
+    setShowOptions(false);
+  };
+
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-[#161a1e] font-prompt transition-colors duration-300">กำลังโหลด...</div>;
+  }
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[#161a1e] font-prompt sm:py-10 transition-colors duration-300">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-white dark:bg-[#161a1e] relative flex flex-col overflow-hidden shadow-2xl transition-colors duration-300">
+        
+        {/* Top Header (Google Style) */}
+        <header className="px-5 py-4 flex items-center justify-between bg-white/80 dark:bg-[#1e2329]/80 backdrop-blur-md z-50 sticky top-0 border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900 dark:text-white tracking-tight text-lg">MAKE A DOT</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {children}
+          </div>
+        </header>
+
+        {/* Main Content (Flow) */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col relative bg-gray-50/30 dark:bg-[#161a1e] transition-colors duration-300">
+          
+          <nav className="pt-6 pb-2 px-6 z-40">
+            <div className="flex justify-between items-center">
+              <motion.button
+                onClick={resetFlow}
+                className="text-gray-400 hover:text-gray-900 transition-colors w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-100"
+                animate={{ opacity: selections.length > 0 ? 1 : 0 }}
+                style={{ pointerEvents: selections.length > 0 ? 'auto' : 'none' }}
+              >
+                <i className="fa-solid fa-arrow-left text-sm" />
+              </motion.button>
+            </div>
+
+            {/* Chips */}
+            <div className="flex flex-wrap gap-2 mt-4 min-h-[28px]">
+              <AnimatePresence>
+                {selections.map((sel, i) => (
+                  <Chip key={`${sel}-${i}`} label={sel} />
+                ))}
+              </AnimatePresence>
+            </div>
+          </nav>
+
+          <div className="px-6 flex flex-col justify-center pb-24 flex-1">
+            {/* Breathing Dot */}
+            <motion.div
+              animate={{
+                scale: showResults ? 0.5 : 1,
+                opacity: showResults ? 0.5 : 1,
+              }}
+              transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
+              className="mb-6"
+            >
+              <BreathingDot />
+            </motion.div>
+
+            {/* Question Text */}
+            {!showResults && (
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-8 leading-snug min-h-[64px] transition-colors duration-300">
+                {displayedText}
+                {isTyping && <span className="text-brand-red animate-pulse">|</span>}
+              </h2>
+            )}
+
+            {/* Step Panels */}
+            <div className="relative w-full">
+              <AnimatePresence mode="wait">
+                {!showResults && showOptions && currentNode && (
+                  <motion.div
+                    key={`node-${currentNode.id}`}
+                    variants={panelVariants}
+                    initial="enter"
+                    animate="active"
+                    exit="exit"
+                    transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+                  >
+                    <div className="flex flex-col gap-3">
+                      {currentNode.options.map((opt) => (
+                        <CardOption
+                          key={opt.id}
+                          label={opt.label}
+                          icon={opt.icon || undefined}
+                          onClick={() => handleSelect(opt)}
+                          layout="full"
+                          showArrow={!!opt.targetNodeId}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Result Panel */}
+                {showResults && (
+                  <motion.div
+                    key="results"
+                    variants={panelVariants}
+                    initial="enter"
+                    animate="active"
+                    exit="exit"
+                    transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+                  >
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 leading-snug transition-colors duration-300">
+                      {displayedText}
+                      {isTyping && <span className="text-brand-red animate-pulse">|</span>}
+                    </h2>
+                    <div className="flex flex-col gap-3">
+                      {dummyResults.map((result, i) => (
+                        <ResultCard
+                           key={result.name}
+                           name={result.name}
+                           tags={result.tags}
+                           avatarUrl={result.avatarUrl}
+                           verified={result.verified}
+                           index={i}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Create Project Button (Mockup transition) */}
+                    <div className="mt-8 text-center">
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const res = await fetch('/api/projects/demo-create', { method: 'POST' });
+                            const data = await res.json();
+                            if (data.id) {
+                              window.location.href = `/project/${data.id}`;
+                            } else {
+                              window.location.href = '/';
+                            }
+                          } catch (e) {
+                            window.location.href = '/';
+                          }
+                        }}
+                        className="inline-flex items-center justify-center w-full bg-[#FF1A1A] text-white py-3.5 rounded-[14px] font-bold hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                      >
+                        เริ่มสร้างโปรเจกต์ร่วมกัน
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        <BottomTabBar />
+      </div>
+    </div>
+  );
+}

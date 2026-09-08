@@ -1,0 +1,77 @@
+[
+  {
+    "industry": "วงการ E-Sports / เกมมิ่ง",
+    "icon": "fa-gamepad",
+    "description": "ค้นหาแนวร่วมสำหรับทีมสตรีมเมอร์, ผู้พัฒนาเกม, หรือนักแข่ง",
+    "nodes": [
+      {
+        "id": "q1",
+        "type": "QUESTION",
+        "question": "เป้าหมายหลักของคุณในวงการ E-Sports คืออะไร?",
+        "options": [
+          { "label": "สร้างทีมแข่ง (Esports Team)", "targetNodeId": "q2_team" },
+          { "label": "พัฒนาเกม (Game Dev)", "targetNodeId": "q2_dev" },
+          { "label": "สตรีมมิ่ง / คอนเทนต์ครีเอเตอร์", "targetNodeId": "q2_content" }
+        ]
+      },
+      {
+        "id": "q2_team",
+        "type": "QUESTION",
+        "question": "คุณกำลังตามหาตำแหน่งไหนมาร่วมทีมแข่ง?",
+        "options": [
+          { "label": "โค้ช / นักวิเคราะห์แผน (Analyst)", "targetNodeId": "result_match" },
+          { "label": "ผู้จัดการทีม (หาทุน/สปอนเซอร์)", "targetNodeId": "result_match" },
+          { "label": "ผู้เล่นโปรเพลเยอร์", "targetNodeId": "result_match" }
+        ]
+      },
+      {
+        "id": "q2_dev",
+        "type": "QUESTION",
+        "question": "เกมที่คุณกำลังสร้าง ขาดคนทำส่วนไหน?",
+        "options": [
+          { "label": "Game Programmer (Unity/Unreal)", "targetNodeId": "result_match" },
+          { "label": "3D Artist / Animator", "targetNodeId": "result_match" },
+          { "label": "Sound Designer", "targetNodeId": "result_match" }
+        ]
+      },
+      {
+        "id": "result_match",
+        "type": "RESULT",
+        "question": "ประมวลผลการจับคู่...",
+        "options": []
+      }
+    ]
+  },
+  {
+    "industry": "วงการเกษตรกรรม (Smart Farming)",
+    "icon": "fa-seedling",
+    "description": "นวัตกรรมเกษตรยุคใหม่, IoT สำหรับฟาร์ม, ตลาดส่งออก",
+    "nodes": [
+      {
+        "id": "q1",
+        "type": "QUESTION",
+        "question": "โปรเจกต์เกษตรของคุณเน้นไปที่ส่วนใด?",
+        "options": [
+          { "label": "พัฒนาระบบ IoT / ออโตเมชันในฟาร์ม", "targetNodeId": "q2_iot" },
+          { "label": "หาตลาดส่งออก / แปรรูปสินค้า", "targetNodeId": "q2_market" },
+          { "label": "หาที่ดิน / ทุนสนับสนุนการเพาะปลูก", "targetNodeId": "q2_resource" }
+        ]
+      },
+      {
+        "id": "q2_iot",
+        "type": "QUESTION",
+        "question": "คุณมีทรัพยากรอะไรอยู่แล้วบ้าง?",
+        "options": [
+          { "label": "มีฟาร์มทดลอง แต่ขาดคนทำซอฟต์แวร์", "targetNodeId": "result_match" },
+          { "label": "มีซอฟต์แวร์ แต่ขาดพื้นที่ทดสอบจริง", "targetNodeId": "result_match" }
+        ]
+      },
+      {
+        "id": "result_match",
+        "type": "RESULT",
+        "question": "ประมวลผลการจับคู่...",
+        "options": []
+      }
+    ]
+  }
+]

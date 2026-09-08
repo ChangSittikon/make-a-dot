@@ -1,0 +1,28 @@
+{
+  "phases": [
+    {
+      "id": "dev",
+      "name": "พัฒนาระบบ (Development)",
+      "status": "active",
+      "wi": "พัฒนาฟีเจอร์ตาม Requirement, ออกแบบ UI/UX, และจัดการ Database"
+    },
+    {
+      "id": "deploy",
+      "name": "Deploy & Run App",
+      "status": "pending",
+      "wi": "เตรียมสภาพแวดล้อม Production, จัดการ Environment Variables และ Deploy ขึ้นเซิร์ฟเวอร์"
+    },
+    {
+      "id": "monitor",
+      "name": "มอนิเตอร์ (Monitor)",
+      "status": "pending",
+      "wi": "ตรวจสอบสถานะการทำงานของระบบ (Uptime) และประสิทธิภาพการทำงาน (Performance)"
+    },
+    {
+      "id": "resolve",
+      "name": "เจอปัญหา/แก้ไข (Issue Resolution)",
+      "status": "standby",
+      "wi": "วิเคราะห์ Error Log, เสนอแนวทางแก้ไข และจัดการแพตช์ (Patch) โค้ดฉุกเฉิน"
+    }
+  ]
+}

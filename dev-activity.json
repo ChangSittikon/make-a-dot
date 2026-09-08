@@ -1,0 +1,80 @@
+[
+  {
+    "id": "1788441404075",
+    "timestamp": "2026-09-03T13:16:44.075Z",
+    "action": "System Restored",
+    "details": "Restored dev-activity.json after accidental corruption."
+  },
+  {
+    "id": "1788441404076",
+    "timestamp": "2026-09-03T13:16:44.076Z",
+    "action": "Feature: Inbox-style Notifications",
+    "details": "Added localStorage tracking for read updates. Clicking an update marks it as read, removes the badge, and dims the card slightly."
+  },
+  {
+    "id": "1788441551751",
+    "timestamp": "2026-09-03T13:19:11.751Z",
+    "action": "Updated Agent Workflow (WI)",
+    "details": "อัปเดตสถานะและ Work Instruction ของ Agent Workflow"
+  },
+  {
+    "id": "1788442470722",
+    "timestamp": "2026-09-03T13:34:30.722Z",
+    "action": "Redesigned Explore Page",
+    "details": "Transformed the /explore page into an e-commerce style homepage with Search, Hero Banner, Industry Categories, Hot Missions, and Featured Projects carousels."
+  },
+  {
+    "id": "1788443789923",
+    "timestamp": "2026-09-03T13:56:29.923Z",
+    "action": "Redesigned Project Details Page",
+    "details": "Transformed the /project/[id] page into a dashboard summarizing the Big Picture (Budget/Equity), missing roles, and the connected team, focusing on the Make A Dot concept."
+  },
+  {
+    "id": "1788450658510",
+    "timestamp": "2026-09-03T15:50:58.511Z",
+    "action": "Added Feature Studio",
+    "details": "Created /profile/settings/feature-studio/page.tsx, a UI to help the admin structure feature requests into AI Prompts."
+  },
+  {
+    "id": "1788453517069",
+    "timestamp": "2026-09-03T16:38:37.069Z",
+    "action": "Added Project Simulator",
+    "details": "Created /project/[id]/simulator/page.tsx UI and /api/projects/[id]/simulate backend API to run scenario analysis (Best/Expected/Worst cases). Updated Project details page to link to the simulator."
+  },
+  {
+    "id": "1788506874721",
+    "timestamp": "2026-09-04T07:27:54.721Z",
+    "action": "Added Dot Synthesizer",
+    "details": "Created /profile/settings/dot-synthesizer and /api/ai/synthesize to allow admins to brainstorm and merge scattered ideas into structured smart choices, aware of project history and schema."
+  },
+  {
+    "id": "1788507497840",
+    "timestamp": "2026-09-04T07:38:17.840Z",
+    "action": "Fix Dot Synthesizer Error",
+    "details": "Added auto-fallback model logic to /api/ai/synthesize/route.ts to prevent AI_APICallError during high demand by automatically failing over to fallback models defined in SystemConfig."
+  },
+  {
+    "id": "1788508906663",
+    "timestamp": "2026-09-04T08:01:46.663Z",
+    "action": "Fix generateObject Model Compat Error",
+    "details": "Injected gemini-1.5-flash and gemini-1.5-pro to the fallback list directly in /api/ai/synthesize/route.ts because some newer experimental models do not support the generateObject (Interactions) API."
+  },
+  {
+    "id": "1788519424187",
+    "timestamp": "2026-09-04T10:57:04.187Z",
+    "action": "Sync DB Fallback Models",
+    "details": "Updated Prisma SystemConfig GLOBAL to use gemini-1.5-pro and gemini-1.5-flash as the actual DB values so the Admin UI correctly reflects the safe models."
+  },
+  {
+    "id": "1788523117996",
+    "action": "Restored Tech Updates Inbox",
+    "details": "Restored the dynamic Tech Updates (Inbox) UI back into AgentHubClient.tsx because it was accidentally removed by another agent.",
+    "timestamp": "2026-09-04T11:58:37.996Z"
+  },
+  {
+    "id": "1788524413411",
+    "action": "Updated Tech Updates Inbox UI",
+    "details": "Implemented line clamping for long summaries, added an expand/collapse toggle, handled unread badge clearing on click, and added an Important badge for highly relevant updates.",
+    "timestamp": "2026-09-04T12:20:13.411Z"
+  }
+]

@@ -1,0 +1,1182 @@
+
+--- 2026-09-03T12:29:04Z ---
+  const [healthMetrics, setHealthMetrics] = useState<any[]>([]);
+  const [loadingHealth, setLoadingHealth] = useState(true);
+  
+  const [techUpdates, setTechUpdates] = useState<any[]>([]);
+  const [loadingUpdates, setLoadingUpdates] = useState(true);
+  
+  const fetchTechUpdates = async () => {
+    setLoadingUpdates(true);
+    try {
+      const res = await fetch("/api/admin/tech-updates");
+      const data = await res.json();
+      if (data.updates) setTechUpdates(data.updates);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingUpdates(false);
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/admin/system-health")
+      .then(res => res.json())
+      .then(data => {
+        if (data.metrics) setHealthMetrics(data.metrics);
+        setLoadingHealth(false);
+      })
+      .catch(() => setLoadingHealth(false));
+      
+    fetchTechUpdates();
+  }, []);
+--- 2026-09-03T12:29:12Z ---
+      {/* 3. Tech News / Updates */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-bold text-gray-900">Tech Updates</h3>
+          <button 
+            onClick={fetchTechUpdates}
+            disabled={loadingUpdates}
+            className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md border border-blue-100 hover:bg-blue-100 transition flex items-center gap-1 disabled:opacity-50"
+          >
+            <i className={`fa-solid fa-rotate ${loadingUpdates ? 'fa-spin' : ''}`}></i>
+            ซิงค์อัพเดท
+          </button>
+        </div>
+        
+        <div className="space-y-2">
+          {loadingUpdates ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex justify-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : techUpdates.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm text-center">
+              <p className="text-xs text-gray-500">ไม่พบข้อมูลอัปเดต</p>
+            </div>
+          ) : (
+            techUpdates.map(update => (
+              <div key={update.id} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:border-blue-300 transition">
+                <div className="flex gap-3">
+                  <div className={`w-8 h-8 rounded-full bg-${update.color}/10 flex items-center justify-center shrink-0`}>
+                    <i className={`fa-solid ${update.icon} text-${update.color}`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-xs text-gray-900">{update.name} <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full ml-1">{update.version}</span></h4>
+                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed line-clamp-2">{update.summary}</p>
+                    <a 
+                      href={update.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-600 font-bold hover:underline mt-2 inline-block"
+                    >
+                      ดูรายละเอียดการอัปเกรด <i className="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+--- 2026-09-03T12:29:34Z ---
+            techUpdates.map(update => (
+              <div key={update.id} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:border-blue-300 transition">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                    <i className={`fa-solid ${update.icon} text-gray-700`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-xs text-gray-900">{update.name} <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full ml-1">{update.version}</span></h4>
+                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed line-clamp-2">{update.summary}</p>
+                    <a 
+                      href={update.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-600 font-bold hover:underline mt-2 inline-block"
+                    >
+                      ดูรายละเอียดการอัปเกรด <i className="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+--- 2026-09-03T12:42:54Z ---
+            techUpdates.map(update => (
+              <div key={update.id} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:border-blue-300 transition">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                    <i className={`fa-solid ${update.icon} text-gray-700`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-bold text-xs text-gray-900">{update.name}</h4>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border text-${update.importance.color.replace('600', '700')} border-${update.importance.color.replace('600', '200')} bg-${update.importance.color.replace('600', '50')}`}>
+                        {update.importance.label}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 mb-1">
+                      เวอร์ชันปัจจุบัน: <span className="font-bold">{update.currentVersion}</span> <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> ล่าสุด: <span className="font-bold text-blue-600">{update.version}</span>
+                    </p>
+                    <p className="text-[11px] font-medium text-gray-800 mt-2 leading-relaxed bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      <span className="block text-[9px] text-gray-400 mb-0.5 uppercase tracking-wider">Release Title</span>
+                      "{update.summary}"
+                    </p>
+                    <a 
+                      href={update.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-600 font-bold hover:underline mt-2 inline-block"
+                    >
+                      ดูรายละเอียดการอัปเกรด <i className="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+--- 2026-09-03T12:48:48Z ---
+  const [techUpdates, setTechUpdates] = useState<any[]>([]);
+  const [loadingUpdates, setLoadingUpdates] = useState(true);
+  const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
+--- 2026-09-03T12:51:48Z ---
+            techUpdates.map(update => (
+              <div 
+                key={update.id} 
+                onClick={() => setExpandedUpdateId(expandedUpdateId === update.id ? null : update.id)}
+                className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:border-blue-300 transition cursor-pointer"
+              >
+                <div className="flex gap-3 items-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                    <i className={`fa-solid ${update.icon} text-gray-700`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-xs text-gray-900">{update.name}</h4>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${update.importance.class}`}>
+                        {update.importance.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-[10px] text-gray-500">
+                        ปัจจุบัน: <span className="font-bold">{update.currentVersion}</span> <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> ล่าสุด: <span className="font-bold text-blue-600">{update.version}</span>
+                      </p>
+                      <i className={`fa-solid fa-chevron-${expandedUpdateId === update.id ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Expanded Details */}
+                {expandedUpdateId === update.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      <span className="block text-[9px] text-gray-400 mb-0.5 uppercase tracking-wider">Release Title</span>
+                      <p className="text-[11px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        "{update.summary}"
+                      </p>
+                    </div>
+                    <a 
+                      href={update.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-600 font-bold hover:underline mt-2 inline-block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      ดูรายละเอียดการอัปเกรด <i className="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5"></i>
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))
+--- 2026-09-03T13:07:22Z ---
+  const [techUpdates, setTechUpdates] = useState<any>({
+    tech: { label: 'Tech', updates: [], unread: 0 },
+    ai: { label: 'AI News', updates: [], unread: 0 },
+    others: { label: 'Others', updates: [], unread: 0 }
+  });
+  const [activeTab, setActiveTab] = useState<'tech' | 'ai' | 'others'>('tech');
+  const [loadingUpdates, setLoadingUpdates] = useState(true);
+  const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
+  
+  const fetchTechUpdates = async () => {
+    setLoadingUpdates(true);
+    try {
+      const res = await fetch("/api/admin/tech-updates");
+      const data = await res.json();
+      if (data.tabs) setTechUpdates(data.tabs);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingUpdates(false);
+    }
+  };
+--- 2026-09-03T13:08:15Z ---
+      {/* 3. Tech News / Updates */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-bold text-gray-900">Tech Updates</h3>
+          <button 
+            onClick={fetchTechUpdates}
+            disabled={loadingUpdates}
+            className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md border border-blue-100 hover:bg-blue-100 transition flex items-center gap-1 disabled:opacity-50"
+          >
+            <i className={`fa-solid fa-rotate ${loadingUpdates ? 'fa-spin' : ''}`}></i>
+            ซิงค์อัพเดท
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex gap-2 px-1 mb-2">
+          {(['tech', 'ai', 'others'] as const).map(tabKey => (
+            <button 
+              key={tabKey}
+              onClick={() => { setActiveTab(tabKey); setExpandedUpdateId(null); }}
+              className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 ${
+                activeTab === tabKey 
+                  ? 'bg-gray-900 text-white' 
+                  : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              {techUpdates[tabKey].label}
+              {techUpdates[tabKey].unread > 0 && (
+                <span className="w-4 h-4 rounded-full bg-brand-red text-white flex items-center justify-center text-[8px]">
+                  {techUpdates[tabKey].unread}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        
+        <div className="space-y-2">
+          {loadingUpdates ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex justify-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : techUpdates[activeTab].updates.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm text-center">
+              <p className="text-xs text-gray-500">ไม่พบข้อมูลอัปเดต</p>
+            </div>
+          ) : (
+            techUpdates[activeTab].updates.map((update: any) => (
+              <div 
+                key={update.id} 
+                onClick={() => setExpandedUpdateId(expandedUpdateId === update.id ? null : update.id)}
+                className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:border-blue-300 transition cursor-pointer"
+              >
+                <div className="flex gap-3 items-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                    <i className={`fa-solid ${update.icon} text-gray-700`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-xs text-gray-900">{update.name}</h4>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${update.importance.class}`}>
+                        {update.importance.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-[10px] text-gray-500">
+                        ปัจจุบัน: <span className="font-bold">{update.currentVersion}</span> <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> ล่าสุด: <span className="font-bold text-blue-600">{update.version}</span>
+                      </p>
+                      <i className={`fa-solid fa-chevron-${expandedUpdateId === update.id ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Expanded Details */}
+                {expandedUpdateId === update.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      <span className="block text-[9px] text-gray-400 mb-0.5 uppercase tracking-wider">Release Title</span>
+                      <p className="text-[11px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        "{update.summary}"
+                      </p>
+                    </div>
+                    <a 
+                      href={update.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-600 font-bold hover:underline mt-2 inline-block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      ดูรายละเอียดการอัปเกรด <i className="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5"></i>
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+--- 2026-09-03T13:14:46Z ---
+  const [techUpdates, setTechUpdates] = useState<any>({
+    tech: { label: 'Tech', updates: [], unread: 0 },
+    ai: { label: 'AI News', updates: [], unread: 0 },
+    others: { label: 'Others', updates: [], unread: 0 }
+  });
+  const [activeTab, setActiveTab] = useState<'tech' | 'ai' | 'others'>('tech');
+  const [loadingUpdates, setLoadingUpdates] = useState(true);
+  const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
+  const [readUpdates, setReadUpdates] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const saved = localStorage.getItem('makeadot_read_updates');
+    if (saved) {
+      try { setReadUpdates(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const handleExpandUpdate = (id: string) => {
+    setExpandedUpdateId(expandedUpdateId === id ? null : id);
+    if (!readUpdates.includes(id)) {
+      const newRead = [...readUpdates, id];
+      setReadUpdates(newRead);
+      localStorage.setItem('makeadot_read_updates', JSON.stringify(newRead));
+    }
+  };
+  
+  const getUnreadCount = (tabKey: 'tech' | 'ai' | 'others') => {
+    if (!techUpdates[tabKey]) return 0;
+    return techUpdates[tabKey].updates.filter((u: any) => u.importance?.isNew && !readUpdates.includes(u.id)).length;
+  };
+  
+  const fetchTechUpdates = async () => {
+    setLoadingUpdates(true);
+    try {
+      const res = await fetch("/api/admin/tech-updates");
+      const data = await res.json();
+      if (data.tabs) setTechUpdates(data.tabs);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingUpdates(false);
+    }
+  };
+--- 2026-09-03T13:15:48Z ---
+        {/* Tabs */}
+        <div className="flex gap-2 px-1 mb-2">
+          {(['tech', 'ai', 'others'] as const).map(tabKey => {
+            const unreadCount = getUnreadCount(tabKey);
+            return (
+              <button 
+                key={tabKey}
+                onClick={() => { setActiveTab(tabKey); setExpandedUpdateId(null); }}
+                className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 ${
+                  activeTab === tabKey 
+                    ? 'bg-gray-900 text-white' 
+                    : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {techUpdates[tabKey].label}
+                {unreadCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-brand-red text-white flex items-center justify-center text-[8px]">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        
+        <div className="space-y-2">
+          {loadingUpdates ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex justify-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : techUpdates[activeTab].updates.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm text-center">
+              <p className="text-xs text-gray-500">ไม่พบข้อมูลอัปเดต</p>
+            </div>
+          ) : (
+            techUpdates[activeTab].updates.map((update: any) => {
+              const isUnread = update.importance?.isNew && !readUpdates.includes(update.id);
+              return (
+                <div 
+                  key={update.id} 
+                  onClick={() => handleExpandUpdate(update.id)}
+                  className={`bg-white rounded-xl border ${isUnread ? 'border-brand-red/30' : 'border-gray-200'} p-3 shadow-sm hover:border-blue-300 transition cursor-pointer relative overflow-hidden`}
+                >
+                  {isUnread && <div className="absolute top-0 right-0 w-2 h-2 bg-brand-red rounded-bl-lg"></div>}
+                  <div className={`flex gap-3 items-center ${isUnread ? '' : 'opacity-80'}`}>
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                      <i className={`fa-solid ${update.icon} text-gray-700`}></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className={`font-bold text-xs ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>{update.name}</h4>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${update.importance.class}`}>
+                          {update.importance.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-500">
+                          ปัจจุบัน: <span className="font-bold">{update.currentVersion}</span> <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> ล่าสุด: <span className="font-bold text-blue-600">{update.version}</span>
+                        </p>
+                        <i className={`fa-solid fa-chevron-${expandedUpdateId === update.id ? 'up' : 'down'} text-[10px] text-gray-400`}></i>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Expanded Details */}
+                  {expandedUpdateId === update.id && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                        <span className="block text-[9px] text-gray-400 mb-0.5 uppercase tracking-wider">Release Title</span>
+                        <p className="text-[11px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                          "{update.summary}"
+                        </p>
+                      </div>
+                      <a 
+                        href={update.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-blue-600 font-bold hover:underline mt-2 inline-block"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        ดูรายละเอียดการอัปเกรด <i className="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5"></i>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+--- 2026-09-04T09:35:56Z ---
+  const [healthMetrics, setHealthMetrics] = useState<any[]>([
+    { id: 1, label: 'Database (SQLite)', status: 'Connected', icon: 'fa-database', color: 'green-500' },
+    { id: 2, label: 'API Routes', status: 'Stable', icon: 'fa-server', color: 'blue-500' },
+    { id: 3, label: 'Background Sync', status: 'Active', icon: 'fa-rotate', color: 'green-500' },
+    { id: 4, label: 'AI Endpoints', status: 'Healthy', icon: 'fa-bolt', color: 'blue-500' }
+  ]);
+  const [loadingHealth, setLoadingHealth] = useState(false);
+  const [techUpdates, setTechUpdates] = useState<any>({
+    tech: { label: 'Tech', updates: [], unread: 0 },
+    ai: { label: 'AI', updates: [
+      { id: '1', name: 'Gemini 1.5 Pro', currentVersion: 'v1.0', version: 'v1.5', summary: 'Improved reasoning capabilities', importance: { label: 'Major', class: 'bg-red-50 text-red-600', isNew: true }, icon: 'fa-microchip' }
+    ], unread: 1 },
+    others: { label: 'Others', updates: [], unread: 0 }
+  });
+  const [activeTab, setActiveTab] = useState<'tech' | 'ai' | 'others'>('tech');
+  const [loadingUpdates, setLoadingUpdates] = useState(false);
+  const [expandedUpdateId, setExpandedUpdateId] = useState<string | null>(null);
+  const [readUpdates, setReadUpdates] = useState<string[]>([]);
+
+  const fetchTechUpdates = () => {};
+  const getUnreadCount = (tab: string) => techUpdates[tab]?.unread || 0;
+  
+  const handleExpandUpdate = (id: string) => {
+    setExpandedUpdateId(expandedUpdateId === id ? null : id);
+    if (!readUpdates.includes(id)) setReadUpdates([...readUpdates, id]);
+  };
+--- 2026-09-04T09:36:07Z ---
+      {/* 2. System Health / Monitoring */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-bold text-gray-900">การทำงานของระบบ (System Health)</h3>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {loadingHealth ? (
+            <div className="col-span-2 py-4 flex justify-center items-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : (
+            healthMetrics.map(metric => (
+              <div key={metric.id} className={`bg-white rounded-xl p-3 border border-gray-200 border-l-4 border-l-${metric.color} shadow-sm relative overflow-hidden`}>
+                <div className={`absolute top-0 right-0 w-12 h-12 bg-${metric.color} opacity-5 rounded-bl-full`}></div>
+                <p className="text-[10px] text-gray-500 mb-1">{metric.label}</p>
+                <div className="flex items-center gap-2">
+                  <i className={`fa-solid ${metric.icon} text-${metric.color} text-xs`}></i>
+                  <p className="text-sm font-bold text-gray-900">{metric.status}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* 3. Tech News / Updates */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-bold text-gray-900">Tech Updates</h3>
+          <button 
+            onClick={fetchTechUpdates}
+            disabled={loadingUpdates}
+            className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md border border-blue-100 hover:bg-blue-100 transition flex items-center gap-1 disabled:opacity-50"
+          >
+            <i className={`fa-solid fa-rotate ${loadingUpdates ? 'fa-spin' : ''}`}></i>
+            อัปเดตข่าวสาร
+          </button>
+        </div>
+        
+        <div className="flex gap-2 px-1 mb-2">
+          {(['tech', 'ai', 'others'] as const).map(tabKey => {
+            const unreadCount = getUnreadCount(tabKey);
+            return (
+              <button 
+                key={tabKey}
+                onClick={() => { setActiveTab(tabKey); setExpandedUpdateId(null); }}
+                className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 ${
+                  activeTab === tabKey 
+                    ? 'bg-gray-900 text-white' 
+                    : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {techUpdates[tabKey]?.label}
+                {unreadCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[8px]">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        
+        <div className="space-y-2">
+          {loadingUpdates ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex justify-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : techUpdates[activeTab]?.updates?.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm text-center">
+              <p className="text-xs text-gray-500">ไม่มีข่าวสารใหม่</p>
+            </div>
+          ) : (
+            techUpdates[activeTab]?.updates?.map((update: any) => {
+              const isUnread = update.importance?.isNew && !readUpdates.includes(update.id);
+              return (
+                <div 
+                  key={update.id} 
+                  onClick={() => handleExpandUpdate(update.id)}
+                  className={`bg-white rounded-xl border ${isUnread ? 'border-red-300' : 'border-gray-200'} p-3 shadow-sm hover:border-blue-300 transition cursor-pointer relative overflow-hidden`}
+                >
+                  {isUnread && <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-bl-lg"></div>}
+                  <div className={`flex gap-3 items-center ${isUnread ? '' : 'opacity-80'}`}>
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                      <i className={`fa-solid ${update.icon || 'fa-newspaper'} text-gray-700`}></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className={`font-bold text-xs ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>{update.name}</h4>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-500">
+                          {update.currentVersion} <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> <span className="font-bold text-blue-600">{update.version}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {expandedUpdateId === update.id && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-[11px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        {update.summary}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {/* View Skills Modal */}
+--- 2026-09-04T10:30:11Z ---
+const fs = require('fs');
+
+let code = fs.readFileSync('C:/Users/CHANG-PCSONSAI/.gemini/antigravity/scratch/make-a-dot/src/components/admin/AgentHubClient.tsx', 'utf8');
+
+// 1. Add readUpdates state
+const activeTabLine = "const [activeTab, setActiveTab] = useState<'tech' | 'ai' | 'others'>('tech');";
+const addReadUpdates = `
+  const [readUpdates, setReadUpdates] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const saved = localStorage.getItem('agentHub_readUpdates');
+    if (saved) {
+      try { setReadUpdates(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const markUpdateAsRead = (id: string) => {
+    setReadUpdates(prev => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      localStorage.setItem('agentHub_readUpdates', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const getUnreadCount = (tabKey: 'tech' | 'ai' | 'others') => {
+    const items = techUpdates[tabKey]?.updates || [];
+    return items.filter((u: any) => u.importance?.isNew && !readUpdates.includes(u.id)).length;
+  };
+
+  const handleExpandUpdate = (id: string) => {
+    setExpandedUpdateId(prev => prev === id ? null : id);
+    markUpdateAsRead(id);
+  };
+`;
+code = code.replace(activeTabLine, activeTabLine + addReadUpdates);
+
+// 2. Replace System Health and Tech Updates rendering
+const renderStart = '{/* 2. System Health / Monitoring */}';
+const renderEnd = '{/* View Skills Modal */}';
+
+const newRender = `{/* 2. System Health / Monitoring */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-bold text-gray-900">การทำงานของระบบ (System Health)</h3>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {loadingHealth ? (
+            <div className="col-span-2 py-4 flex justify-center items-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : (
+            healthMetrics.map(metric => (
+              <div key={metric.id} className={\`bg-white rounded-xl p-3 border border-gray-200 border-l-4 border-l-\${metric.color} shadow-sm relative overflow-hidden\`}>
+                <div className={\`absolute top-0 right-0 w-12 h-12 bg-\${metric.color} opacity-5 rounded-bl-full\`}></div>
+                <p className="text-[10px] text-gray-500 mb-1">{metric.label}</p>
+                <div className="flex items-center gap-2">
+                  <i className={\`fa-solid \${metric.icon} text-\${metric.color} text-xs\`}></i>
+                  <p className="text-sm font-bold text-gray-900">{metric.status}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* 3. Tech News / Updates */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-bold text-gray-900">Tech Updates</h3>
+          <button 
+            onClick={fetchTechUpdates}
+            disabled={loadingUpdates}
+            className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md border border-blue-100 hover:bg-blue-100 transition flex items-center gap-1 disabled:opacity-50"
+          >
+            <i className={\`fa-solid fa-rotate \${loadingUpdates ? 'fa-spin' : ''}\`}></i>
+            ซิงค์อัพเดท
+          </button>
+        </div>
+        
+        <div className="flex gap-2 px-1 mb-2">
+          {(['tech', 'ai', 'others'] as const).map(tabKey => {
+            const unreadCount = getUnreadCount(tabKey);
+            return (
+              <button 
+                key={tabKey}
+                onClick={() => { setActiveTab(tabKey); setExpandedUpdateId(null); }}
+                className={\`text-[10px] font-bold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 \${
+                  activeTab === tabKey 
+                    ? 'bg-gray-900 text-white' 
+                    : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+                }\`}
+              >
+                {techUpdates[tabKey]?.label}
+                {unreadCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[8px]">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        
+        <div className="space-y-2">
+          {loadingUpdates ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex justify-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : techUpdates[activeTab]?.updates?.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm text-center">
+              <p className="text-xs text-gray-500">ไม่มีอัพเดทใหม่</p>
+            </div>
+          ) : (
+            techUpdates[activeTab]?.updates?.map((update: any) => {
+              const isUnread = update.importance?.isNew && !readUpdates.includes(update.id);
+              return (
+                <div 
+                  key={update.id} 
+                  onClick={() => handleExpandUpdate(update.id)}
+                  className={\`bg-white rounded-xl border \${isUnread ? 'border-red-300' : 'border-gray-200'} p-3 shadow-sm hover:border-blue-300 transition cursor-pointer relative overflow-hidden\`}
+                >
+                  {isUnread && <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-bl-lg"></div>}
+                  <div className={\`flex gap-3 items-center \${isUnread ? '' : 'opacity-80'}\`}>
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                      <i className={\`fa-solid \${update.icon || 'fa-newspaper'} text-gray-700\`}></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className={\`font-bold text-xs \${isUnread ? 'text-gray-900' : 'text-gray-700'}\`}>{update.name}</h4>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-500">
+                          {update.currentVersion} <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> <span className="font-bold text-blue-600">{update.version}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {expandedUpdateId === update.id && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-[11px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        {update.summary}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {/* Add/Edit Rule Modal */}`;
+
+const startIndex = code.indexOf(renderStart);
+const endIndex = code.indexOf('{/* Add/Edit Rule Modal */}');
+if (startIndex !== -1 && endIndex !== -1) {
+  code = code.substring(0, startIndex) + newRender + code.substring(endIndex + '{/* Add/Edit Rule Modal */}'.length);
+}
+
+fs.writeFileSync('C:/Users/CHANG-PCSONSAI/.gemini/antigravity/scratch/make-a-dot/src/components/admin/AgentHubClient.tsx', code, 'utf8');
+console.log('Patched');
+
+--- 2026-09-04T10:35:19Z ---
+const fs = require('fs');
+
+let code = fs.readFileSync('C:/Users/CHANG-PCSONSAI/.gemini/antigravity/scratch/make-a-dot/src/components/admin/AgentHubClient.tsx', 'utf8');
+
+// 1. Props
+code = code.replace(
+  'initialSkills, \n  initialLogs, \n  initialWorkflow \n}: { \n  initialSkills: any[], \n  initialLogs: any[],\n  initialWorkflow: any[] \n}',
+  'initialRules = [],\n  initialSkills = [], \n  initialLogs, \n  initialWorkflow \n}: { \n  initialRules?: any[],\n  initialSkills?: any[], \n  initialLogs: any[],\n  initialWorkflow: any[] \n}'
+);
+
+code = code.replace('import { useState, useEffect } from "react";', 'import { useState, useEffect, useRef } from "react";');
+
+// 2. States
+code = code.replace('const [skillsList, setSkillsList] = useState(initialSkills);', 'const [skillsList, setSkillsList] = useState([...initialRules, ...initialSkills]);');
+
+const stateAnchor = 'const [loadingHealth, setLoadingHealth] = useState(true);';
+const advancedStates = `  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeCustomizationTab, setActiveCustomizationTab] = useState<'rule' | 'skill'>('rule');
+  const [ruleType, setRuleType] = useState<'rule' | 'skill'>('rule');
+  const [ruleTrigger, setRuleTrigger] = useState('always_on');
+  const [ruleContent, setRuleContent] = useState('');
+  const [oldFilename, setOldFilename] = useState('');
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/agent-customizations/import', { method: 'POST', body: formData });
+      if (res.ok) window.location.reload();
+      else alert('Import failed');
+    } catch (e) {
+      alert('Import failed');
+    }
+    setSaving(false);
+  };
+
+  const handleExport = () => {
+    window.location.href = '/api/admin/agent-customizations/export';
+  };
+
+  const [readUpdates, setReadUpdates] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const saved = localStorage.getItem('agentHub_readUpdates');
+    if (saved) {
+      try { setReadUpdates(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const markUpdateAsRead = (id: string) => {
+    setReadUpdates(prev => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      localStorage.setItem('agentHub_readUpdates', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const getUnreadCount = (tabKey: 'tech' | 'ai' | 'others') => {
+    const items = techUpdates[tabKey]?.updates || [];
+    return items.filter((u: any) => u.importance?.isNew && !readUpdates.includes(u.id)).length;
+  };
+
+  const handleExpandUpdate = (id: string) => {
+    setExpandedUpdateId(prev => prev === id ? null : id);
+    markUpdateAsRead(id);
+  };
+`;
+code = code.replace(stateAnchor, stateAnchor + '\\n' + advancedStates);
+
+// 3. Handlers
+code = code.replace(/  const openAddRule = \(\) => \{[\s\S]*?setShowRuleModal\(true\);\n  \};/, 
+  `  const openAddRule = () => {
+    setRuleTitle('');
+    setRuleDesc('');
+    setRuleContent('');
+    setRuleTrigger(activeCustomizationTab === 'rule' ? 'always_on' : 'model_decision');
+    setRuleType(activeCustomizationTab);
+    setOldFilename('');
+    setIsEditingRule(false);
+    setEditIndex(null);
+    setShowRuleModal(true);
+    setShowSkillsModal(false);
+  };`
+);
+
+code = code.replace(/  const openEditRule = \(idx: number, skill: any\) => \{[\s\S]*?setShowRuleModal\(true\);\n  \};/, 
+  `  const openEditRule = (idx: number, item: any, type: 'rule'|'skill') => {
+    setRuleTitle(item.title);
+    setRuleDesc(item.desc);
+    setRuleContent(item.content || '');
+    setRuleTrigger(item.trigger || 'model_decision');
+    setRuleType(type);
+    setOldFilename(item.filename || '');
+    setIsEditingRule(true);
+    setEditIndex(idx);
+    setShowRuleModal(true);
+    setShowSkillsModal(false);
+  };`
+);
+
+code = code.replace(/  const handleSaveRule = async \(\) => \{[\s\S]*?setSaving\(false\);\n    \}\n  \};/, 
+  `  const handleSaveRule = async () => {
+    if (!ruleTitle) return;
+    setSaving(true);
+    try {
+      const payload: any = {
+        type: ruleType,
+        name: ruleTitle.toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
+        description: ruleDesc,
+        content: ruleContent,
+      };
+      if (ruleType === 'rule') payload.trigger = ruleTrigger;
+      if (isEditingRule && oldFilename) payload.oldFilename = oldFilename;
+      
+      const res = await fetch('/api/admin/agent-customizations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) window.location.reload();
+      else alert('Failed to save rule');
+    } catch (e) {
+      alert('Error saving rule');
+    }
+    setSaving(false);
+  };
+  
+  const handleDeleteRule = async (filename: string, type: 'rule'|'skill') => {
+    if(!confirm('Are you sure you want to delete this?')) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/agent-customizations?filename=' + filename + '&type=' + type, { method: 'DELETE' });
+      if (res.ok) window.location.reload();
+      else alert('Failed to delete');
+    } catch (e) {
+      alert('Error deleting');
+    }
+    setSaving(false);
+  };`
+);
+
+// 4. Modals
+const ruleModalRegex = /\{\/\* Add\/Edit Rule Modal \*\/\}([\s\S]*?)\{\/\* View Skills Modal \*\/\}/;
+const newRuleModal = `{/* Add/Edit Rule Modal */}
+      {showRuleModal && (
+        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end">
+          <div className="bg-white w-full rounded-t-3xl h-[95%] flex flex-col animate-slide-up">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-3xl z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <i className="fa-solid fa-book text-xs"></i>
+                </div>
+                <h3 className="font-bold text-gray-900">{isEditingRule ? "แก้ไขข้อมูล (Edit)" : "เพิ่มข้อมูลใหม่ (Add)"}</h3>
+              </div>
+              <button onClick={() => { setShowRuleModal(false); setShowSkillsModal(true); }} className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200">
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto flex-1 bg-gray-50 space-y-4">
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1.5">ประเภท (Type)</label>
+                  <select value={ruleType} onChange={e=>setRuleType(e.target.value as any)} className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" disabled={isEditingRule}>
+                    <option value="rule">Rule (กฎของโปรเจกต์)</option>
+                    <option value="skill">Skill (ทักษะเฉพาะทาง)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1.5">ชื่อ (Name - ภาษาอังกฤษ)</label>
+                  <input type="text" value={ruleTitle} onChange={e => setRuleTitle(e.target.value)} className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" placeholder="e.g. ui-styling-guide" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1.5">คำอธิบายสั้นๆ (Description)</label>
+                  <input type="text" value={ruleDesc} onChange={e => setRuleDesc(e.target.value)} className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1.5">การทำงาน (Trigger)</label>
+                  <select value={ruleTrigger} onChange={e=>setRuleTrigger(e.target.value)} className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+                    <option value="always_on">Always On (บังคับใช้อัตโนมัติ)</option>
+                    <option value="model_decision">Model Decision (เมื่อ AI เลือกใช้)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 block mb-1.5">เนื้อหา (Markdown Content)</label>
+                  <textarea rows={10} value={ruleContent} onChange={e => setRuleContent(e.target.value)} className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono text-xs"></textarea>
+                </div>
+                
+                {isEditingRule && (
+                  <button onClick={() => handleDeleteRule(oldFilename, ruleType)} className="text-xs text-red-500 font-bold flex items-center gap-1 mt-2">
+                    <i className="fa-solid fa-trash"></i> ลบข้อมูลนี้
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="p-4 bg-white border-t border-gray-100">
+              <button 
+                onClick={handleSaveRule}
+                disabled={saving}
+                className="w-full py-3 bg-blue-600 text-white text-sm font-bold rounded-xl flex justify-center items-center gap-2"
+              >
+                {saving && <i className="fa-solid fa-spinner fa-spin"></i>}
+                บันทึก (Save)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* View Skills Modal */}`;
+code = code.replace(ruleModalRegex, newRuleModal);
+
+const skillsListOld = /<div className="space-y-3">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<\/div>\s*\)\}/;
+const skillsListNew = `<div className="space-y-3">
+                {skillsList.map((skill, idx) => {
+                  const isRule = initialRules && initialRules.some(r => r.title === skill.title);
+                  return (
+                  <div key={idx} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm p-4 hover:border-blue-300 transition group relative">
+                    <div className="flex gap-3 items-start">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                        <i className={\`fa-solid \${isRule ? 'fa-shield-halved' : 'fa-code-branch'} text-xs\`}></i>
+                      </div>
+                      <div className="flex-1 pr-8">
+                        <h4 className="font-bold text-sm text-gray-900">{skill.title} <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-2">{isRule ? 'Rule' : 'Skill'}</span></h4>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-3">{skill.desc}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => openEditRule(idx, skill, isRule ? 'rule' : 'skill')}
+                      className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition border border-gray-100"
+                      title="แก้ไขข้อมูล (Edit)"
+                    >
+                      <i className="fa-solid fa-pen text-xs"></i>
+                    </button>
+                  </div>
+                )})}
+              </div>
+            </div>
+            <div className="p-4 bg-white border-t border-gray-100 flex gap-2">
+              <button onClick={handleExport} className="flex-1 py-3 bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100 flex items-center justify-center gap-2"><i className="fa-solid fa-download"></i> Export</button>
+              <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
+              <button onClick={() => fileInputRef.current?.click()} className="flex-1 py-3 bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-100 flex items-center justify-center gap-2"><i className="fa-solid fa-upload"></i> Import</button>
+            </div>
+          </div>
+        </div>
+      )}`;
+code = code.replace(skillsListOld, skillsListNew);
+
+// 5. Tech Updates Rendering
+const bottomSectionOld = /\{\/\* 3\. Tech News \/ Updates \*\/\}([\s\S]*?)\<\/div\>\n  \);\n\}/;
+const bottomSectionNew = `{/* 3. Tech News / Updates */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-bold text-gray-900">Tech Updates</h3>
+          <button 
+            onClick={fetchTechUpdates}
+            disabled={loadingUpdates}
+            className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md border border-blue-100 hover:bg-blue-100 transition flex items-center gap-1 disabled:opacity-50"
+          >
+            <i className={\`fa-solid fa-rotate \${loadingUpdates ? 'fa-spin' : ''}\`}></i>
+            ซิงค์อัพเดท
+          </button>
+        </div>
+        
+        <div className="flex gap-2 px-1 mb-2">
+          {(['tech', 'ai', 'others'] as const).map(tabKey => {
+            const unreadCount = getUnreadCount(tabKey);
+            return (
+              <button 
+                key={tabKey}
+                onClick={() => { setActiveTab(tabKey); setExpandedUpdateId(null); }}
+                className={\`text-[10px] font-bold px-3 py-1.5 rounded-full transition flex items-center gap-1.5 \${
+                  activeTab === tabKey 
+                    ? 'bg-gray-900 text-white' 
+                    : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'
+                }\`}
+              >
+                {techUpdates[tabKey]?.label}
+                {unreadCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[8px]">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        
+        <div className="space-y-2">
+          {loadingUpdates ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex justify-center">
+              <i className="fa-solid fa-spinner fa-spin text-blue-500"></i>
+            </div>
+          ) : techUpdates[activeTab]?.updates?.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm text-center">
+              <p className="text-xs text-gray-500">ไม่มีอัพเดทใหม่</p>
+            </div>
+          ) : (
+            techUpdates[activeTab]?.updates?.map((update: any) => {
+              const isUnread = update.importance?.isNew && !readUpdates.includes(update.id);
+              return (
+                <div 
+                  key={update.id} 
+                  onClick={() => handleExpandUpdate(update.id)}
+                  className={\`bg-white rounded-xl border \${isUnread ? 'border-red-300' : 'border-gray-200'} p-3 shadow-sm hover:border-blue-300 transition cursor-pointer relative overflow-hidden\`}
+                >
+                  {isUnread && <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-bl-lg"></div>}
+                  <div className={\`flex gap-3 items-center \${isUnread ? '' : 'opacity-80'}\`}>
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                      <i className={\`fa-solid \${update.icon || 'fa-newspaper'} text-gray-700\`}></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className={\`font-bold text-xs \${isUnread ? 'text-gray-900' : 'text-gray-700'}\`}>{update.name}</h4>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-500">
+                          {update.currentVersion} <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> <span className="font-bold text-blue-600">{update.version}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {expandedUpdateId === update.id && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-[11px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        {update.summary}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}`;
+code = code.replace(bottomSectionOld, bottomSectionNew);
+
+fs.writeFileSync('C:/Users/CHANG-PCSONSAI/.gemini/antigravity/scratch/make-a-dot/src/components/admin/AgentHubClient.tsx', code, 'utf8');
+console.log('Done!');
+
+--- 2026-09-04T10:51:27Z ---
+const fs = require('fs');
+
+let code = fs.readFileSync('C:/Users/CHANG-PCSONSAI/.gemini/antigravity/scratch/make-a-dot/src/components/admin/AgentHubClient.tsx', 'utf8');
+
+const oldCards = `          ) : (
+            techUpdates[activeTab]?.updates?.map((update: any) => {
+              const isUnread = update.importance?.isNew && !readUpdates.includes(update.id);
+              return (
+                <div 
+                  key={update.id} 
+                  onClick={() => handleExpandUpdate(update.id)}
+                  className={\`bg-white rounded-xl border \${isUnread ? 'border-red-300' : 'border-gray-200'} p-3 shadow-sm hover:border-blue-300 transition cursor-pointer relative overflow-hidden\`}
+                >
+                  {isUnread && <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-bl-lg"></div>}
+                  <div className={\`flex gap-3 items-center \${isUnread ? '' : 'opacity-80'}\`}>
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                      <i className={\`fa-solid \${update.icon || 'fa-newspaper'} text-gray-700\`}></i>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className={\`font-bold text-xs \${isUnread ? 'text-gray-900' : 'text-gray-700'}\`}>{update.name}</h4>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-500">
+                          {update.currentVersion} <i className="fa-solid fa-arrow-right mx-1 text-gray-300"></i> <span className="font-bold text-blue-600">{update.version}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {expandedUpdateId === update.id && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-[11px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        {update.summary}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}`;
+
+const newCards = `          ) : (
+            techUpdates[activeTab]?.updates?.map((update: any) => {
+              const isUnread = update.importance?.isNew && !readUpdates.includes(update.id);
+              return (
+                <div 
+                  key={update.id} 
+                  className={\`bg-white rounded-2xl border \${isUnread ? 'border-red-300' : 'border-gray-200'} p-4 shadow-sm hover:border-blue-300 transition relative overflow-hidden\`}
+                >
+                  <div className="flex gap-3">
+                    <div className={\`w-1.5 h-1.5 rounded-full \${isUnread ? 'bg-brand-red' : 'bg-gray-300'} mt-1.5 shrink-0 relative\`}>
+                      {isUnread && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-red opacity-75"></span>}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className={\`font-bold text-xs \${isUnread ? 'text-gray-900' : 'text-gray-700'}\`}>{update.name} <span className="text-blue-600">{update.version}</span></h4>
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-1 leading-relaxed whitespace-pre-wrap">
+                        {update.summary}
+                      </p>
+                      <a 
+                        href={update.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => markUpdateAsRead(update.id)}
+                        className="text-[10px] text-blue-600 font-bold hover:underline mt-2 inline-block"
+                      >
+                        ดูรายละเอียดการอัปเกรด
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}`;
+
+code = code.replace(oldCards, newCards);
+
+fs.writeFileSync('C:/Users/CHANG-PCSONSAI/.gemini/antigravity/scratch/make-a-dot/src/components/admin/AgentHubClient.tsx', code, 'utf8');
+console.log('Patched cards!');

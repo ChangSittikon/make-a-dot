@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "description": "การผูกมัดตรรกะและวิทยาศาสตร์ของระบบ (Directory to Rule Mapping)",
+  "mappings": [
+    {
+      "directory": "src/app/api",
+      "ruleTitle": "Strict Database Security",
+      "description": "โฟลเดอร์นี้ควบคุมเส้นเลือดใหญ่ของแอป ห้าม AI แก้ไขตรรกะฐานข้อมูลโดยไม่ตรวจสอบความปลอดภัยเด็ดขาด",
+      "aiConfidenceRequired": "High"
+    },
+    {
+      "directory": "src/components",
+      "ruleTitle": "Make-a-dot Brand Identity",
+      "description": "แผงหน้าจอต้องรักษาความคลีน มินิมอล โทนสีแดง/ดำ/เทา ห้ามเพิ่มสีฉูดฉาด",
+      "aiConfidenceRequired": "Medium"
+    }
+  ]
+}

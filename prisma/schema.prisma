@@ -1,0 +1,436 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ============================================================
+// PILLAR 1: CORE MATCHMAKING (เดิม)
+// ============================================================
+
+model Industry {
+  id    String  @id @default(cuid())
+  name  String
+  icon  String? // FontAwesome class name e.g. "fa-solid fa-music"
+  order Int     @default(0)
+
+  // Platform Fee สำหรับวงการนี้ (basis points: 500 = 5.00%)
+  macroFeePercentage Int @default(500)
+
+  // AI Control Panel: คำสั่งพิเศษสำหรับ AI ของวงการนี้
+  aiPromptDirective String? // เช่น "เน้นคำถามเกี่ยวกับงบประมาณ, ทักษะทางเทคนิค"
+  aiNodeCount       Int     @default(5) // จำนวนคำถามที่ AI ควรสร้าง (3-10)
+  aiToneLevel       Int     @default(2) // 0=ขำๆ, 1=ชิลๆ, 2=ปกติ, 3=ทางการ, 4=วิชาการ, 5=เชี่ยวชาญ, 6=ควอนตัม, 7=ดอทปริศนา
+  aiSmartChoices    String? // JSON array: ["branching","budget","skill","timeline","risk","sweat","location","collab"]
+
+  // Relations
+  nodes          Node[]
+  domainDirector DomainDirector?
+  projects       Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Node {
+  id         String   @id @default(cuid())
+  industryId String
+  industry   Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  type       String   @default("QUESTION") // START, QUESTION, RESULT
+  question   String?
+  order      Int      @default(0)
+
+  options  Option[] @relation("NodeOptions")
+  incoming Option[] @relation("TargetNode")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Option {
+  id     String  @id @default(cuid())
+  nodeId String
+  node   Node    @relation("NodeOptions", fields: [nodeId], references: [id], onDelete: Cascade)
+  label  String
+  icon   String? // FontAwesome class name
+  order  Int     @default(0)
+
+  // Algorithm & Variables Mapping (JSON String: e.g. {"budget": 10, "sweat": 5, "timeline": -5})
+  vectorWeight String? 
+
+  targetNodeId String?
+  targetNode   Node?   @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: SetNull)
+}
+
+// ============================================================
+// USER & ROLE SYSTEM
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  avatarUrl     String?
+  role          String    @default("USER") // USER, PROFESSIONAL, GUARANTOR, DIRECTOR, ADMIN
+  phone         String?
+  bankAccount   String?
+  cryptoWallet  String?
+  trustScore    Int       @default(0)
+  isVerified    Boolean   @default(false)
+
+  // Auth.js Relations
+  accounts Account[]
+  sessions Session[]
+
+  // Relations
+  directorProfile      DomainDirector?
+  projectsOwned        Project[]             @relation("ProjectOwner")
+  projectMemberships   ProjectMember[]
+  canvasProposals      CollaborationCanvas[] @relation("CanvasProposer")
+  guaranteesGiven      GuarantorNode[]       @relation("GuarantorUser")
+  endorsementsReceived Endorsement[]         @relation("EndorsedUser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// PILLAR 5: DOMAIN DIRECTOR (ผู้อำนวยการวงการ — พาร์ทเนอร์ระดับชาติ)
+// ============================================================
+
+model DomainDirector {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  industryId String   @unique
+  industry   Industry @relation(fields: [industryId], references: [id])
+
+  displayName String // ชื่อ Co-branding
+  title       String // ตำแหน่ง เช่น "ผู้เชี่ยวชาญระดับประเทศ"
+  bio         String?
+  avatarUrl   String?
+  bannerUrl   String? // ภาพ Hero Banner
+
+  // ผลประโยชน์ — ส่วนแบ่งจาก Platform Fee (basis points: 2000 = 20.00%)
+  profitSharePercentage Int @default(2000)
+  equityPoints          Int @default(0) // คะแนนหุ้นส่วนสะสม
+  totalEarnedSatang     Int @default(0) // รายได้สะสม (สตางค์)
+
+  // Relations
+  endorsements       Endorsement[]
+  disputeResolutions EscrowVault[] @relation("DisputeResolver")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// PROJECT SYSTEM
+// ============================================================
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  industryId  String
+  industry    Industry @relation(fields: [industryId], references: [id])
+  ownerId     String
+  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+
+  status       String @default("DRAFT") // DRAFT, OPEN, IN_PROGRESS, COMPLETED, CANCELLED
+  budgetSatang Int    @default(0) // งบประมาณรวม (สตางค์)
+
+  // Location สำหรับ Heat Map
+  province  String?
+  district  String?
+  latitude  Float?
+  longitude Float?
+
+  // Director endorsement
+  isEndorsed Boolean @default(false)
+
+  // Relations
+  members      ProjectMember[]
+  canvas       CollaborationCanvas?
+  escrow       EscrowVault?
+  guarantor    GuarantorNode?
+  endorsements Endorsement[]
+  simulations  ProjectSimulation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectMember {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+
+  role String @default("MEMBER") // OWNER, MEMBER, CONTRACTOR, INVESTOR
+
+  // ส่วนแบ่ง (basis points: 5000 = 50.00%)
+  equityPercentage Int @default(0)
+
+  status   String    @default("INVITED") // INVITED, ACCEPTED, REJECTED
+  joinedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+}
+
+// ============================================================
+// PILLAR 2: COLLABORATION CANVAS (แคนวาสข้อตกลงร่วม)
+// ============================================================
+
+model CollaborationCanvas {
+  id         String  @id @default(cuid())
+  projectId  String  @unique
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  proposerId String
+  proposer   User    @relation("CanvasProposer", fields: [proposerId], references: [id])
+
+  splitType String @default("REVENUE_SHARE") // REVENUE_SHARE, FLAT_FEE, HYBRID
+
+  // Breakeven Logic
+  hasBreakeven          Boolean @default(false)
+  breakevenAmountSatang Int     @default(0)
+  breakevenRecipientId  String?
+
+  status String @default("DRAFT") // DRAFT, PROPOSED, COUNTERED, AGREED, SIGNED
+
+  smartSummary String? // ข้อตกลงฉบับย่อ (ภาษาคนอ่านง่าย)
+  signedAt     DateTime?
+
+  // Relations
+  resources Resource[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Resource {
+  id       String              @id @default(cuid())
+  canvasId String
+  canvas   CollaborationCanvas @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+
+  contributorId         String // User ID ของคนที่ลงทรัพยากร
+  label                 String // เช่น "ห้องอัดเสียง 3 วัน"
+  icon                  String? // FontAwesome icon
+  category              String // EQUIPMENT, LABOR, CASH, VENUE, IP
+  equivalentValueSatang Int // มูลค่าเทียบเท่า (สตางค์)
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// PILLAR 3: ESCROW VAULT (ตู้เซฟคนกลาง)
+// ============================================================
+
+model EscrowVault {
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id])
+
+  totalAmountSatang Int @default(0) // ยอดเงินรวมในตู้เซฟ
+  releasedSatang    Int @default(0) // ยอดที่ปลดล็อกแล้ว
+  frozenSatang      Int @default(0) // ยอดที่แช่แข็ง (พิพาท)
+
+  paymentMethod   String  @default("BANK_TRANSFER") // STRIPE_CONNECT, CRYPTO_WALLET, BANK_TRANSFER
+  stripePaymentId String?
+  cryptoTxHash    String?
+  bankSlipUrl     String?
+
+  status String @default("PENDING") // PENDING, LOCKED, PARTIALLY_RELEASED, FULLY_RELEASED, DISPUTED, REFUNDED
+
+  // Dispute Resolution
+  disputeReason    String?
+  disputedAt       DateTime?
+  resolvedById     String?
+  resolvedDirector DomainDirector? @relation("DisputeResolver", fields: [resolvedById], references: [id])
+  resolvedAt       DateTime?
+
+  // Fee Breakdown (สตางค์)
+  platformFeeSatang Int @default(0)
+  directorFeeSatang Int @default(0)
+
+  // Relations
+  milestones Milestone[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Milestone {
+  id       String      @id @default(cuid())
+  escrowId String
+  escrow   EscrowVault @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+
+  title        String // เช่น "งวดที่ 1: ส่งเดโม"
+  description  String?
+  amountSatang Int // จำนวนเงินในงวดนี้ (สตางค์)
+  order        Int     @default(0)
+
+  status String @default("LOCKED") // LOCKED, PENDING_REVIEW, APPROVED, RELEASED, DISPUTED
+
+  approvedById String?
+  approvedAt   DateTime?
+  releasedAt   DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// PILLAR 4: GUARANTOR SYSTEM (ผู้ค้ำประกัน)
+// ============================================================
+
+model GuarantorNode {
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id])
+
+  guarantorType String @default("PEER") // PEER, INSTITUTIONAL, COLLATERAL_ASSET
+
+  // Peer Guarantor
+  guarantorUserId String?
+  guarantorUser   User?   @relation("GuarantorUser", fields: [guarantorUserId], references: [id])
+
+  // Institutional
+  institutionName    String?
+  institutionLicense String?
+
+  // Collateral
+  collateralDescription  String?
+  collateralAmountSatang Int     @default(0) // มูลค่าค้ำ (สตางค์)
+
+  // ค่าธรรมเนียมความเสี่ยง (basis points: 300 = 3.00%)
+  premiumFeePercentage Int @default(300)
+
+  status String @default("PENDING") // PENDING, ACTIVE, CLAIMED, EXPIRED
+
+  approvedAt DateTime?
+  claimedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// ENDORSEMENT (ตราประทับจาก Director)
+// ============================================================
+
+model Endorsement {
+  id         String         @id @default(cuid())
+  directorId String
+  director   DomainDirector @relation(fields: [directorId], references: [id])
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  userId    String?
+  user      User?    @relation("EndorsedUser", fields: [userId], references: [id])
+
+  message    String?
+  isFeatured Boolean @default(false) // ขึ้นหน้าแนะนำระดับประเทศ
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// SYSTEM CONFIGURATION
+// ============================================================
+
+model SystemConfig {
+  id String @id @default("GLOBAL")
+
+  // AI Settings
+  aiEnabled      Boolean @default(true)
+  autoFallback   Boolean @default(true)
+  primaryModel   String  @default("models/gemini-3.8-flash")
+  fallbackModels String  @default("models/gemini-3.7-flash,models/deep-research-preview-04-2026") // Comma separated
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// PROJECT SIMULATOR
+// ============================================================
+model ProjectSimulation {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  scenarioType String // "BEST_CASE", "EXPECTED", "WORST_CASE"
+
+  // Financial Outcomes
+  projectedRevenueSatang Int     @default(0)
+  escrowStatus           String // e.g., "FULLY_RELEASED", "DISPUTED", "REFUNDED"
+  guarantorClaimed       Boolean @default(false)
+
+  // Summary
+  impactSummary String?
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// IDEA & CONCEPT SCRATCHPAD (กระดานจดดอท)
+// ============================================================
+model IdeaDot {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "DOT001"
+  title       String   // e.g., "อาชีพ"
+  description String   // Details
+  status      String   @default("DRAFT") // "DRAFT", "IMPLEMENTED", "ARCHIVED"
+  
+  // Hierarchy (Folder/Sub-folder) support
+  parentId    String?
+  parent      IdeaDot?  @relation("DotHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    IdeaDot[] @relation("DotHierarchy")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
