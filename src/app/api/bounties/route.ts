@@ -83,3 +83,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const bounties = await prisma.problemNode.findMany({
+      where: {
+        status: 'OPEN',
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        occupation: true,
+        resources: true,
+        problemSkills: {
+          include: {
+            skillTag: true
+          }
+        },
+        requester: {
+          select: { name: true, image: true }
+        }
+      }
+    });
+
+    return NextResponse.json({ success: true, bounties });
+  } catch (error) {
+    console.error('Failed to fetch bounties:', error);
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+  }
+}
