@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session || !session.user) {
@@ -10,7 +10,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     const { kpiDefinition, contractBindingType } = await request.json();
-    const problemNodeId = params.id;
+    const resolvedParams = await params;
+    const problemNodeId = resolvedParams.id;
 
     // Start a transaction: Update ProblemNode to NEGOTIATING, Create/Update ContractBinding
     const [updatedNode] = await prisma.$transaction([
@@ -43,9 +44,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const problemNodeId = params.id;
+    const resolvedParams = await params;
+    const problemNodeId = resolvedParams.id;
     const bounty = await prisma.problemNode.findUnique({
       where: { id: problemNodeId },
       include: {
