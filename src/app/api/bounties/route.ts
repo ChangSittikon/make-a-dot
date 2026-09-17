@@ -48,6 +48,7 @@ export async function POST(req: Request) {
     const problemNode = await prisma.problemNode.create({
       data: {
         rawDescription: rawDesc || 'Untitled Quest',
+        bountyDescription: title,
         entityType: 'ENTERPRISE',
         primaryGap: 'SKILL_GAP',
         bountyPrizeSatang: Math.floor((parseFloat(bountyPrize) || 0) * 100),
@@ -55,9 +56,9 @@ export async function POST(req: Request) {
         status: 'OPEN',
         urgencyState: 'HOT_MISSION',
         requesterId: user.id,
-        workType: connectWorkType,
-        occupation: connectOccupation,
-        problemSkills: problemSkillTags
+        workTypeId: workTypeId || undefined,
+        occupationId: occupationId || undefined,
+        requiredSkills: problemSkillTags
       }
     });
 
