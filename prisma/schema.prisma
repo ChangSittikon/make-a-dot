@@ -30,10 +30,11 @@ model Industry {
   nodes          Node[]
   domainDirector DomainDirector?
   projects       Project[]
-  occupations    Occupation[]    // Cascading taxonomy: Industry → Occupation → SkillTag
+  occupations    Occupation[] // Cascading taxonomy: Industry → Occupation → SkillTag
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  problemPatterns ProblemPattern[]
 }
 
 model Node {
@@ -60,7 +61,7 @@ model Option {
   order  Int     @default(0)
 
   // Algorithm & Variables Mapping (JSON String: e.g. {"budget": 10, "sweat": 5, "timeline": -5})
-  vectorWeight String? 
+  vectorWeight String?
 
   targetNodeId String?
   targetNode   Node?   @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: SetNull)
@@ -80,9 +81,9 @@ model User {
 
   // RBAC: Role-Based Access Control
   // Values: USER | PROFESSIONAL | GUARANTOR | DIRECTOR | ADMIN
-  role         String  @default("USER")
-  isVerified   Boolean @default(false)
-  licenseData  String? // JSON: {"licenseNo": "...", "issuedBy": "...", "expiresAt": "..."}
+  role        String  @default("USER")
+  isVerified  Boolean @default(false)
+  licenseData String? // JSON: {"licenseNo": "...", "issuedBy": "...", "expiresAt": "..."}
 
   phone        String?
   bankAccount  String?
@@ -104,15 +105,17 @@ model User {
 
   // Bounty Protocol Relations
   problemsRequested ProblemNode[] @relation("Requester") // ปัญหาที่ user นี้ตั้งค่าหัว
-  problemsSolved    ProblemNode[] @relation("Solver")    // ปัญหาที่ user นี้แก้สำเร็จ
+  problemsSolved    ProblemNode[] @relation("Solver") // ปัญหาที่ user นี้แก้สำเร็จ
 
   // DOT023, DOT024: Resources & Matching
-  resourcesProvided   ProjectResource[] @relation("ResourceProvider")
-  matchesAsRequester  MatchMakingLog[]  @relation("MatchRequester")
-  matchesAsSolver     MatchMakingLog[]  @relation("MatchSolver")
+  resourcesProvided  ProjectResource[] @relation("ResourceProvider")
+  matchesAsRequester MatchMakingLog[]  @relation("MatchRequester")
+  matchesAsSolver    MatchMakingLog[]  @relation("MatchSolver")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  userRequester User_Requester?
+  userSolver    User_Solver?
 }
 
 model Account {
@@ -221,8 +224,8 @@ model Project {
   guarantor    GuarantorNode?
   endorsements Endorsement[]
   simulations  ProjectSimulation[]
-  equitySplit  EquitySplit?        // ระบบแบ่งสัดส่วน equity ของโปรเจกต์นี้
-  escrowNew    Escrow?             // Phase 1 Escrow ล็อกเงิน/ทรัพยากร
+  equitySplit  EquitySplit? // ระบบแบ่งสัดส่วน equity ของโปรเจกต์นี้
+  escrowNew    Escrow? // Phase 1 Escrow ล็อกเงิน/ทรัพยากร
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -446,11 +449,11 @@ model ProjectSimulation {
 // IDEA & CONCEPT SCRATCHPAD — THE ROSETTA STONE
 // ============================================================
 model IdeaDot {
-  id          String   @id @default(cuid())
-  code        String   @unique // "DOT001", "DOT002" ... — Logical Primary Key ทั้งระบบ
+  id          String @id @default(cuid())
+  code        String @unique // "DOT001", "DOT002" ... — Logical Primary Key ทั้งระบบ
   title       String
   description String
-  status      String   @default("DRAFT") // DRAFT, IMPLEMENTED, ARCHIVED
+  status      String @default("DRAFT") // DRAFT, IMPLEMENTED, ARCHIVED
 
   // Technical Bridge — JSON แปลงวิสัยทัศน์ → Program Logic
   // {"linkedModel": "QuestionFlow", "linkedId": "xxx", "apiEndpoint": "/api/flow", "triggerCondition": "..."}
@@ -470,10 +473,10 @@ model IdeaDot {
 // ============================================================
 
 model QuestionFlow {
-  id          String  @id @default(cuid())
-  industryId  String? // null = Global flow (ข้ามทุกวงการ)
+  id         String  @id @default(cuid())
+  industryId String? // null = Global flow (ข้ามทุกวงการ)
 
-  title       String  // ชื่อชุดคำถาม เช่น "ค้นหาพาร์ทเนอร์ดนตรี"
+  title       String // ชื่อชุดคำถาม เช่น "ค้นหาพาร์ทเนอร์ดนตรี"
   description String?
   isActive    Boolean @default(true)
   order       Int     @default(0)
@@ -497,7 +500,7 @@ model FlowOption {
   flowId String
   flow   QuestionFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
-  label String  // ข้อความตัวเลือก เช่น "ฉันต้องการทรัพยากร"
+  label String // ข้อความตัวเลือก เช่น "ฉันต้องการทรัพยากร"
   icon  String? // FontAwesome icon
   order Int     @default(0)
 
@@ -553,10 +556,10 @@ model EquitySplitMember {
 
   // สัดส่วน basis points: 5000 = 50.00%
   percentage Int @default(0)
-  
+
   // DOT023: รูปแบบการแบ่งและเงื่อนไขเวลา
-  splitType         String  @default("FIXED") // FIXED_PRICE, REVENUE_SHARE, EQUITY, SWEAT_EQUITY
-  vestingPeriodDays Int?    // จำนวนวันที่ต้องทำงานถึงจะได้หุ้น (กรณี Sweat Equity)
+  splitType         String @default("FIXED") // FIXED_PRICE, REVENUE_SHARE, EQUITY, SWEAT_EQUITY
+  vestingPeriodDays Int? // จำนวนวันที่ต้องทำงานถึงจะได้หุ้น (กรณี Sweat Equity)
 
   // สถานะการยอมรับของ User คนนี้
   status     String    @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTER_PROPOSED
@@ -580,9 +583,9 @@ model Escrow {
   escrowType String @default("CASH") // CASH, RESOURCE, IP, MIXED
 
   // มูลค่าที่ล็อก (สตางค์)
-  totalAmountSatang   Int @default(0)
-  releasedSatang      Int @default(0)
-  remainingSatang     Int @default(0)
+  totalAmountSatang Int @default(0)
+  releasedSatang    Int @default(0)
+  remainingSatang   Int @default(0)
 
   // สถานะ
   status String @default("PENDING") // PENDING, LOCKED, PARTIALLY_RELEASED, FULLY_RELEASED, DISPUTED, REFUNDED
@@ -591,9 +594,9 @@ model Escrow {
   conditionDotCode String? // Logical FK → IdeaDot.code
 
   // หลักฐานการชำระ
-  paymentRef  String? // Bank slip URL, Tx Hash, หรือ Stripe ID
-  disputedAt  DateTime?
-  resolvedAt  DateTime?
+  paymentRef String? // Bank slip URL, Tx Hash, หรือ Stripe ID
+  disputedAt DateTime?
+  resolvedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -637,7 +640,7 @@ model AgentLog {
 model WorkType {
   id   String @id @default(cuid())
   name String @unique
-  
+
   // Relations
   problemNodes ProblemNode[]
 
@@ -651,7 +654,7 @@ model Occupation {
   industryId String
   industry   Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
 
-  name        String  // เช่น "Sound Engineer", "โปรดิวเซอร์", "Session Musician"
+  name        String // เช่น "Sound Engineer", "โปรดิวเซอร์", "Session Musician"
   description String?
   icon        String? // FontAwesome icon
   order       Int     @default(0)
@@ -660,11 +663,12 @@ model Occupation {
   relatedDotCode String? // Logical FK → IdeaDot.code
 
   // Relations
-  skillTags    SkillTag[]    // Occupation → SkillTag (One-to-Many)
+  skillTags    SkillTag[] // Occupation → SkillTag (One-to-Many)
   problemNodes ProblemNode[] // ปัญหาในระบบที่ต้องการอาชีพนี้
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  problemPatterns ProblemPattern[]
 }
 
 // SkillTag: ทักษะเฉพาะ ที่อยู่ใต้ Occupation
@@ -674,7 +678,7 @@ model SkillTag {
   occupationId String
   occupation   Occupation @relation(fields: [occupationId], references: [id], onDelete: Cascade)
 
-  name  String  // เช่น "Pro Tools", "ทักษะกีตาร์คลาสสิก", "React.js"
+  name  String // เช่น "Pro Tools", "ทักษะกีตาร์คลาสสิก", "React.js"
   level String  @default("ANY") // ANY, BEGINNER, INTERMEDIATE, EXPERT, MASTER
   icon  String?
 
@@ -694,10 +698,10 @@ model ProblemNode {
   id String @id @default(cuid())
 
   // ===== THE QUEST DESCRIPTION =====
-  rawDescription String  // คำอธิบายปัญหาแบบดิบ จาก User พิมพ์เอง
-  entityType     String  // ประเภทหน่วยงาน: INDIVIDUAL, STARTUP, SME, ENTERPRISE, NGO
-  primaryGap     String  // ช่องว่างหลัก: SKILL_GAP, RESOURCE_GAP, NETWORK_GAP, CAPITAL_GAP, KNOWLEDGE_GAP
-  urgencyState   String  @default("NORMAL") // NORMAL, URGENT, CRITICAL, HOT_MISSION
+  rawDescription String // คำอธิบายปัญหาแบบดิบ จาก User พิมพ์เอง
+  entityType     String // ประเภทหน่วยงาน: INDIVIDUAL, STARTUP, SME, ENTERPRISE, NGO
+  primaryGap     String // ช่องว่างหลัก: SKILL_GAP, RESOURCE_GAP, NETWORK_GAP, CAPITAL_GAP, KNOWLEDGE_GAP
+  urgencyState   String @default("NORMAL") // NORMAL, URGENT, CRITICAL, HOT_MISSION
 
   // Deep Attributes — AI วิเคราะห์และเติม (JSON)
   // {"estimatedDays": 7, "requiredHeadcount": 2, "locationRequired": "กรุงเทพ", "remoteOk": true, "kpiDraft": "..."}
@@ -711,7 +715,7 @@ model ProblemNode {
   // ===== KPI & NEGOTIATION SANDBOX =====
   kpiDefinition  String? // JSON: [{"metric": "ยอดขาย", "target": "100 units", "deadline": "2026-12-31"}]
   kpiAgreedAt    DateTime? // ทั้งสองฝ่ายตกลง KPI แล้ว
-  negotiationLog String?   // JSON array: บันทึกประวัติการต่อรอง
+  negotiationLog String? // JSON array: บันทึกประวัติการต่อรอง
 
   // ===== STATUS & LIFECYCLE =====
   // OPEN → MATCHING (AI กำลังหา Solver) → NEGOTIATING → ACTIVE → PENDING_REVIEW → COMPLETED | CANCELLED | DISPUTED
@@ -724,8 +728,8 @@ model ProblemNode {
   occupationId String?
   occupation   Occupation? @relation(fields: [occupationId], references: [id])
 
-  workTypeId   String?
-  workType     WorkType?   @relation(fields: [workTypeId], references: [id])
+  workTypeId String?
+  workType   WorkType? @relation(fields: [workTypeId], references: [id])
 
   // ===== RELATIONS: Engine Connection =====
   // Requester: คนตั้งปัญหา (เจ้าของค่าหัว)
@@ -740,23 +744,25 @@ model ProblemNode {
   requiredSkills ProblemSkillTag[]
 
   // Escrow: เงินที่ล็อกไว้ (1:1 — บังคับล็อกทันทีที่ตั้งค่าหัว)
-  escrowId String?  @unique
+  escrowId String? @unique
   // NOTE: ไม่ผูก Relation ตรงเพราะใช้ Escrow model เดิมที่ผูกกับ Project
   // ในอนาคตเมื่อ Bounty ใหญ่ขึ้นจะแยก BountyEscrow ออกมา
 
   // ===== DOT023 & DOT024 RELATIONS =====
-  resources        ProjectResource[]  // ทรัพยากรที่ระดม
+  resources        ProjectResource[] // ทรัพยากรที่ระดม
   resolutionMethod ResolutionMethod? // วิธีแก้ปัญหา
-  contract         ContractBinding?  // สัญญาผูกมัด
-  matchLogs        MatchMakingLog[]  // ประวัติการจับคู่
+  contract         ContractBinding? // สัญญาผูกมัด
+  matchLogs        MatchMakingLog[] // ประวัติการจับคู่
 
   // Timestamps
-  publishedAt  DateTime? // เวลาที่เปิดรับสมัคร
-  matchedAt    DateTime? // เวลาที่ AI จับคู่สำเร็จ
-  startedAt    DateTime? // เวลาเริ่มงานจริง
-  completedAt  DateTime? // เวลาที่งานสำเร็จ
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  publishedAt     DateTime? // เวลาที่เปิดรับสมัคร
+  matchedAt       DateTime? // เวลาที่ AI จับคู่สำเร็จ
+  startedAt       DateTime? // เวลาเริ่มงานจริง
+  completedAt     DateTime? // เวลาที่งานสำเร็จ
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  equityAndSplit  EquityAndSplit?
+  escrowCondition EscrowCondition?
 }
 
 // Junction Table: ProblemNode ↔ SkillTag (M:N)
@@ -778,19 +784,19 @@ model ProblemSkillTag {
 // ============================================================
 
 model ProjectResource {
-  id            String      @id @default(cuid())
-  problemNodeId String
-  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+  id             String      @id @default(cuid())
+  problemNodeId  String
+  problemNode    ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
   providerUserId String
-  provider      User        @relation("ResourceProvider", fields: [providerUserId], references: [id])
+  provider       User        @relation("ResourceProvider", fields: [providerUserId], references: [id])
 
-  resourceType  String   // CASH, MATERIAL, TOOL_SOFTWARE, LABOR, CREDIT_NETWORK
-  description   String
-  amountValue   Float    @default(0) // ตีเป็นมูลค่าเงิน (บาท) เพื่อคำนวณได้
-  unit          String?  // "บาท", "วัน", "ชั่วโมง", "ชิ้น"
+  resourceType String // CASH, MATERIAL, TOOL_SOFTWARE, LABOR, CREDIT_NETWORK
+  description  String
+  amountValue  Float   @default(0) // ตีเป็นมูลค่าเงิน (บาท) เพื่อคำนวณได้
+  unit         String? // "บาท", "วัน", "ชั่วโมง", "ชิ้น"
 
   // Rosetta Stone
-  originDotCode String?  // "DOT023"
+  originDotCode String? // "DOT023"
 
   status    String   @default("PLEDGED") // PLEDGED, LOCKED_IN_ESCROW, RELEASED, RETURNED
   createdAt DateTime @default(now())
@@ -801,7 +807,7 @@ model ResolutionMethod {
   problemNodeId String      @unique
   problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
 
-  methodType    String  // CASH_PAYMENT, SKILL_EXECUTION, CREDIT_NEGOTIATION, TIME_SWAP
+  methodType    String // CASH_PAYMENT, SKILL_EXECUTION, CREDIT_NEGOTIATION, TIME_SWAP
   executionPlan String? // JSON: [{"step": 1, "action": "...", "deadline": "..."}]
 
   originDotCode String? // "DOT024"
@@ -814,13 +820,13 @@ model ContractBinding {
   problemNodeId String      @unique
   problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
 
-  bindingType         String  // DIGITAL_SIGNATURE, SMART_CONTRACT, WEB_AGREE, HANDSHAKE
-  meetingRequirement  String  @default("REMOTE") // REMOTE, IN_PERSON, VIDEO_CALL
-  locationData        String? // JSON: {"lat": 13.7, "lng": 100.5, "address": "..."}
+  bindingType        String // DIGITAL_SIGNATURE, SMART_CONTRACT, WEB_AGREE, HANDSHAKE
+  meetingRequirement String  @default("REMOTE") // REMOTE, IN_PERSON, VIDEO_CALL
+  locationData       String? // JSON: {"lat": 13.7, "lng": 100.5, "address": "..."}
 
   // สถานะสัญญา
-  status        String    @default("DRAFT") // DRAFT, PROPOSED, COUNTER, SIGNED, BREACHED
-  signedAt      DateTime?
+  status   String    @default("DRAFT") // DRAFT, PROPOSED, COUNTER, SIGNED, BREACHED
+  signedAt DateTime?
 
   // บทลงโทษหากผิดสัญญา
   penaltyClause String? // JSON: {"breachedBy": "SOLVER", "action": "FORFEIT_ESCROW"}
@@ -835,16 +841,77 @@ model MatchMakingLog {
   problemNodeId String
   problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
 
-  requesterId   String
-  requester     User   @relation("MatchRequester", fields: [requesterId], references: [id])
-  solverId      String?
-  solver        User?  @relation("MatchSolver", fields: [solverId], references: [id])
+  requesterId String
+  requester   User    @relation("MatchRequester", fields: [requesterId], references: [id])
+  solverId    String?
+  solver      User?   @relation("MatchSolver", fields: [solverId], references: [id])
 
-  matchScore    Float   @default(0) // คะแนน 0-100 จาก Algorithm (ทักษะ+ทรัพยากร+ต้องการ)
-  matchReason   String? // JSON: {"skillMatch": 85, "resourceMatch": 70, "locationMatch": 100}
+  matchScore  Float   @default(0) // คะแนน 0-100 จาก Algorithm (ทักษะ+ทรัพยากร+ต้องการ)
+  matchReason String? // JSON: {"skillMatch": 85, "resourceMatch": 70, "locationMatch": 100}
 
-  status        String  @default("PENDING") // PENDING, NEGOTIATING, AGREED, CANCELLED
-  initiatedAt   DateTime @default(now())
-  agreedAt      DateTime?
+  status      String    @default("PENDING") // PENDING, NEGOTIATING, AGREED, CANCELLED
+  initiatedAt DateTime  @default(now())
+  agreedAt    DateTime?
 }
 
+// ============================================================
+// DOT015 & DOT018: PROFILES AND PATTERNS
+// ============================================================
+
+model ProblemPattern {
+  id           String      @id @default(cuid())
+  industryId   String?
+  industry     Industry?   @relation(fields: [industryId], references: [id])
+  occupationId String?
+  occupation   Occupation? @relation(fields: [occupationId], references: [id])
+
+  patternName       String // e.g., "ผู้รับเหมาทิ้งงาน", "ขาดสภาพคล่องหมุนเวียน"
+  rootCauseCategory String // e.g., คน, เงิน, เทคโนโลยี, เวลา, กฎหมาย
+  standardImpact    String // Low, Medium, High, Critical
+
+  createdAt DateTime @default(now())
+}
+
+model User_Requester {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  currentPainPoint String?
+  urgencyLevel     String? // e.g., 24 ชม., 1 สัปดาห์, ไม่รีบ
+  availableAssets  String? // e.g., มีเงินจ่าย, มีเปอร์เซ็นต์หุ้นให้, มีเครดิต
+}
+
+model User_Solver {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  historicalSuccess    Int     @default(0)
+  expectedCompensation String? // e.g., เงินสด, หุ้นส่วน, เวลาแลกเวลา
+  availability         String? // e.g., ว่างทันที, รับเฉพาะเสาร์-อาทิตย์
+}
+
+// ============================================================
+// DOT023: EQUITY AND ESCROW
+// ============================================================
+
+model EquityAndSplit {
+  id            String      @id @default(cuid())
+  problemNodeId String      @unique
+  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+
+  splitType     String // Fixed Price, Revenue Share, Equity, Sweat Equity
+  percentage    Float   @default(0)
+  vestingPeriod String? // ระยะเวลาที่ต้องอยู่ถึงจะได้หุ้น
+}
+
+model EscrowCondition {
+  id            String      @id @default(cuid())
+  problemNodeId String      @unique
+  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+
+  lockedAmount   Float   @default(0)
+  releaseTrigger String // งานเสร็จ 100%, ถึงวันที่กำหนด
+  penaltyClause  String? // ริบเงิน, ลดสัดส่วนหุ้น
+}
