@@ -62,7 +62,7 @@ export default async function ProfileSettingsPage() {
       const vaults = await prisma.escrowVault.findMany({
         where: { project: { industryId: dir.industryId } }
       });
-      totalVolumeSatang = vaults.reduce((acc, v) => acc + v.amountSatang, 0);
+      totalVolumeSatang = vaults.reduce((acc, v) => acc + v.totalAmountSatang, 0);
     }
   }
 
@@ -226,7 +226,7 @@ export default async function ProfileSettingsPage() {
                   <h2 className="text-xl font-black mb-4">{directorData.industry?.name}</h2>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm text-brand-red-100">รายได้สะสม:</span>
-                    <span className="text-2xl font-black tracking-tight">฿{(revenueSatang / 100).toLocaleString('th-TH')}</span>
+                    <span className="text-2xl font-black tracking-tight">฿{(directorData.totalEarnedSatang / 100).toLocaleString('th-TH')}</span>
                   </div>
                 </div>
                 {/* Decorative BG */}

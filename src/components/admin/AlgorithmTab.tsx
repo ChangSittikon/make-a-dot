@@ -6,6 +6,7 @@ interface Option {
   id: string;
   nodeId: string;
   label: string;
+  icon?: string | null;
   vectorWeight?: string | null;
 }
 

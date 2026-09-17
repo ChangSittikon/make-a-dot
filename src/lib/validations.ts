@@ -83,12 +83,14 @@ export const createGuarantorSchema = z.object({
 // ENDORSEMENT
 // ============================================================
 export const createEndorsementSchema = z.object({
+  directorId: z.string(),
   projectId: z.string().optional(),
   userId: z.string().optional(),
   message: z.string().optional(),
   isFeatured: z.boolean().default(false),
 }).refine(data => data.projectId || data.userId, {
   message: 'ต้องระบุ projectId หรือ userId อย่างน้อย 1 อย่าง',
+  path: ['projectId']
 });
 
 // ============================================================

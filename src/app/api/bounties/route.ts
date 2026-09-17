@@ -32,8 +32,6 @@ export async function POST(req: Request) {
     }
 
     // Prepare connection objects
-    const connectWorkType = workTypeId ? { connect: { id: workTypeId } } : undefined;
-    const connectOccupation = occupationId ? { connect: { id: occupationId } } : undefined;
     
     const problemSkillTags = skillTags && skillTags.length > 0 ? {
       create: skillTags.map((tagId: string) => ({
