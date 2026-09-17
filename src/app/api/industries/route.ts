@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       data: {
         name: json.name,
         icon: json.icon,
-        order: json.order || 0
+        order: json.order || 0,
+        parentId: json.parentId || null
       }
     });
     return NextResponse.json({ ...industry, nodeCount: 0 });

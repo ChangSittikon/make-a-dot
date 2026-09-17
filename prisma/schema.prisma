@@ -17,6 +17,10 @@ model Industry {
   icon  String? // FontAwesome class name e.g. "fa-solid fa-music"
   order Int     @default(0)
 
+  parentId      String?
+  parent        Industry?  @relation("IndustryHierarchy", fields: [parentId], references: [id])
+  subIndustries Industry[] @relation("IndustryHierarchy")
+
   // Platform Fee สำหรับวงการนี้ (basis points: 500 = 5.00%)
   macroFeePercentage Int @default(500)
 
