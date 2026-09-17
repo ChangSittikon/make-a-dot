@@ -204,7 +204,7 @@ export function FlowApp({ session, children }: { session: any, children?: React.
         }, 600);
       } else {
         setShowOptions(false);
-        setCurrentNodeId(targetNode.id);
+        if (targetNode) setCurrentNodeId(targetNode.id);
       }
     },
     [isTyping, nodes, typeText]
