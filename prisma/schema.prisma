@@ -94,6 +94,7 @@ model User {
   canvasProposals      CollaborationCanvas[] @relation("CanvasProposer")
   guaranteesGiven      GuarantorNode[]       @relation("GuarantorUser")
   endorsementsReceived Endorsement[]         @relation("EndorsedUser")
+  equitySplits         EquitySplitMember[]   // ส่วนแบ่ง equity ที่ user นี้ได้รับในแต่ละโปรเจกต์
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -185,6 +186,10 @@ model Project {
   // e.g. {"vision": "...", "milestones": [...], "roles": [...], "successMetrics": "..."}
   projectBlueprint String? // JSON String
 
+  // Rosetta Stone: อ้างอิง IdeaDot Code ที่เป็นแม่แบบของโปรเจกต์นี้
+  // e.g. "DOT003" = ใช้ Template การจับคู่แบบ DOT003
+  blueprintDotCode String? // Logical FK → IdeaDot.code
+
   // Location สำหรับ Heat Map
   province  String?
   district  String?
@@ -201,6 +206,8 @@ model Project {
   guarantor    GuarantorNode?
   endorsements Endorsement[]
   simulations  ProjectSimulation[]
+  equitySplit  EquitySplit?        // ระบบแบ่งสัดส่วน equity ของโปรเจกต์นี้
+  escrowNew    Escrow?             // Phase 1 Escrow ล็อกเงิน/ทรัพยากร
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -421,115 +428,184 @@ model ProjectSimulation {
 }
 
 // ============================================================
-// IDEA & CONCEPT SCRATCHPAD (กระดานจดดอท)
+// IDEA & CONCEPT SCRATCHPAD — THE ROSETTA STONE
 // ============================================================
 model IdeaDot {
   id          String   @id @default(cuid())
-  code        String   @unique // e.g., "DOT001"
-  title       String   // e.g., "อาชีพ"
-  description String   // Details
-  status      String   @default("DRAFT") // "DRAFT", "IMPLEMENTED", "ARCHIVED"
-  
-  // Technical Bridge — JSON สำหรับเชื่อม Dot กับ Feature จริงในระบบ
-  // e.g. {"linkedModel": "QuestionFlow", "linkedId": "xxx", "apiEndpoint": "/api/flow"}
+  code        String   @unique // "DOT001", "DOT002" ... — Logical Primary Key ทั้งระบบ
+  title       String
+  description String
+  status      String   @default("DRAFT") // DRAFT, IMPLEMENTED, ARCHIVED
+
+  // Technical Bridge — JSON แปลงวิสัยทัศน์ → Program Logic
+  // {"linkedModel": "QuestionFlow", "linkedId": "xxx", "apiEndpoint": "/api/flow", "triggerCondition": "..."}
   technicalBridge String? // JSON String
 
-  // Hierarchy (Folder/Sub-folder) support
-  parentId    String?
-  parent      IdeaDot?  @relation("DotHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    IdeaDot[] @relation("DotHierarchy")
+  // Hierarchy: รองรับ Folder / Sub-folder ไม่จำกัดชั้น
+  parentId String?
+  parent   IdeaDot?  @relation("DotHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children IdeaDot[] @relation("DotHierarchy")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ============================================================
-// PHASE 1: QUESTION FLOW ENGINE (เครื่องยนต์คำถาม Quantum Match)
+// PHASE 1: QUESTION FLOW ENGINE — Dynamic Q&A (Quantum Match)
 // ============================================================
 
 model QuestionFlow {
-  id          String   @id @default(cuid())
-  industryId  String?  // ถ้า null = Global flow
-  
-  title       String   // ชื่อชุดคำถาม เช่น "ค้นหาพาร์ทเนอร์ดนตรี"
+  id          String  @id @default(cuid())
+  industryId  String? // null = Global flow (ข้ามทุกวงการ)
+
+  title       String  // ชื่อชุดคำถาม เช่น "ค้นหาพาร์ทเนอร์ดนตรี"
   description String?
-  isActive    Boolean  @default(true)
-  order       Int      @default(0)
+  isActive    Boolean @default(true)
+  order       Int     @default(0)
 
-  options     FlowOption[]
+  // Rosetta Stone: Dot ที่เป็นต้นกำเนิดของ Flow นี้
+  originDotCode String? // Logical FK → IdeaDot.code
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Self-referencing: Flow นี้เกิดจากการ Branch มาจาก Flow อื่นหรือไม่
+  parentFlowId String?
+  parentFlow   QuestionFlow?  @relation("FlowBranching", fields: [parentFlowId], references: [id])
+  childFlows   QuestionFlow[] @relation("FlowBranching")
+
+  options FlowOption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model FlowOption {
-  id             String       @id @default(cuid())
-  flowId         String
-  flow           QuestionFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  id     String       @id @default(cuid())
+  flowId String
+  flow   QuestionFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
-  label          String       // ข้อความตัวเลือก เช่น "ฉันเป็น Freelancer"
-  icon           String?      // FontAwesome icon
-  order          Int          @default(0)
+  label String  // ข้อความตัวเลือก เช่น "ฉันต้องการทรัพยากร"
+  icon  String? // FontAwesome icon
+  order Int     @default(0)
 
-  // เชื่อมกับ IdeaDot Code — ทำให้รู้ว่า Option นี้ mapping กับ Dot ไหน
-  relatedDotCode String?      // e.g., "DOT007"
+  // Rosetta Stone: Option นี้ Trigger ตรรกะของ DOT ไหน
+  // เช่น "DOT002" = เลือกแล้วให้ไปใช้ตรรกะทรัพยากรของ DOT002
+  relatedDotCode String?
 
-  // Vector weight สำหรับ Algorithm
-  vectorWeight   String?      // JSON: {"budget": 10, "sweat": -5}
+  // Vector weight สำหรับ Algorithm คำนวณคะแนน
+  vectorWeight String? // JSON: {"budget": 10, "sweat": -5, "timeline": 3}
 
-  // Branch ไปคำถามถัดไป (ถ้า null = ไปผลลัพธ์เลย)
-  nextFlowId     String?
+  // Branching: เลือก Option นี้แล้วจะ Branch ไป Flow ถัดไป (null = จบ แสดงผลลัพธ์)
+  nextFlowId String?
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 // ============================================================
-// PHASE 1: EQUITY SPLIT (ระบบแบ่งสัดส่วน)
+// PHASE 1: EQUITY SPLIT — ระบบแบ่งสัดส่วน (Rosetta Stone: DOT001)
 // ============================================================
 
 model EquitySplit {
-  id          String  @id @default(cuid())
-  projectId   String  @unique
-  
-  // สูตรการแบ่ง (JSON) — ยืดหยุ่นรองรับทุกรูปแบบ
-  // e.g. [{"userId": "xxx", "percentage": 5000, "role": "OWNER"}, ...]
-  splitFormula String  // JSON String (basis points: 5000 = 50%)
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  splitType    String  @default("EQUAL") // EQUAL, CUSTOM, CONTRIBUTION_BASED, HYBRID
-  
-  // สถานะการยืนยัน
-  status       String  @default("DRAFT") // DRAFT, PROPOSED, ALL_AGREED, LOCKED
-  agreedAt     DateTime?
-  lockedAt     DateTime?
+  splitType String @default("EQUAL") // EQUAL, CUSTOM, CONTRIBUTION_BASED, HYBRID
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Rosetta Stone: ใช้ Template การแบ่งจาก DOT ไหน
+  templateDotCode String? // Logical FK → IdeaDot.code (เช่น "DOT001" = สัดส่วนตามบทบาท)
+
+  // สถานะรวมของการตกลง
+  status   String    @default("NEGOTIATING") // NEGOTIATING, PROPOSED, ALL_AGREED, LOCKED
+  agreedAt DateTime?
+  lockedAt DateTime?
+
+  // สมาชิกที่มีส่วนแบ่งใน Split นี้
+  members EquitySplitMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Junction Table: User ↔ EquitySplit (แต่ละคนได้กี่ % และบทบาทอะไร)
+model EquitySplitMember {
+  id            String      @id @default(cuid())
+  equitySplitId String
+  equitySplit   EquitySplit @relation(fields: [equitySplitId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+
+  // บทบาทของ User ใน Project นี้ (อ้างอิง DOT001: Creator, Executor, Guarantor, Investor)
+  role String @default("MEMBER") // OWNER, CREATOR, EXECUTOR, GUARANTOR, INVESTOR, ADVISOR
+
+  // สัดส่วน basis points: 5000 = 50.00%
+  percentage Int @default(0)
+
+  // สถานะการยอมรับของ User คนนี้
+  status     String    @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTER_PROPOSED
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([equitySplitId, userId])
 }
 
 // ============================================================
-// PHASE 1: AGENT LOG (บันทึกกิจกรรม AI Agent)
+// PHASE 1: ESCROW — ล็อกเงิน/ทรัพยากร ผูกกับ Project
+// ============================================================
+
+model Escrow {
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // ประเภทสิ่งที่ล็อก
+  escrowType String @default("CASH") // CASH, RESOURCE, IP, MIXED
+
+  // มูลค่าที่ล็อก (สตางค์)
+  totalAmountSatang   Int @default(0)
+  releasedSatang      Int @default(0)
+  remainingSatang     Int @default(0)
+
+  // สถานะ
+  status String @default("PENDING") // PENDING, LOCKED, PARTIALLY_RELEASED, FULLY_RELEASED, DISPUTED, REFUNDED
+
+  // Rosetta Stone: อ้างอิง DOT ที่กำหนดเงื่อนไขการปล่อยเงิน
+  conditionDotCode String? // Logical FK → IdeaDot.code
+
+  // หลักฐานการชำระ
+  paymentRef  String? // Bank slip URL, Tx Hash, หรือ Stripe ID
+  disputedAt  DateTime?
+  resolvedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// PHASE 1: AGENT LOG — Evolution Memory (DOT005: 3-Layer AI)
 // ============================================================
 
 model AgentLog {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  // ประเภทกิจกรรม
-  action      String   // เช่น "CODE_EDIT", "DB_PUSH", "GIT_COMMIT", "SCHEMA_UPDATE"
-  
+  // ประเภทการตัดสินใจของ AI
+  action       String // CODE_EDIT, DB_PUSH, GIT_COMMIT, SCHEMA_UPDATE, FLOW_CREATED, MATCH_EXECUTED, EQUITY_PROPOSED
+  decisionType String @default("EXECUTION") // PLANNING, EXECUTION, REVIEW, LEARNING
+
+  // Rosetta Stone: การตัดสินใจนี้เกี่ยวข้องกับ DOT ไหน
+  // ทำให้ AI รุ่นถัดไปย้อนรอยได้ว่า "สร้าง Flow นี้เพราะวิสัยทัศน์ DOT005"
+  relatedDotCode String? // Logical FK → IdeaDot.code
+
   // รายละเอียด
-  details     String?  // อธิบายว่าทำอะไร
-  payload     String?  // JSON — ข้อมูลเพิ่มเติม (diff, affected files, etc.)
-  
+  details String? // อธิบายว่า AI ตัดสินใจทำอะไร และเพราะอะไร
+  payload String? // JSON — ข้อมูลเพิ่มเติม (diff, matched users, proposed equity, etc.)
+
   // สถานะ
-  status      String   @default("SUCCESS") // SUCCESS, FAILED, PENDING
-  errorMsg    String?  // ถ้า status = FAILED
-  
-  // ระยะเวลา (milliseconds)
-  durationMs  Int?
+  status   String  @default("SUCCESS") // SUCCESS, FAILED, PENDING, ROLLED_BACK
+  errorMsg String?
 
-  // ไฟล์ที่เกี่ยวข้อง (JSON array)
-  affectedFiles String? // JSON: ["src/app/page.tsx", "prisma/schema.prisma"]
+  // Performance
+  durationMs    Int?
+  affectedFiles String? // JSON array: ["src/app/page.tsx"]
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
-
