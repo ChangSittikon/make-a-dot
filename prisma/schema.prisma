@@ -106,6 +106,11 @@ model User {
   problemsRequested ProblemNode[] @relation("Requester") // ปัญหาที่ user นี้ตั้งค่าหัว
   problemsSolved    ProblemNode[] @relation("Solver")    // ปัญหาที่ user นี้แก้สำเร็จ
 
+  // DOT023, DOT024: Resources & Matching
+  resourcesProvided   ProjectResource[] @relation("ResourceProvider")
+  matchesAsRequester  MatchMakingLog[]  @relation("MatchRequester")
+  matchesAsSolver     MatchMakingLog[]  @relation("MatchSolver")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -548,6 +553,10 @@ model EquitySplitMember {
 
   // สัดส่วน basis points: 5000 = 50.00%
   percentage Int @default(0)
+  
+  // DOT023: รูปแบบการแบ่งและเงื่อนไขเวลา
+  splitType         String  @default("FIXED") // FIXED_PRICE, REVENUE_SHARE, EQUITY, SWEAT_EQUITY
+  vestingPeriodDays Int?    // จำนวนวันที่ต้องทำงานถึงจะได้หุ้น (กรณี Sweat Equity)
 
   // สถานะการยอมรับของ User คนนี้
   status     String    @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTER_PROPOSED
@@ -721,6 +730,12 @@ model ProblemNode {
   // NOTE: ไม่ผูก Relation ตรงเพราะใช้ Escrow model เดิมที่ผูกกับ Project
   // ในอนาคตเมื่อ Bounty ใหญ่ขึ้นจะแยก BountyEscrow ออกมา
 
+  // ===== DOT023 & DOT024 RELATIONS =====
+  resources        ProjectResource[]  // ทรัพยากรที่ระดม
+  resolutionMethod ResolutionMethod? // วิธีแก้ปัญหา
+  contract         ContractBinding?  // สัญญาผูกมัด
+  matchLogs        MatchMakingLog[]  // ประวัติการจับคู่
+
   // Timestamps
   publishedAt  DateTime? // เวลาที่เปิดรับสมัคร
   matchedAt    DateTime? // เวลาที่ AI จับคู่สำเร็จ
@@ -742,5 +757,80 @@ model ProblemSkillTag {
   isRequired Boolean @default(true) // true = บังคับ, false = มีแล้วได้เปรียบ
 
   @@unique([problemNodeId, skillTagId])
+}
+
+// ============================================================
+// PHASE 1.5: BOUNTY RESOURCES & CONTRACTS (DOT023, DOT024)
+// ============================================================
+
+model ProjectResource {
+  id            String      @id @default(cuid())
+  problemNodeId String
+  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+  providerUserId String
+  provider      User        @relation("ResourceProvider", fields: [providerUserId], references: [id])
+
+  resourceType  String   // CASH, MATERIAL, TOOL_SOFTWARE, LABOR, CREDIT_NETWORK
+  description   String
+  amountValue   Float    @default(0) // ตีเป็นมูลค่าเงิน (บาท) เพื่อคำนวณได้
+  unit          String?  // "บาท", "วัน", "ชั่วโมง", "ชิ้น"
+
+  // Rosetta Stone
+  originDotCode String?  // "DOT023"
+
+  status    String   @default("PLEDGED") // PLEDGED, LOCKED_IN_ESCROW, RELEASED, RETURNED
+  createdAt DateTime @default(now())
+}
+
+model ResolutionMethod {
+  id            String      @id @default(cuid())
+  problemNodeId String      @unique
+  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+
+  methodType    String  // CASH_PAYMENT, SKILL_EXECUTION, CREDIT_NEGOTIATION, TIME_SWAP
+  executionPlan String? // JSON: [{"step": 1, "action": "...", "deadline": "..."}]
+
+  originDotCode String? // "DOT024"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ContractBinding {
+  id            String      @id @default(cuid())
+  problemNodeId String      @unique
+  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+
+  bindingType         String  // DIGITAL_SIGNATURE, SMART_CONTRACT, WEB_AGREE, HANDSHAKE
+  meetingRequirement  String  @default("REMOTE") // REMOTE, IN_PERSON, VIDEO_CALL
+  locationData        String? // JSON: {"lat": 13.7, "lng": 100.5, "address": "..."}
+
+  // สถานะสัญญา
+  status        String    @default("DRAFT") // DRAFT, PROPOSED, COUNTER, SIGNED, BREACHED
+  signedAt      DateTime?
+
+  // บทลงโทษหากผิดสัญญา
+  penaltyClause String? // JSON: {"breachedBy": "SOLVER", "action": "FORFEIT_ESCROW"}
+
+  originDotCode String? // "DOT024"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MatchMakingLog {
+  id            String      @id @default(cuid())
+  problemNodeId String
+  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+
+  requesterId   String
+  requester     User   @relation("MatchRequester", fields: [requesterId], references: [id])
+  solverId      String?
+  solver        User?  @relation("MatchSolver", fields: [solverId], references: [id])
+
+  matchScore    Float   @default(0) // คะแนน 0-100 จาก Algorithm (ทักษะ+ทรัพยากร+ต้องการ)
+  matchReason   String? // JSON: {"skillMatch": 85, "resourceMatch": 70, "locationMatch": 100}
+
+  status        String  @default("PENDING") // PENDING, NEGOTIATING, AGREED, CANCELLED
+  initiatedAt   DateTime @default(now())
+  agreedAt      DateTime?
 }
 
