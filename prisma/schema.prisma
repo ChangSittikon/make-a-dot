@@ -633,6 +633,17 @@ model AgentLog {
 // PHASE 1.5: UNIVERSAL PROBLEM MATRIX — Occupation & Skill Taxonomy
 // ============================================================
 
+// WorkType: รูปแบบการทำงาน (Category พิเศษ)
+model WorkType {
+  id   String @id @default(cuid())
+  name String @unique
+  
+  // Relations
+  problemNodes ProblemNode[]
+
+  createdAt DateTime @default(now())
+}
+
 // Occupation: อาชีพ/บทบาท ที่อยู่ใต้ Industry
 // Industry → Occupation (One-to-Many)
 model Occupation {
@@ -712,6 +723,9 @@ model ProblemNode {
   // ===== OCCUPATION TAXONOMY =====
   occupationId String?
   occupation   Occupation? @relation(fields: [occupationId], references: [id])
+
+  workTypeId   String?
+  workType     WorkType?   @relation(fields: [workTypeId], references: [id])
 
   // ===== RELATIONS: Engine Connection =====
   // Requester: คนตั้งปัญหา (เจ้าของค่าหัว)
