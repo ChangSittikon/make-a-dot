@@ -28,6 +28,9 @@ interface Node {
   question: string | null;
   order: number;
   options: Option[];
+  inputType?: string | null;
+  fieldName?: string | null;
+  suggestions?: string | null;
 }
 
 export default function AdminPage() {
@@ -173,13 +176,17 @@ export default function AdminPage() {
     }
   };
 
-  const handleSaveNode = (questionText: string, newOptions: any[]) => {
+  const handleSaveNode = (questionText: string, newOptions: any[], extras?: { inputType?: string; fieldName?: string; suggestions?: string }) => {
     if (!editingNode) return;
     setNodes(nodes.map(n => {
       if (n.id === editingNode.id) {
         return {
           ...n,
           question: questionText,
+          inputType: extras?.inputType || null,
+          fieldName: extras?.fieldName || null,
+          suggestions: extras?.suggestions || null,
+          type: extras?.inputType ? 'INPUT' : n.type,
           options: newOptions.map((o, idx) => ({
             id: o.id || crypto.randomUUID(),
             label: o.label,
@@ -713,6 +720,9 @@ export default function AdminPage() {
             })) || []
           }
           targetOptions={targetOptionsForModal as any}
+          inputType={editingNode?.inputType}
+          fieldName={editingNode?.fieldName}
+          suggestions={editingNode?.suggestions}
           onSave={handleSaveNode}
           onDelete={() => {
             if (editingNode && confirm("คุณต้องการลบคำถามนี้ใช่หรือไม่?")) {

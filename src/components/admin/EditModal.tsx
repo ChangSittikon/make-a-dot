@@ -20,8 +20,12 @@ interface EditModalProps {
   questionText?: string;
   options?: EditOption[];
   targetOptions?: TargetOption[];
-  onSave?: (questionText: string, newOptions: EditOption[]) => void;
+  onSave?: (questionText: string, newOptions: EditOption[], extras?: { inputType?: string; fieldName?: string; suggestions?: string }) => void;
   onDelete?: () => void;
+  // New fields for INPUT-type nodes
+  inputType?: string | null;
+  fieldName?: string | null;
+  suggestions?: string | null;
 }
 
 export function EditModal({
@@ -32,9 +36,25 @@ export function EditModal({
   targetOptions = [],
   onSave,
   onDelete,
+  inputType: initialInputType = null,
+  fieldName: initialFieldName = null,
+  suggestions: initialSuggestions = null,
 }: EditModalProps) {
   const [question, setQuestion] = useState(questionText);
   const [editOptions, setEditOptions] = useState(options);
+  const [inputType, setInputType] = useState(initialInputType || "");
+  const [fieldName, setFieldName] = useState(initialFieldName || "");
+  const [suggestionsText, setSuggestionsText] = useState(() => {
+    if (!initialSuggestions) return "";
+    try {
+      const arr = JSON.parse(initialSuggestions);
+      return Array.isArray(arr) ? arr.join(", ") : "";
+    } catch {
+      return initialSuggestions;
+    }
+  });
+
+  const isInputNode = !!inputType;
 
   const addOption = () => {
     setEditOptions([
@@ -55,7 +75,14 @@ export function EditModal({
 
   const handleSaveClick = () => {
     if (onSave) {
-      onSave(question, editOptions);
+      const sugArr = suggestionsText.trim()
+        ? suggestionsText.split(",").map(s => s.trim()).filter(Boolean)
+        : [];
+      onSave(question, editOptions, {
+        inputType: inputType || undefined,
+        fieldName: fieldName || undefined,
+        suggestions: sugArr.length > 0 ? JSON.stringify(sugArr) : undefined
+      });
     }
   };
 
@@ -102,6 +129,51 @@ export function EditModal({
                   onChange={(e) => setQuestion(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent resize-none h-24"
                 />
+              </div>
+
+              {/* Input Type Config */}
+              <div className="mb-5 bg-purple-50 rounded-lg p-4 border border-purple-100">
+                <label className="block text-[10px] font-bold text-purple-500 uppercase mb-2">
+                  <i className="fa-solid fa-keyboard mr-1" />
+                  ประเภท Input (สำหรับ Flow แจ้งปัญหา)
+                </label>
+                <select
+                  value={inputType}
+                  onChange={(e) => setInputType(e.target.value)}
+                  className="w-full text-xs p-2 border border-purple-200 rounded bg-white mb-3"
+                >
+                  <option value="">ไม่ใช้ (Option-based ปกติ)</option>
+                  <option value="TEXT">TEXT — กล่องพิมพ์ข้อความ</option>
+                  <option value="TEXTAREA">TEXTAREA — กล่องพิมพ์ข้อความยาว</option>
+                  <option value="NUMBER">NUMBER — กล่องพิมพ์ตัวเลข</option>
+                  <option value="OPTIONS">OPTIONS — ตัวเลือกแบบ Card</option>
+                </select>
+
+                {isInputNode && (
+                  <>
+                    <label className="block text-[10px] font-bold text-purple-500 uppercase mb-1 mt-2">
+                      ชื่อ Field (API)
+                    </label>
+                    <input
+                      type="text"
+                      value={fieldName}
+                      onChange={(e) => setFieldName(e.target.value)}
+                      className="w-full text-xs p-2 border border-purple-200 rounded bg-white mb-3"
+                      placeholder="เช่น title, description, bountyPrize"
+                    />
+
+                    <label className="block text-[10px] font-bold text-purple-500 uppercase mb-1 mt-2">
+                      Suggestion Chips (คั่นด้วย ,)
+                    </label>
+                    <input
+                      type="text"
+                      value={suggestionsText}
+                      onChange={(e) => setSuggestionsText(e.target.value)}
+                      className="w-full text-xs p-2 border border-purple-200 rounded bg-white"
+                      placeholder="เช่น Programmer, Designer, Singer"
+                    />
+                  </>
+                )}
               </div>
 
               <div>

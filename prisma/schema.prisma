@@ -45,9 +45,14 @@ model Node {
   id         String   @id @default(cuid())
   industryId String
   industry   Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
-  type       String   @default("QUESTION") // START, QUESTION, RESULT
+  type       String   @default("QUESTION") // START, QUESTION, RESULT, INPUT
   question   String?
   order      Int      @default(0)
+
+  // For INPUT-type nodes (used by BountyFlowApp, etc.)
+  inputType   String?  // TEXT, TEXTAREA, NUMBER, OPTIONS (null = classic option-based)
+  fieldName   String?  // API field name e.g. "title", "description", "bountyPrize"
+  suggestions String?  // JSON array of suggestion chips e.g. '["React","Node.js"]'
 
   options  Option[] @relation("NodeOptions")
   incoming Option[] @relation("TargetNode")

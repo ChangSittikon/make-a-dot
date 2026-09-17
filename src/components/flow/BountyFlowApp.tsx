@@ -16,48 +16,6 @@ interface Step {
   suggestions?: string[];
 }
 
-const FLOW_STEPS: Step[] = [
-  {
-    id: 'step-1',
-    type: 'TEXT',
-    question: 'บอกเราหน่อย ปัญหาหรือเป้าหมายที่คุณต้องการคนช่วยคืออะไร?',
-    field: 'title',
-    suggestions: ['ตามหาโปรแกรมเมอร์ทำแอป React', 'หาคนช่วยทำบัญชีรายรับรายจ่าย', 'ตามหานักร้องนำวงอินดี้', 'หาคนตัดต่อวิดีโอ YouTube']
-  },
-  {
-    id: 'step-2',
-    type: 'TEXTAREA',
-    question: 'ขอรายละเอียดเพิ่มเติมอีกนิด เพื่อให้เราหาฮีโร่ที่ใช่ที่สุด',
-    field: 'description',
-    suggestions: ['รายละเอียดงาน: \nเป้าหมาย: \nสิ่งที่คาดหวัง: ']
-  },
-  {
-    id: 'step-magic',
-    type: 'TEXT',
-    question: 'คุณกำลังมองหาคนสายไหน? (เช่น โปรแกรมเมอร์, ช่างภาพ, กราฟิก)',
-    field: 'magicSearch',
-    suggestions: ['Programmer', 'Graphic Designer', 'Photographer', 'Marketer', 'Accountant', 'Singer', 'Producer']
-  },
-  {
-    id: 'step-3',
-    type: 'OPTIONS',
-    question: 'คุณเตรียมค่าตอบแทนรูปแบบไหนไว้ให้?',
-    field: 'resourceType',
-    options: [
-      { label: 'เงินสด (CASH)', value: 'CASH', icon: 'fa-solid fa-money-bill-wave' },
-      { label: 'แลกเปลี่ยนแรง/สกิล (SWAP)', value: 'LABOR', icon: 'fa-solid fa-handshake-angle' },
-      { label: 'ส่วนแบ่งรายได้ (EQUITY)', value: 'EQUITY', icon: 'fa-solid fa-chart-pie' }
-    ]
-  },
-  {
-    id: 'step-4',
-    type: 'NUMBER',
-    question: 'ประเมินมูลค่าเป็นตัวเลขกลมๆ (บาท) ประมาณเท่าไหร่ครับ?',
-    field: 'bountyPrize',
-    suggestions: ['1000', '5000', '10000', '30000', '50000']
-  }
-];
-
 const panelVariants = {
   enter: { opacity: 0, y: 30, scale: 0.95 },
   active: { opacity: 1, y: 0, scale: 1 },
@@ -76,6 +34,8 @@ interface FloatingDot {
 
 export function BountyFlowApp() {
   const router = useRouter();
+  const [flowSteps, setFlowSteps] = useState<Step[]>([]);
+  const [loadingSteps, setLoadingSteps] = useState(true);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   
@@ -91,6 +51,19 @@ export function BountyFlowApp() {
   const [universeDots, setUniverseDots] = useState<FloatingDot[]>([]);
   const [dotPosition, setDotPosition] = useState<'center' | 'text'>('center');
 
+  // Fetch flow steps from API
+  useEffect(() => {
+    fetch('/api/bounty-flow', { cache: 'no-store' })
+      .then(res => res.json())
+      .then((data: Step[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setFlowSteps(data);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoadingSteps(false));
+  }, []);
+
   // Initialize Universe
   useEffect(() => {
     const dots = Array.from({length: 40}).map((_, i) => ({
@@ -105,7 +78,7 @@ export function BountyFlowApp() {
     setUniverseDots(dots);
   }, []);
 
-  const currentStep = FLOW_STEPS[currentStepIndex];
+  const currentStep = flowSteps[currentStepIndex];
 
   // Typing effect
   const typeText = useCallback((text: string) => {
@@ -129,14 +102,14 @@ export function BountyFlowApp() {
 
   // Trigger typing when step changes
   useEffect(() => {
-    if (currentStep && !isSubmitting) {
+    if (currentStep && !isSubmitting && !loadingSteps) {
       setInputValue("");
       const timer = setTimeout(() => {
         typeText(currentStep.question);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [currentStepIndex, isSubmitting, typeText]);
+  }, [currentStepIndex, isSubmitting, typeText, loadingSteps]);
 
   // Focus input automatically after typing finishes
   useEffect(() => {
@@ -181,7 +154,7 @@ export function BountyFlowApp() {
       });
     });
 
-    if (currentStepIndex < FLOW_STEPS.length - 1) {
+    if (currentStepIndex < flowSteps.length - 1) {
       setShowInput(false);
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
@@ -245,7 +218,7 @@ export function BountyFlowApp() {
             <i className="fa-solid fa-arrow-left text-gray-600"></i>
           </Link>
           <div className="text-sm font-bold text-gray-500">
-            {isSubmitting ? 'FINALIZING...' : `STEP ${currentStepIndex + 1} OF ${FLOW_STEPS.length}`}
+            {isSubmitting ? 'FINALIZING...' : `STEP ${currentStepIndex + 1} OF ${flowSteps.length}`}
           </div>
         </header>
 

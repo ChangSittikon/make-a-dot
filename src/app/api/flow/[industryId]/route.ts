@@ -54,6 +54,9 @@ export async function PUT(
             type: node.type,
             question: node.question,
             order: node.order,
+            inputType: node.inputType || null,
+            fieldName: node.fieldName || null,
+            suggestions: node.suggestions || null,
           }
         });
       }
