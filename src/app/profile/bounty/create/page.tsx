@@ -114,7 +114,7 @@ export default function CreateBountyPage() {
       const data = await res.json();
       
       if (data.success) {
-        alert("บันทึกค่าหัวสำเร็จ!");
+        alert("แจ้งปัญหาสำเร็จ!");
         router.push('/profile/bounty');
       } else {
         alert("เกิดข้อผิดพลาด: " + data.error);
@@ -129,7 +129,7 @@ export default function CreateBountyPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Create Bounty Quest</h1>
-      <p className="text-gray-500 mb-8">ตั้งค่าหัวปัญหาของคุณเพื่อหาผู้แก้ที่เหมาะสม</p>
+      <p className="text-gray-500 mb-8">แจ้งปัญหาของคุณเพื่อหาผู้แก้ปัญหาที่เหมาะสม</p>
 
       <div className="space-y-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -236,9 +236,9 @@ export default function CreateBountyPage() {
 
         {/* STEP 2: Bounty & Escrow */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-lg font-semibold mb-4">Step 2: ค่าหัว (Bounty Prize)</h2>
+          <h2 className="text-lg font-semibold mb-4">Step 2: ค่าตอบแทน (Bounty Prize)</h2>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">เงินรางวัลค่าหัว (THB)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">ค่าตอบแทน (THB)</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500 font-bold text-lg">฿</span>
               <input 
@@ -298,7 +298,7 @@ export default function CreateBountyPage() {
             disabled={isSubmitting}
             className="bg-[#FF1A1A] text-white px-8 py-3 rounded-md hover:bg-red-700 transition font-bold text-lg disabled:opacity-50"
           >
-            {isSubmitting ? 'กำลังประกาศ...' : 'ประกาศค่าหัวปัญหา (Publish Bounty)'}
+            {isSubmitting ? 'กำลังประกาศ...' : 'ประกาศปัญหา (Publish Quest)'}
           </button>
         </div>
       </div>

@@ -66,19 +66,18 @@ export default async function ProfilePage() {
           {/* Bounty Hub Access */}
           <div className="mt-8">
             <h3 className="text-lg font-bold text-gray-900 mb-4">ระบบค่าหัวปัญหา (Bounty Protocol)</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/profile/bounty" className="flex flex-col items-center justify-center p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition shadow-sm">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-red mb-2 shadow-sm">
-                  <i className="fa-solid fa-crosshairs text-lg"></i>
+            <div className="grid grid-cols-2 gap-4">
+              <Link href="/profile/bounty" className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition border border-gray-100">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-xl text-gray-700">
+                  <i className="fa-solid fa-list-check"></i>
                 </div>
-                <span className="text-sm font-bold text-gray-800">กระดานค่าหัว</span>
-                <span className="text-[10px] text-gray-500 mt-1">ค้นหางาน (Solver)</span>
+                <span className="text-sm font-bold text-gray-800">ปัญหาและค่าตอบแทน</span>
               </Link>
-              <Link href="/profile/bounty/create" className="flex flex-col items-center justify-center p-4 bg-brand-red border border-brand-red rounded-xl hover:bg-red-600 transition shadow-sm group">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white mb-2 group-hover:bg-white/30 transition">
-                  <i className="fa-solid fa-plus text-lg"></i>
+              <Link href="/profile/bounty/create" className="flex flex-col items-center justify-center p-4 bg-brand-red rounded-2xl hover:bg-red-700 transition shadow-md group">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3 text-xl text-white group-hover:scale-110 transition">
+                  <i className="fa-solid fa-plus"></i>
                 </div>
-                <span className="text-sm font-bold text-white">ตั้งค่าหัวปัญหา</span>
+                <span className="text-sm font-bold text-white">แจ้งปัญหา</span>
                 <span className="text-[10px] text-red-100 mt-1">ประกาศ (Visionary)</span>
               </Link>
             </div>

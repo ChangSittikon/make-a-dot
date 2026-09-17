@@ -88,7 +88,7 @@ export default function NegotiatePage() {
   return (
     <div className="p-6 max-w-6xl mx-auto min-h-screen flex flex-col font-prompt bg-brand-gray-light">
       <Link href="/profile/bounty" className="text-gray-500 hover:text-gray-900 mb-6 inline-block">
-        <i className="fa-solid fa-arrow-left mr-2"></i> กลับสู่กระดานค่าหัว
+        <i className="fa-solid fa-arrow-left mr-2"></i> กลับสู่ปัญหาและค่าตอบแทน
       </Link>
 
       <div className="flex justify-between items-start mb-6">

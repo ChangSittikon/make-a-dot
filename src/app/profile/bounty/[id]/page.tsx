@@ -15,7 +15,7 @@ export default function BountyDetailPage() {
         </div>
         <div className="text-right">
           <p className="text-3xl font-bold text-gray-900">฿50,000</p>
-          <p className="text-sm text-gray-500">Bounty Prize</p>
+          <p className="text-sm text-gray-500">ค่าตอบแทน</p>
         </div>
       </div>
 
@@ -42,14 +42,14 @@ export default function BountyDetailPage() {
                 <i className="fas fa-lock mr-2"></i> CASH ESCROW
               </div>
               <p className="text-sm text-red-700 mb-4">
-                เงินรางวัล ฿50,000 ถูกค้ำประกันไว้ในระบบเรียบร้อยแล้ว หากส่งมอบงานผ่าน จะได้รับเงินทันที
+                ค่าตอบแทน ฿50,000 ถูกค้ำประกันไว้ในระบบเรียบร้อยแล้ว หากส่งมอบงานผ่าน จะได้รับเงินทันที
               </p>
             </div>
             <Link 
               href="/profile/bounty/placeholder-id/negotiate" 
               className="mt-4 block w-full bg-[#FF1A1A] text-white text-center px-4 py-3 rounded-md hover:bg-red-700 transition font-medium"
             >
-              รับงาน (Propose Solution)
+              รับงาน (เจรจา)
             </Link>
           </div>
         </div>

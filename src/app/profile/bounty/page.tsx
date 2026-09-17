@@ -34,12 +34,12 @@ export default function BountyHubPage() {
               <i className="fa-solid fa-arrow-left text-gray-600"></i>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">กระดานค่าหัว (Bounty Hub)</h1>
+              <h1 className="text-xl font-bold text-gray-900">ปัญหาและค่าตอบแทน (Bounty Hub)</h1>
               <p className="text-xs text-gray-500">ศูนย์รวมปัญหาที่รอการแก้ไขแบบ Outcome-based</p>
             </div>
           </div>
           <Link href="/profile/bounty/create" className="bg-brand-red text-white px-5 py-2.5 rounded-full font-medium hover:bg-red-700 transition flex items-center gap-2 shadow-sm text-sm">
-            <i className="fa-solid fa-plus"></i> ตั้งค่าหัวปัญหา
+            <i className="fa-solid fa-plus"></i> แจ้งปัญหา
           </Link>
         </div>
       </div>
@@ -72,8 +72,8 @@ export default function BountyHubPage() {
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fa-solid fa-box-open text-3xl text-gray-300"></i>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">ยังไม่มีค่าหัวในระบบ</h3>
-            <p className="text-sm text-gray-500 mb-6">เป็นคนแรกที่ตั้งค่าหัวปัญหา เพื่อหาคนเก่งไปช่วยแก้สิ!</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">ยังไม่มีปัญหาในระบบ</h3>
+            <p className="text-sm text-gray-500 mb-6">เป็นคนแรกที่แจ้งปัญหา เพื่อหาคนเก่งไปช่วยแก้สิ!</p>
             <Link href="/profile/bounty/create" className="text-brand-red font-medium hover:underline">
               สร้าง Quest ตอนนี้ <i className="fa-solid fa-arrow-right ml-1"></i>
             </Link>
@@ -96,7 +96,7 @@ export default function BountyHubPage() {
                         ? `฿${(bounty.bountyPrizeSatang / 100).toLocaleString()}` 
                         : 'รอเจรจา'}
                     </p>
-                    <p className="text-[10px] text-gray-500 font-medium uppercase">Bounty Prize</p>
+                    <p className="text-[10px] text-gray-500 font-medium uppercase">ค่าตอบแทน</p>
                   </div>
                 </div>
 
