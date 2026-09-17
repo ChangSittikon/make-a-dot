@@ -113,7 +113,7 @@ export default function BountyHubPage() {
                         <i className="fa-solid fa-briefcase mr-1"></i> {bounty.occupation.name}
                       </span>
                     )}
-                    {bounty.problemSkills?.map((ps: any) => (
+                    {bounty.requiredSkills?.map((ps: any) => (
                       <span key={ps.id} className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-md border border-gray-200">
                         {ps.skillTag?.name}
                       </span>

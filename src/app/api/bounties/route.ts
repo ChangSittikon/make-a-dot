@@ -94,7 +94,7 @@ export async function GET() {
       include: {
         occupation: true,
         resources: true,
-        problemSkills: {
+        requiredSkills: {
           include: {
             skillTag: true
           }
