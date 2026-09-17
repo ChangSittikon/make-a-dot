@@ -21,15 +21,16 @@ model Industry {
   macroFeePercentage Int @default(500)
 
   // AI Control Panel: คำสั่งพิเศษสำหรับ AI ของวงการนี้
-  aiPromptDirective String? // เช่น "เน้นคำถามเกี่ยวกับงบประมาณ, ทักษะทางเทคนิค"
-  aiNodeCount       Int     @default(5) // จำนวนคำถามที่ AI ควรสร้าง (3-10)
-  aiToneLevel       Int     @default(2) // 0=ขำๆ, 1=ชิลๆ, 2=ปกติ, 3=ทางการ, 4=วิชาการ, 5=เชี่ยวชาญ, 6=ควอนตัม, 7=ดอทปริศนา
-  aiSmartChoices    String? // JSON array: ["branching","budget","skill","timeline","risk","sweat","location","collab"]
+  aiPromptDirective String?
+  aiNodeCount       Int     @default(5)
+  aiToneLevel       Int     @default(2)
+  aiSmartChoices    String? // JSON array
 
   // Relations
   nodes          Node[]
   domainDirector DomainDirector?
   projects       Project[]
+  occupations    Occupation[]    // Cascading taxonomy: Industry → Occupation → SkillTag
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -76,25 +77,34 @@ model User {
   emailVerified DateTime?
   image         String?
   avatarUrl     String?
-  role          String    @default("USER") // USER, PROFESSIONAL, GUARANTOR, DIRECTOR, ADMIN
-  phone         String?
-  bankAccount   String?
-  cryptoWallet  String?
-  trustScore    Int       @default(0)
-  isVerified    Boolean   @default(false)
+
+  // RBAC: Role-Based Access Control
+  // Values: USER | PROFESSIONAL | GUARANTOR | DIRECTOR | ADMIN
+  role         String  @default("USER")
+  isVerified   Boolean @default(false)
+  licenseData  String? // JSON: {"licenseNo": "...", "issuedBy": "...", "expiresAt": "..."}
+
+  phone        String?
+  bankAccount  String?
+  cryptoWallet String?
+  trustScore   Int     @default(0)
 
   // Auth.js Relations
   accounts Account[]
   sessions Session[]
 
-  // Relations
+  // Core Relations
   directorProfile      DomainDirector?
   projectsOwned        Project[]             @relation("ProjectOwner")
   projectMemberships   ProjectMember[]
   canvasProposals      CollaborationCanvas[] @relation("CanvasProposer")
   guaranteesGiven      GuarantorNode[]       @relation("GuarantorUser")
   endorsementsReceived Endorsement[]         @relation("EndorsedUser")
-  equitySplits         EquitySplitMember[]   // ส่วนแบ่ง equity ที่ user นี้ได้รับในแต่ละโปรเจกต์
+  equitySplits         EquitySplitMember[]
+
+  // Bounty Protocol Relations
+  problemsRequested ProblemNode[] @relation("Requester") // ปัญหาที่ user นี้ตั้งค่าหัว
+  problemsSolved    ProblemNode[] @relation("Solver")    // ปัญหาที่ user นี้แก้สำเร็จ
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -609,3 +619,128 @@ model AgentLog {
 
   createdAt DateTime @default(now())
 }
+
+// ============================================================
+// PHASE 1.5: UNIVERSAL PROBLEM MATRIX — Occupation & Skill Taxonomy
+// ============================================================
+
+// Occupation: อาชีพ/บทบาท ที่อยู่ใต้ Industry
+// Industry → Occupation (One-to-Many)
+model Occupation {
+  id         String   @id @default(cuid())
+  industryId String
+  industry   Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  name        String  // เช่น "Sound Engineer", "โปรดิวเซอร์", "Session Musician"
+  description String?
+  icon        String? // FontAwesome icon
+  order       Int     @default(0)
+
+  // Rosetta Stone
+  relatedDotCode String? // Logical FK → IdeaDot.code
+
+  // Relations
+  skillTags    SkillTag[]    // Occupation → SkillTag (One-to-Many)
+  problemNodes ProblemNode[] // ปัญหาในระบบที่ต้องการอาชีพนี้
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// SkillTag: ทักษะเฉพาะ ที่อยู่ใต้ Occupation
+// Occupation → SkillTag (One-to-Many)
+model SkillTag {
+  id           String     @id @default(cuid())
+  occupationId String
+  occupation   Occupation @relation(fields: [occupationId], references: [id], onDelete: Cascade)
+
+  name  String  // เช่น "Pro Tools", "ทักษะกีตาร์คลาสสิก", "React.js"
+  level String  @default("ANY") // ANY, BEGINNER, INTERMEDIATE, EXPERT, MASTER
+  icon  String?
+
+  // Relations (M:N กับ ProblemNode ผ่าน Junction)
+  problemSkills ProblemSkillTag[]
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// PHASE 1.5: PROBLEM NODE — The Quest / Bounty Core (DOT012)
+// ============================================================
+
+// ProblemNode คือ "Quest" หนึ่งใบ ที่มีเงินรางวัลแขวนอยู่
+// Requester ตั้ง → ระบบล็อกเงินใน Escrow → Solver รับงาน → ตกลง KPI → ปลดล็อกเงิน
+model ProblemNode {
+  id String @id @default(cuid())
+
+  // ===== THE QUEST DESCRIPTION =====
+  rawDescription String  // คำอธิบายปัญหาแบบดิบ จาก User พิมพ์เอง
+  entityType     String  // ประเภทหน่วยงาน: INDIVIDUAL, STARTUP, SME, ENTERPRISE, NGO
+  primaryGap     String  // ช่องว่างหลัก: SKILL_GAP, RESOURCE_GAP, NETWORK_GAP, CAPITAL_GAP, KNOWLEDGE_GAP
+  urgencyState   String  @default("NORMAL") // NORMAL, URGENT, CRITICAL, HOT_MISSION
+
+  // Deep Attributes — AI วิเคราะห์และเติม (JSON)
+  // {"estimatedDays": 7, "requiredHeadcount": 2, "locationRequired": "กรุงเทพ", "remoteOk": true, "kpiDraft": "..."}
+  deepAttributes String? // JSON String
+
+  // ===== BOUNTY PROTOCOL (DOT012) =====
+  bountyPrizeSatang Int     @default(0) // เงินรางวัลค่าหัว (สตางค์) — ถ้า 0 = แลกเปลี่ยน/ไม่ใช่เงินสด
+  bountyType        String  @default("CASH") // CASH, EQUITY, RESOURCE_SWAP, HYBRID
+  bountyDescription String? // อธิบายรางวัลเพิ่มเติม (เช่น "ฟรีค่าห้องอัดเสียง 3 วัน")
+
+  // ===== KPI & NEGOTIATION SANDBOX =====
+  kpiDefinition  String? // JSON: [{"metric": "ยอดขาย", "target": "100 units", "deadline": "2026-12-31"}]
+  kpiAgreedAt    DateTime? // ทั้งสองฝ่ายตกลง KPI แล้ว
+  negotiationLog String?   // JSON array: บันทึกประวัติการต่อรอง
+
+  // ===== STATUS & LIFECYCLE =====
+  // OPEN → MATCHING (AI กำลังหา Solver) → NEGOTIATING → ACTIVE → PENDING_REVIEW → COMPLETED | CANCELLED | DISPUTED
+  status String @default("OPEN")
+
+  // ===== ROSETTA STONE =====
+  originDotCode String? // Logical FK → IdeaDot.code (เช่น "DOT012" = Bounty Protocol)
+
+  // ===== OCCUPATION TAXONOMY =====
+  occupationId String?
+  occupation   Occupation? @relation(fields: [occupationId], references: [id])
+
+  // ===== RELATIONS: Engine Connection =====
+  // Requester: คนตั้งปัญหา (เจ้าของค่าหัว)
+  requesterId String
+  requester   User   @relation("Requester", fields: [requesterId], references: [id])
+
+  // Solver: คนรับงาน (นักล่าค่าหัว)
+  solverId String?
+  solver   User?   @relation("Solver", fields: [solverId], references: [id])
+
+  // Skills ที่ต้องการ (M:N)
+  requiredSkills ProblemSkillTag[]
+
+  // Escrow: เงินที่ล็อกไว้ (1:1 — บังคับล็อกทันทีที่ตั้งค่าหัว)
+  escrowId String?  @unique
+  // NOTE: ไม่ผูก Relation ตรงเพราะใช้ Escrow model เดิมที่ผูกกับ Project
+  // ในอนาคตเมื่อ Bounty ใหญ่ขึ้นจะแยก BountyEscrow ออกมา
+
+  // Timestamps
+  publishedAt  DateTime? // เวลาที่เปิดรับสมัคร
+  matchedAt    DateTime? // เวลาที่ AI จับคู่สำเร็จ
+  startedAt    DateTime? // เวลาเริ่มงานจริง
+  completedAt  DateTime? // เวลาที่งานสำเร็จ
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// Junction Table: ProblemNode ↔ SkillTag (M:N)
+// "Quest นี้ต้องการ SkillTag เหล่านี้"
+model ProblemSkillTag {
+  id            String      @id @default(cuid())
+  problemNodeId String
+  problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
+  skillTagId    String
+  skillTag      SkillTag    @relation(fields: [skillTagId], references: [id])
+
+  isRequired Boolean @default(true) // true = บังคับ, false = มีแล้วได้เปรียบ
+
+  @@unique([problemNodeId, skillTagId])
+}
+
