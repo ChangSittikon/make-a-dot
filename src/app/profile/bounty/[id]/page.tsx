@@ -3,7 +3,22 @@ import Link from 'next/link';
 
 export default function BountyDetailPage() {
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/profile/bounty" className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+              <i className="fa-solid fa-arrow-left text-gray-600"></i>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">รายละเอียดงาน</h1>
+              <p className="text-xs text-gray-500">Quest Detail</p>
+            </div>
+          </div>
+        </div>
+      <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
+        <div className="mx-auto">
       <div className="flex justify-between items-start mb-8">
         <div>
           <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mb-2">HOT_MISSION</span>
@@ -19,8 +34,8 @@ export default function BountyDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
+      <div className="flex flex-col gap-6">
+        <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">รายละเอียดงาน (Quest Description)</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
@@ -54,6 +69,9 @@ export default function BountyDetailPage() {
           </div>
         </div>
       </div>
+    </div>
+      </main>
+    </div>
     </div>
   );
 }

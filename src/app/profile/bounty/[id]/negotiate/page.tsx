@@ -86,12 +86,23 @@ export default function NegotiatePage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto min-h-screen flex flex-col font-prompt bg-brand-gray-light">
-      <Link href="/profile/bounty" className="text-gray-500 hover:text-gray-900 mb-6 inline-block">
-        <i className="fa-solid fa-arrow-left mr-2"></i> กลับสู่ปัญหาและค่าตอบแทน
-      </Link>
-
-      <div className="flex justify-between items-start mb-6">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/profile/bounty" className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+              <i className="fa-solid fa-arrow-left text-gray-600"></i>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">เจรจา</h1>
+              <p className="text-xs text-gray-500">Negotiate</p>
+            </div>
+          </div>
+        </div>
+      <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
+        <div className="mx-auto">
+        <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">The Negotiation Sandbox</h1>
           <p className="text-sm text-gray-500">
@@ -108,9 +119,9 @@ export default function NegotiatePage() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="flex-1 flex flex-col gap-6">
         {/* Left Column: Scope & KPIs */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <i className="fa-solid fa-bullseye text-brand-red"></i> นิยามความสำเร็จ (KPIs)
@@ -235,6 +246,9 @@ export default function NegotiatePage() {
           </div>
         </div>
       </div>
+    </div>
+      </main>
+    </div>
     </div>
   );
 }

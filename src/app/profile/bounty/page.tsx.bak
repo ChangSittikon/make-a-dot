@@ -25,11 +25,10 @@ export default function BountyHubPage() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
-      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
+    <div className="min-h-screen bg-brand-gray-light font-prompt">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div className="px-5 py-4 flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
               <i className="fa-solid fa-arrow-left text-gray-600"></i>
@@ -39,15 +38,14 @@ export default function BountyHubPage() {
               <p className="text-xs text-gray-500">ศูนย์รวมปัญหาที่รอการแก้ไขแบบ Outcome-based</p>
             </div>
           </div>
-          <Link href="/profile/bounty/create" className="w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-full hover:bg-red-700 transition shadow-sm">
-            <i className="fa-solid fa-plus"></i>
+          <Link href="/profile/bounty/create" className="bg-brand-red text-white px-5 py-2.5 rounded-full font-medium hover:bg-red-700 transition flex items-center gap-2 shadow-sm text-sm">
+            <i className="fa-solid fa-plus"></i> แจ้งปัญหา
           </Link>
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
-        <div className="mx-auto">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Search & Filter */}
         <div className="mb-8 flex gap-3">
           <div className="flex-1 relative">
@@ -81,7 +79,7 @@ export default function BountyHubPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1">
+          <div className="grid gap-4 md:grid-cols-2">
             {bounties.map((bounty) => (
               <div key={bounty.id} className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition group flex flex-col h-full">
                 {/* Status & Urgency */}
@@ -93,7 +91,7 @@ export default function BountyHubPage() {
                     </span>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-gray-900">
+                    <p className="text-2xl font-bold text-gray-900">
                       {bounty.bountyPrizeSatang > 0 
                         ? `฿${(bounty.bountyPrizeSatang / 100).toLocaleString()}` 
                         : 'รอเจรจา'}
@@ -154,8 +152,6 @@ export default function BountyHubPage() {
           </div>
         )}
       </div>
-      </main>
-    </div>
     </div>
   );
 }

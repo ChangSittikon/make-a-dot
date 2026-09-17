@@ -127,9 +127,23 @@ export default function CreateBountyPage() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">Create Bounty Quest</h1>
-      <p className="text-gray-500 mb-8">แจ้งปัญหาของคุณเพื่อหาผู้แก้ปัญหาที่เหมาะสม</p>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+              <i className="fa-solid fa-arrow-left text-gray-600"></i>
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">แจ้งปัญหา</h1>
+              <p className="text-xs text-gray-500">Create Quest</p>
+            </div>
+          </div>
+        </div>
+      <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
+        <div className="mx-auto">
+
 
       <div className="space-y-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -302,6 +316,9 @@ export default function CreateBountyPage() {
           </button>
         </div>
       </div>
+</div>
+      </main>
     </div>
-  )
+    </div>
+  );
 }
