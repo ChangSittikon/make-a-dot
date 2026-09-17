@@ -295,7 +295,7 @@ export function BountyFlowApp() {
                 animate="active"
                 exit="exit"
                 transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-                className="flex-1 px-6 pb-12 flex flex-col justify-end"
+                className="flex-1 px-6 pb-24 flex flex-col justify-end"
               >
                 {/* Question */}
                 <div className="mb-6 min-h-[80px] relative">
@@ -372,7 +372,7 @@ export function BountyFlowApp() {
                         </div>
 
                         {currentStep.suggestions && (
-                          <div className="flex flex-wrap gap-2 mt-1">
+                          <div className="flex flex-wrap gap-2 mt-3">
                             {currentStep.suggestions.map((sug, idx) => (
                               <button
                                 key={idx}
