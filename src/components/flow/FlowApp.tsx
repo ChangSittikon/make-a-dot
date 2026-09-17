@@ -6,6 +6,7 @@ import { BreathingDot } from "@/components/flow/BreathingDot";
 import { CardOption } from "@/components/flow/CardOption";
 import { ResultCard } from "@/components/flow/ResultCard";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BottomTabBar } from "@/components/shared/BottomTabBar";
 
 interface Option {
@@ -13,6 +14,7 @@ interface Option {
   label: string;
   icon?: string | null;
   targetNodeId?: string | null;
+  vectorWeight?: string | null;
 }
 
 interface Node {
@@ -136,12 +138,22 @@ export function FlowApp({ session, children }: { session: any, children?: React.
     }
   }, [currentNode, showResults, typeText]);
 
+  const router = useRouter();
+
   const handleSelect = useCallback(
     (option: Option) => {
       if (isTyping) return;
 
+      let routeUrl: string | null = null;
+      if (option.vectorWeight) {
+        try {
+          const parsed = JSON.parse(option.vectorWeight);
+          if (parsed.url) routeUrl = parsed.url;
+        } catch (e) {}
+      }
+
       const targetNode = nodes.find(n => n.id === option.targetNodeId);
-      const isEnd = !targetNode || targetNode.type === 'RESULT' || !option.targetNodeId;
+      const isEnd = routeUrl ? true : (!targetNode || targetNode.type === 'RESULT' || !option.targetNodeId);
 
       // QUANTUM COLLAPSE ANIMATION (Minimalist)
       setUniverseDots(prevDots => {
@@ -182,9 +194,13 @@ export function FlowApp({ session, children }: { session: any, children?: React.
       if (isEnd) {
         setShowOptions(false);
         setTimeout(() => {
-          setDisplayedText("");
-          setShowResults(true);
-          typeText(targetNode?.question || "เราพบ 2 โอกาสที่ตรงกับทิศทางของคุณที่สุด");
+          if (routeUrl) {
+            router.push(routeUrl);
+          } else {
+            setDisplayedText("");
+            setShowResults(true);
+            typeText(targetNode?.question || "เราพบ 2 โอกาสที่ตรงกับทิศทางของคุณที่สุด");
+          }
         }, 600);
       } else {
         setShowOptions(false);
