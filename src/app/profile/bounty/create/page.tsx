@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 // Types based on Prisma models
 type WorkType = { id: string; name: string };
@@ -9,14 +10,27 @@ type Occupation = { id: string; name: string; skillTags: SkillTag[] };
 type Industry = { id: string; name: string; occupations: Occupation[] };
 
 export default function CreateBountyPage() {
+  const router = useRouter();
+  
+  // Data State
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
   const [industries, setIndustries] = useState<Industry[]>([]);
+  
+  // Form State
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Selections
-  const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
-  const [selectedOccupations, setSelectedOccupations] = useState<{occ: Occupation, ind: Industry}[]>([]);
+  const [selectedWorkType, setSelectedWorkType] = useState<string | null>(null);
+  const [selectedOccupation, setSelectedOccupation] = useState<Occupation | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<{skill: SkillTag, occ: Occupation}[]>([]);
+  
+  // Prize & Resources
+  const [bountyPrize, setBountyPrize] = useState('');
+  const [resourceType, setResourceType] = useState('CASH');
+  const [resourceAmount, setResourceAmount] = useState('');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetch('/api/taxonomy')
@@ -30,12 +44,9 @@ export default function CreateBountyPage() {
   }, []);
 
   const toggleWorkType = (id: string) => {
-    setSelectedWorkTypes(prev => 
-      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-    );
+    setSelectedWorkType(prev => prev === id ? null : id);
   };
 
-  const removeOcc = (id: string) => setSelectedOccupations(prev => prev.filter(o => o.occ.id !== id));
   const removeSkill = (id: string) => setSelectedSkills(prev => prev.filter(s => s.skill.id !== id));
 
   const filteredResults = React.useMemo(() => {
@@ -62,15 +73,57 @@ export default function CreateBountyPage() {
 
   const selectResult = (result: any) => {
     if (result.type === 'occupation') {
-      if (!selectedOccupations.find(o => o.occ.id === result.item.id)) {
-        setSelectedOccupations([...selectedOccupations, { occ: result.item, ind: result.parent }]);
-      }
+      setSelectedOccupation(result.item);
     } else {
       if (!selectedSkills.find(s => s.skill.id === result.item.id)) {
         setSelectedSkills([...selectedSkills, { skill: result.item, occ: result.parent }]);
       }
+      // Auto select occupation if not set
+      if (!selectedOccupation) {
+        setSelectedOccupation(result.parent);
+      }
     }
     setSearchTerm('');
+  };
+
+  const handlePublish = async () => {
+    if (!title) {
+      alert("กรุณากรอกหัวข้อปัญหา");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    const payload = {
+      title,
+      description,
+      bountyPrize,
+      workTypeId: selectedWorkType,
+      occupationId: selectedOccupation?.id,
+      skillTags: selectedSkills.map(s => s.skill.id),
+      resourceType,
+      resourceAmount
+    };
+
+    try {
+      const res = await fetch('/api/bounties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        alert("บันทึกค่าหัวสำเร็จ!");
+        router.push('/profile/bounty');
+      } else {
+        alert("เกิดข้อผิดพลาด: " + data.error);
+        setIsSubmitting(false);
+      }
+    } catch (e) {
+      alert("Network Error");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,10 +135,26 @@ export default function CreateBountyPage() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold mb-4">Step 1: Core Problem & Taxonomy</h2>
           
-          <textarea 
-            className="w-full border border-gray-300 rounded-md p-4 min-h-[120px] mb-4"
-            placeholder="อธิบายปัญหาของคุณอย่างละเอียด..."
-          ></textarea>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">หัวข้อปัญหา (Quest Title)</label>
+            <input 
+              type="text" 
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2"
+              placeholder="เช่น: ต้องการทีมพัฒนา MVP ภายใน 1 เดือน"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">รายละเอียดปัญหา</label>
+            <textarea 
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-4 min-h-[100px]"
+              placeholder="อธิบายปัญหาของคุณอย่างละเอียด..."
+            ></textarea>
+          </div>
 
           {/* MAGIC SEARCH BOX */}
           <div className="mb-4">
@@ -123,14 +192,14 @@ export default function CreateBountyPage() {
           </div>
 
           {/* SELECTED CHIPS */}
-          {(selectedOccupations.length > 0 || selectedSkills.length > 0) && (
+          {(selectedOccupation || selectedSkills.length > 0) && (
             <div className="flex flex-wrap gap-2 mb-4">
-              {selectedOccupations.map(so => (
-                <span key={so.occ.id} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center">
-                  <i className="fas fa-briefcase mr-2"></i> {so.occ.name}
-                  <button onClick={() => removeOcc(so.occ.id)} className="ml-2 text-blue-500 hover:text-blue-700"><i className="fas fa-times"></i></button>
+              {selectedOccupation && (
+                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center">
+                  <i className="fas fa-briefcase mr-2"></i> {selectedOccupation.name}
+                  <button onClick={() => setSelectedOccupation(null)} className="ml-2 text-blue-500 hover:text-blue-700"><i className="fas fa-times"></i></button>
                 </span>
-              ))}
+              )}
               {selectedSkills.map(ss => (
                 <span key={ss.skill.id} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center">
                   <i className="fas fa-bolt mr-2"></i> {ss.skill.name}
@@ -145,7 +214,7 @@ export default function CreateBountyPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">รูปแบบการทำงาน (Quick Filters)</label>
             <div className="flex flex-wrap gap-2">
               {workTypes.map(wt => {
-                const isSelected = selectedWorkTypes.includes(wt.id);
+                const isSelected = selectedWorkType === wt.id;
                 return (
                   <button
                     key={wt.id}
@@ -167,32 +236,69 @@ export default function CreateBountyPage() {
 
         {/* STEP 2: Bounty & Escrow */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-lg font-semibold mb-4">Step 2: Bounty & Escrow</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm mb-1">เงินรางวัลค่าหัว (THB)</label>
-              <input type="number" className="w-full border border-gray-300 rounded-md px-4 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">รูปแบบผลตอบแทน</label>
-              <select className="w-full border border-gray-300 rounded-md px-4 py-2">
-                <option>CASH</option>
-                <option>EQUITY</option>
-                <option>RESOURCE_SWAP</option>
-              </select>
+          <h2 className="text-lg font-semibold mb-4">Step 2: ค่าหัว (Bounty Prize)</h2>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">เงินรางวัลค่าหัว (THB)</label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500 font-bold text-lg">฿</span>
+              <input 
+                type="number" 
+                value={bountyPrize}
+                onChange={e => setBountyPrize(e.target.value)}
+                className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-3 text-lg font-semibold focus:ring-2 focus:ring-red-500" 
+                placeholder="50000"
+              />
             </div>
           </div>
-          <div className="mt-4 bg-red-50 p-4 rounded-md border border-red-200">
-            <p className="text-sm text-red-800 font-medium">
-              <i className="fas fa-lock mr-2"></i>
-              ระบบจะทำการล็อกเงินจำนวนนี้ไว้ใน Escrow ทันทีที่ผู้ให้รับมอบงาน เพื่อเป็นหลักประกัน
-            </p>
+        </div>
+
+        {/* STEP 3: Resource Pledge */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h2 className="text-lg font-semibold mb-4">Step 3: ทรัพยากรค้ำประกัน (Resource Pledge)</h2>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ประเภททรัพยากร</label>
+              <select 
+                value={resourceType}
+                onChange={e => setResourceType(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-4 py-2"
+              >
+                <option value="CASH">CASH (เงินสด)</option>
+                <option value="LABOR">LABOR (แรงงาน)</option>
+                <option value="MATERIAL">MATERIAL (วัตถุดิบ/สินค้า)</option>
+                <option value="TOOL_SOFTWARE">TOOL_SOFTWARE (เครื่องมือ/ซอฟต์แวร์)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">มูลค่าประเมิน (THB)</label>
+              <input 
+                type="number" 
+                value={resourceAmount}
+                onChange={e => setResourceAmount(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-4 py-2"
+                placeholder="มูลค่าที่ค้ำประกัน..."
+              />
+            </div>
+          </div>
+
+          <div className="bg-red-50 p-4 rounded-md border border-red-200 flex items-start">
+            <i className="fas fa-lock text-red-600 mt-1 mr-3"></i>
+            <div>
+              <p className="text-sm text-red-800 font-medium">Smart Escrow Lock</p>
+              <p className="text-xs text-red-700 mt-1">
+                ระบบจะทำการล็อกเงินหรือทรัพยากรจำนวนนี้ไว้ใน Escrow Vault ทันทีที่ผู้แก้ปัญหารับมอบงาน เพื่อเป็นหลักประกันความน่าเชื่อถือ
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="flex justify-end">
-          <button className="bg-[#FF1A1A] text-white px-6 py-3 rounded-md hover:bg-red-700 transition font-medium">
-            Publish Bounty
+          <button 
+            onClick={handlePublish}
+            disabled={isSubmitting}
+            className="bg-[#FF1A1A] text-white px-8 py-3 rounded-md hover:bg-red-700 transition font-bold text-lg disabled:opacity-50"
+          >
+            {isSubmitting ? 'กำลังประกาศ...' : 'ประกาศค่าหัวปัญหา (Publish Bounty)'}
           </button>
         </div>
       </div>
