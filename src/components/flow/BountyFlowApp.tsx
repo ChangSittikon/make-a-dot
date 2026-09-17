@@ -13,6 +13,7 @@ interface Step {
   question: string;
   options?: { label: string; value: string; icon?: string }[];
   field: string;
+  suggestions?: string[];
 }
 
 const FLOW_STEPS: Step[] = [
@@ -20,19 +21,22 @@ const FLOW_STEPS: Step[] = [
     id: 'step-1',
     type: 'TEXT',
     question: 'บอกเราหน่อย ปัญหาหรือเป้าหมายที่คุณต้องการคนช่วยคืออะไร?',
-    field: 'title'
+    field: 'title',
+    suggestions: ['ตามหาโปรแกรมเมอร์ทำแอป React', 'หาคนช่วยทำบัญชีรายรับรายจ่าย', 'ตามหานักร้องนำวงอินดี้', 'หาคนตัดต่อวิดีโอ YouTube']
   },
   {
     id: 'step-2',
     type: 'TEXTAREA',
     question: 'ขอรายละเอียดเพิ่มเติมอีกนิด เพื่อให้เราหาฮีโร่ที่ใช่ที่สุด',
-    field: 'description'
+    field: 'description',
+    suggestions: ['รายละเอียดงาน: \nเป้าหมาย: \nสิ่งที่คาดหวัง: ']
   },
   {
     id: 'step-magic',
     type: 'TEXT',
     question: 'คุณกำลังมองหาคนสายไหน? (เช่น โปรแกรมเมอร์, ช่างภาพ, กราฟิก)',
-    field: 'magicSearch'
+    field: 'magicSearch',
+    suggestions: ['Programmer', 'Graphic Designer', 'Photographer', 'Marketer', 'Accountant', 'Singer', 'Producer']
   },
   {
     id: 'step-3',
@@ -48,8 +52,9 @@ const FLOW_STEPS: Step[] = [
   {
     id: 'step-4',
     type: 'NUMBER',
-    question: 'ประเมินมูลค่าเป็นตัวเลขกลมๆ (บาท) ประมาณเท่าไรครับ?',
-    field: 'bountyPrize'
+    question: 'ประเมินมูลค่าเป็นตัวเลขกลมๆ (บาท) ประมาณเท่าไหร่ครับ?',
+    field: 'bountyPrize',
+    suggestions: ['1000', '5000', '10000', '30000', '50000']
   }
 ];
 
@@ -336,33 +341,55 @@ export function BountyFlowApp() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                        className="w-full relative"
+                        className="w-full flex flex-col gap-2"
                       >
-                        {currentStep.type === 'TEXTAREA' ? (
-                          <textarea 
-                            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-2xl p-4 text-gray-800 text-lg focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm min-h-[120px] resize-none"
-                            placeholder="พิมพ์รายละเอียดที่นี่..."
-                          />
-                        ) : (
-                          <input 
-                            ref={inputRef as React.RefObject<HTMLInputElement>}
-                            type={currentStep.type === 'NUMBER' ? 'number' : 'text'}
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            className="w-full bg-white border-2 border-gray-200 rounded-2xl px-4 py-4 text-gray-800 text-lg focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm"
-                            placeholder={currentStep.type === 'NUMBER' ? "เช่น 50000" : "พิมพ์ที่นี่..."}
-                          />
+                        <div className="relative w-full">
+                          {currentStep.type === 'TEXTAREA' ? (
+                            <textarea 
+                              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+                              value={inputValue}
+                              onChange={(e) => setInputValue(e.target.value)}
+                              className="w-full bg-white border-2 border-gray-200 rounded-2xl p-4 text-gray-800 text-lg focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm min-h-[120px] resize-none"
+                              placeholder="พิมพ์ข้อความที่ต้องการ..."
+                            />
+                          ) : (
+                            <input 
+                              ref={inputRef as React.RefObject<HTMLInputElement>}
+                              type={currentStep.type === 'NUMBER' ? 'number' : 'text'}
+                              value={inputValue}
+                              onChange={(e) => setInputValue(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              className="w-full bg-white border-2 border-gray-200 rounded-2xl px-4 py-4 text-gray-800 text-lg focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm"
+                              placeholder={currentStep.type === 'NUMBER' ? "เช่น 50000" : "พิมพ์คำตอบที่นี่..."}
+                            />
+                          )}
+                          <button 
+                            onClick={() => handleNext()}
+                            className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-xl hover:bg-red-700 transition"
+                          >
+                            <i className="fa-solid fa-arrow-up"></i>
+                          </button>
+                        </div>
+
+                        {currentStep.suggestions && (
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {currentStep.suggestions.map((sug, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  if (currentStep.type === 'TEXTAREA') {
+                                    setInputValue((prev) => prev ? prev + '\n' + sug : sug);
+                                  } else {
+                                    setInputValue(sug);
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-medium hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
+                              >
+                                {sug}
+                              </button>
+                            ))}
+                          </div>
                         )}
-                        <button 
-                          onClick={() => handleNext()}
-                          className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-xl hover:bg-red-700 transition"
-                        >
-                          <i className="fa-solid fa-arrow-up"></i>
-                        </button>
                       </motion.div>
                     )}
                   </AnimatePresence>
