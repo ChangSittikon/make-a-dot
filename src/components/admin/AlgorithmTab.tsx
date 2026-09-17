@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 
 interface Option {
   id: string;
@@ -98,7 +98,7 @@ export function AlgorithmTab({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {nodes.filter(n => n.type !== 'RESULT').map(node => (
-              <optgroup key={node.id} className="contents">
+              <Fragment key={node.id}>
                 <tr>
                   <td colSpan={6} className="px-6 py-3 bg-gray-50 font-semibold text-gray-800 text-xs border-t border-gray-200">
                     Q: {node.question}
@@ -156,7 +156,7 @@ export function AlgorithmTab({
                     </tr>
                   );
                 })}
-              </optgroup>
+              </Fragment>
             ))}
             {nodes.length === 0 && (
               <tr>
