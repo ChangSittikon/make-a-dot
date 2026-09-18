@@ -11,12 +11,16 @@ export async function POST(req: Request) {
     const { 
       title, 
       description, 
+      rawDescription,
       bountyPrize, 
       workTypeId,
       occupationId,
       skillTags,
       resourceType,
-      resourceAmount
+      resourceAmount,
+      entityType,
+      primaryGap,
+      urgencyState
     } = body;
 
     // Get a fallback user for requesterId
@@ -40,19 +44,20 @@ export async function POST(req: Request) {
     } : undefined;
 
     // Combine title and description for rawDescription
-    const rawDesc = `${title}\n\n${description}`;
+    const effectiveRawDesc = rawDescription || (title && description ? `${title}\n\n${description}` : (title || description || 'Untitled Quest'));
+    const effectiveTitle = title || (rawDescription ? rawDescription.substring(0, 50) : 'Untitled Quest');
 
     // Create ProblemNode
     const problemNode = await prisma.problemNode.create({
       data: {
-        rawDescription: rawDesc || 'Untitled Quest',
-        bountyDescription: title,
-        entityType: 'ENTERPRISE',
-        primaryGap: 'SKILL_GAP',
+        rawDescription: effectiveRawDesc,
+        bountyDescription: effectiveTitle,
+        entityType: entityType || 'ENTERPRISE',
+        primaryGap: primaryGap || 'SKILL_GAP',
         bountyPrizeSatang: Math.floor((parseFloat(bountyPrize) || 0) * 100),
         bountyType: resourceType === 'CASH' ? 'CASH' : (resourceType === 'EQUITY' ? 'EQUITY' : 'RESOURCE_SWAP'),
         status: 'OPEN',
-        urgencyState: 'HOT_MISSION',
+        urgencyState: urgencyState || 'HOT_MISSION',
         requesterId: user.id,
         workTypeId: workTypeId || undefined,
         occupationId: occupationId || undefined,

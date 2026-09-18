@@ -9,11 +9,36 @@ import { useRouter } from "next/navigation";
 
 interface Step {
   id: string;
-  type: 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'OPTIONS';
+  type: 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'OPTIONS' | 'MAGIC_SEARCH';
   question: string;
   options?: { label: string; value: string; icon?: string }[];
   field: string;
   suggestions?: string[];
+}
+
+interface TaxonomyItem {
+  id: string;
+  name: string;
+}
+
+interface OccupationTaxonomy {
+  id: string;
+  name: string;
+  industryId: string;
+  skillTags: TaxonomyItem[];
+}
+
+interface IndustryTaxonomy {
+  id: string;
+  name: string;
+  occupations: OccupationTaxonomy[];
+}
+
+interface SearchMatch {
+  type: 'occupation' | 'skill';
+  item: TaxonomyItem;
+  parentName: string;
+  occupationId?: string;
 }
 
 const panelVariants = {
@@ -45,6 +70,13 @@ export function BountyFlowApp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
+  // Magic Search State
+  const [taxonomyIndustries, setTaxonomyIndustries] = useState<IndustryTaxonomy[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOccupations, setSelectedOccupations] = useState<TaxonomyItem[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<TaxonomyItem[]>([]);
+  const [filteredMatches, setFilteredMatches] = useState<SearchMatch[]>([]);
+
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   // Quantum Universe State
@@ -63,6 +95,54 @@ export function BountyFlowApp() {
       .catch(console.error)
       .finally(() => setLoadingSteps(false));
   }, []);
+
+  // Fetch taxonomy for MAGIC_SEARCH
+  useEffect(() => {
+    fetch('/api/taxonomy')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.industries)) {
+          setTaxonomyIndustries(data.industries);
+        }
+      })
+      .catch(err => console.error("Failed to load taxonomy:", err));
+  }, []);
+
+  // Handle Magic Search Filtering
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredMatches([]);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    const matches: SearchMatch[] = [];
+
+    taxonomyIndustries.forEach(ind => {
+      ind.occupations?.forEach(occ => {
+        if (occ.name.toLowerCase().includes(term)) {
+          matches.push({
+            type: 'occupation',
+            item: { id: occ.id, name: occ.name },
+            parentName: ind.name,
+            occupationId: occ.id
+          });
+        }
+        occ.skillTags?.forEach(skill => {
+          if (skill.name.toLowerCase().includes(term)) {
+            matches.push({
+              type: 'skill',
+              item: { id: skill.id, name: skill.name },
+              parentName: occ.name,
+              occupationId: occ.id
+            });
+          }
+        });
+      });
+    });
+
+    setFilteredMatches(matches.slice(0, 8));
+  }, [searchTerm, taxonomyIndustries]);
 
   // Initialize Universe
   useEffect(() => {
@@ -113,25 +193,38 @@ export function BountyFlowApp() {
 
   // Focus input automatically after typing finishes
   useEffect(() => {
-    if (showInput && inputRef.current && currentStep?.type !== 'OPTIONS') {
+    if (showInput && inputRef.current && currentStep?.type !== 'OPTIONS' && currentStep?.type !== 'MAGIC_SEARCH') {
       inputRef.current.focus();
     }
   }, [showInput, currentStep]);
 
   const handleNext = async (valueOverride?: string) => {
     if (isTyping) return;
-    const val = valueOverride !== undefined ? valueOverride : inputValue;
+
+    let val = valueOverride !== undefined ? valueOverride : inputValue;
     
-    // Allow empty answers? Let's require them.
-    if (!val.trim()) {
-      alert("กรุณาระบุข้อมูล");
-      return;
+    // For MAGIC_SEARCH, check if tags selected or input typed
+    if (currentStep.type === 'MAGIC_SEARCH') {
+      if (selectedOccupations.length === 0 && selectedSkills.length === 0 && !val.trim()) {
+        alert("กรุณาเลือกหรือค้นหาอาชีพ/ทักษะอย่างน้อย 1 รายการ");
+        return;
+      }
+      if (!val.trim()) {
+        const allTags = [...selectedOccupations.map(o => o.name), ...selectedSkills.map(s => s.name)];
+        val = allTags.join(', ');
+      }
+    } else {
+      if (!val.trim()) {
+        alert("กรุณาระบุข้อมูล");
+        return;
+      }
     }
 
-    const newAnswers = { ...answers, [currentStep.field]: val };
+    const fieldKey = currentStep.field || 'answer';
+    const newAnswers = { ...answers, [fieldKey]: val };
     setAnswers(newAnswers);
 
-    // QUANTUM COLLAPSE ANIMATION (Minimalist)
+    // QUANTUM COLLAPSE ANIMATION
     setUniverseDots(prevDots => {
       const activeDots = prevDots.filter(d => d.active);
       const killCount = Math.floor(activeDots.length * 0.2); 
@@ -158,7 +251,6 @@ export function BountyFlowApp() {
       setShowInput(false);
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
-      // Final Step! Submit to API
       submitBounty(newAnswers);
     }
   };
@@ -167,6 +259,33 @@ export function BountyFlowApp() {
     if (e.key === 'Enter' && currentStep.type !== 'TEXTAREA') {
       handleNext();
     }
+  };
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericVal = e.target.value.replace(/[^0-9]/g, '');
+    setInputValue(numericVal);
+  };
+
+  const selectMatch = (match: SearchMatch) => {
+    if (match.type === 'occupation') {
+      if (!selectedOccupations.some(o => o.id === match.item.id)) {
+        setSelectedOccupations(prev => [...prev, match.item]);
+      }
+    } else {
+      if (!selectedSkills.some(s => s.id === match.item.id)) {
+        setSelectedSkills(prev => [...prev, match.item]);
+      }
+    }
+    setSearchTerm("");
+    setFilteredMatches([]);
+  };
+
+  const removeOccupation = (id: string) => {
+    setSelectedOccupations(prev => prev.filter(o => o.id !== id));
+  };
+
+  const removeSkill = (id: string) => {
+    setSelectedSkills(prev => prev.filter(s => s.id !== id));
   };
 
   const submitBounty = async (finalAnswers: Record<string, string>) => {
@@ -178,12 +297,23 @@ export function BountyFlowApp() {
     // Final collapse animation
     setUniverseDots(prev => prev.map(dot => ({ ...dot, opacity: 0, scale: 0 })));
 
+    const title = finalAnswers.title || finalAnswers.questTitle || finalAnswers.rawDescription?.substring(0, 50) || 'Untitled Quest';
+    const description = finalAnswers.rawDescription || finalAnswers.description || '';
+    const bountyPrize = finalAnswers.bountyPrize || '0';
+    const resourceType = finalAnswers.resourceType || 'CASH';
+
     const payload = {
-      title: finalAnswers.title,
-      description: finalAnswers.description,
-      bountyPrize: finalAnswers.bountyPrize,
-      resourceType: finalAnswers.resourceType,
-      resourceAmount: finalAnswers.bountyPrize, // Same for simplicity
+      title,
+      description,
+      rawDescription: finalAnswers.rawDescription,
+      bountyPrize,
+      resourceType,
+      resourceAmount: bountyPrize,
+      occupationId: selectedOccupations[0]?.id || undefined,
+      skillTags: selectedSkills.map(s => s.id),
+      entityType: finalAnswers.entityType || undefined,
+      primaryGap: finalAnswers.primaryGap || undefined,
+      urgencyState: finalAnswers.urgencyState || undefined
     };
 
     try {
@@ -316,35 +446,151 @@ export function BountyFlowApp() {
                         transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
                         className="w-full flex flex-col gap-2"
                       >
-                        <div className="relative w-full">
-                          {currentStep.type === 'TEXTAREA' ? (
-                            <textarea 
-                              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-                              value={inputValue}
-                              onChange={(e) => setInputValue(e.target.value)}
-                              className="w-full bg-white border-2 border-gray-200 rounded-2xl p-4 text-gray-800 text-lg focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm min-h-[120px] resize-none"
-                              placeholder="พิมพ์ข้อความที่ต้องการ..."
-                            />
-                          ) : (
-                            <input 
-                              ref={inputRef as React.RefObject<HTMLInputElement>}
-                              type={currentStep.type === 'NUMBER' ? 'number' : 'text'}
-                              value={inputValue}
-                              onChange={(e) => setInputValue(e.target.value)}
-                              onKeyDown={handleKeyDown}
-                              className="w-full bg-white border-2 border-gray-200 rounded-2xl px-4 py-4 text-gray-800 text-lg focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm"
-                              placeholder={currentStep.type === 'NUMBER' ? "เช่น 50000" : "พิมพ์คำตอบที่นี่..."}
-                            />
-                          )}
-                          <button 
-                            onClick={() => handleNext()}
-                            className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-xl hover:bg-red-700 transition"
-                          >
-                            <i className="fa-solid fa-arrow-up"></i>
-                          </button>
-                        </div>
+                        {/* MAGIC SEARCH (DOT017 Taxonomy Component) */}
+                        {currentStep.type === 'MAGIC_SEARCH' ? (
+                          <div className="w-full flex flex-col gap-2">
+                            {/* Selected Chips */}
+                            {(selectedOccupations.length > 0 || selectedSkills.length > 0) && (
+                              <div className="flex flex-wrap gap-1.5 p-2 bg-gray-50 border border-gray-200 rounded-2xl max-h-28 overflow-y-auto">
+                                {selectedOccupations.map(occ => (
+                                  <span
+                                    key={occ.id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 border border-brand-red/30 text-brand-red rounded-full text-xs font-medium shadow-xs"
+                                  >
+                                    <i className="fa-solid fa-briefcase text-[10px]"></i>
+                                    {occ.name}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeOccupation(occ.id)}
+                                      className="text-brand-red/60 hover:text-brand-red ml-0.5"
+                                    >
+                                      <i className="fa-solid fa-xmark text-[10px]"></i>
+                                    </button>
+                                  </span>
+                                ))}
+                                {selectedSkills.map(skill => (
+                                  <span
+                                    key={skill.id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 border border-gray-300 text-gray-700 rounded-full text-xs font-medium shadow-xs"
+                                  >
+                                    <i className="fa-solid fa-bolt text-[10px] text-amber-500"></i>
+                                    {skill.name}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeSkill(skill.id)}
+                                      className="text-gray-400 hover:text-gray-700 ml-0.5"
+                                    >
+                                      <i className="fa-solid fa-xmark text-[10px]"></i>
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
 
-                        {currentStep.suggestions && (
+                            {/* Search Input Box */}
+                            <div className="relative w-full">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                <i className="fa-solid fa-wand-magic-sparkles text-sm text-brand-red"></i>
+                              </div>
+                              <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    if (filteredMatches.length > 0) {
+                                      selectMatch(filteredMatches[0]);
+                                    } else {
+                                      handleNext(searchTerm);
+                                    }
+                                  }
+                                }}
+                                className="w-full bg-white border-2 border-gray-200 rounded-2xl pl-11 pr-14 py-4 text-gray-800 text-base focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm"
+                                placeholder="ค้นหาอาชีพ หรือทักษะที่ต้องการ..."
+                              />
+                              <button
+                                onClick={() => handleNext()}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-xl hover:bg-red-700 transition shadow-sm"
+                              >
+                                <i className="fa-solid fa-arrow-up"></i>
+                              </button>
+
+                              {/* Search Results Dropdown */}
+                              {filteredMatches.length > 0 && (
+                                <div className="absolute left-0 right-0 bottom-full mb-2 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50 max-h-56 overflow-y-auto">
+                                  <div className="p-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 bg-gray-50/70">
+                                    ผลการค้นหา Taxonomy (DOT017)
+                                  </div>
+                                  {filteredMatches.map((m, idx) => (
+                                    <div
+                                      key={idx}
+                                      onClick={() => selectMatch(m)}
+                                      className="px-4 py-2.5 hover:bg-red-50/50 cursor-pointer flex items-center justify-between border-b border-gray-50 last:border-b-0 transition-colors"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <i className={`fa-solid ${m.type === 'occupation' ? 'fa-briefcase text-brand-red' : 'fa-bolt text-amber-500'} text-xs w-4 text-center`}></i>
+                                        <span className="text-sm font-medium text-gray-800">{m.item.name}</span>
+                                        <span className="text-xs text-gray-400">({m.parentName})</span>
+                                      </div>
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${m.type === 'occupation' ? 'bg-red-100 text-brand-red' : 'bg-amber-100 text-amber-800'}`}>
+                                        {m.type === 'occupation' ? 'อาชีพ' : 'ทักษะ'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          /* STANDARD INPUTS: TEXTAREA, NUMBER, TEXT */
+                          <div className="relative w-full">
+                            {currentStep.type === 'TEXTAREA' ? (
+                              <textarea 
+                                ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                className="w-full bg-white border-2 border-gray-200 rounded-2xl p-4 pr-14 text-gray-800 text-base focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm min-h-[140px] resize-none leading-relaxed"
+                                placeholder="พิมพ์ข้อความที่ต้องการอย่างละเอียด..."
+                              />
+                            ) : currentStep.type === 'NUMBER' ? (
+                              <div className="relative w-full">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-400 pointer-events-none font-bold text-lg select-none">
+                                  <span>฿</span>
+                                </div>
+                                <input 
+                                  ref={inputRef as React.RefObject<HTMLInputElement>}
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={inputValue}
+                                  onChange={handleNumberChange}
+                                  onKeyDown={handleKeyDown}
+                                  className="w-full bg-white border-2 border-gray-200 rounded-2xl pl-10 pr-14 py-4 text-gray-800 text-lg font-semibold focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm"
+                                  placeholder="ระบุตัวเลขงบประมาณ เช่น 50000"
+                                />
+                              </div>
+                            ) : (
+                              <input 
+                                ref={inputRef as React.RefObject<HTMLInputElement>}
+                                type="text"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                className="w-full bg-white border-2 border-gray-200 rounded-2xl px-4 pr-14 py-4 text-gray-800 text-lg focus:outline-none focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 transition-all shadow-sm"
+                                placeholder="พิมพ์คำตอบที่นี่..."
+                              />
+                            )}
+                            <button 
+                              onClick={() => handleNext()}
+                              className="absolute right-3 bottom-3 w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-xl hover:bg-red-700 transition shadow-sm"
+                            >
+                              <i className="fa-solid fa-arrow-up"></i>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Suggestion Chips */}
+                        {currentStep.suggestions && currentStep.suggestions.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-3">
                             {currentStep.suggestions.map((sug, idx) => (
                               <button
@@ -352,6 +598,8 @@ export function BountyFlowApp() {
                                 onClick={() => {
                                   if (currentStep.type === 'TEXTAREA') {
                                     setInputValue((prev) => prev ? prev + '\n' + sug : sug);
+                                  } else if (currentStep.type === 'MAGIC_SEARCH') {
+                                    setSearchTerm(sug);
                                   } else {
                                     setInputValue(sug);
                                   }

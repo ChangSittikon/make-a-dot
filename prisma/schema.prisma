@@ -50,8 +50,8 @@ model Node {
   order      Int      @default(0)
 
   // For INPUT-type nodes (used by BountyFlowApp, etc.)
-  inputType   String?  // TEXT, TEXTAREA, NUMBER, OPTIONS (null = classic option-based)
-  fieldName   String?  // API field name e.g. "title", "description", "bountyPrize"
+  inputType   String?  // TEXT, TEXTAREA, NUMBER, OPTIONS, MAGIC_SEARCH (null = classic option-based)
+  fieldName   String?  // API field name e.g. "title", "rawDescription", "bountyPrize", "occupationId", "skillTags"
   suggestions String?  // JSON array of suggestion chips e.g. '["React","Node.js"]'
 
   options  Option[] @relation("NodeOptions")
