@@ -740,6 +740,11 @@ model ProblemNode {
   workTypeId String?
   workType   WorkType? @relation(fields: [workTypeId], references: [id])
 
+  // ===== REQUESTER PROFILE (Step 3: Cascading Options) =====
+  problemCategory      String? // หมวดหมู่ปัญหา ตาม Step 1 (เงิน/ธุรกิจ, งาน/อาชีพ, ฯลฯ)
+  requesterWorkTypeId  String? // WorkType.id ที่ผู้แจ้งปัญหาเลือก (Layer 1)
+  requesterIndustryId  String? // Industry.id ที่ผู้แจ้งปัญหาเลือก (Layer 2)
+
   // ===== RELATIONS: Engine Connection =====
   // Requester: คนตั้งปัญหา (เจ้าของค่าหัว)
   requesterId String

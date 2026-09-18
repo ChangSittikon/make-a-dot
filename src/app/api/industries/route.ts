@@ -1,43 +1,19 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+﻿import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+// GET /api/industries — returns ALL top-level Industry records dynamically (no hardcoded filter)
 export async function GET() {
   try {
     const industries = await prisma.industry.findMany({
-      orderBy: { order: 'asc' },
-      include: {
-        _count: {
-          select: { nodes: true }
-        },
-        domainDirector: true
-      }
+      where: { parentId: null },
+      select: { id: true, name: true, icon: true },
+      orderBy: { order: "asc" },
     });
-    // map _count to nodeCount for frontend compatibility
-    const formatted = industries.map(ind => ({
-      ...ind,
-      nodeCount: ind._count.nodes
-    }));
-    return NextResponse.json(formatted);
+    return NextResponse.json({ industries });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch industries' }, { status: 500 });
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const json = await request.json();
-    const industry = await prisma.industry.create({
-      data: {
-        name: json.name,
-        icon: json.icon,
-        order: json.order || 0,
-        parentId: json.parentId || null
-      }
-    });
-    return NextResponse.json({ ...industry, nodeCount: 0 });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to create industry' }, { status: 500 });
+    console.error("[/api/industries] Failed:", error);
+    return NextResponse.json({ error: "Failed to fetch industries" }, { status: 500 });
   }
 }
