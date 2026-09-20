@@ -52,7 +52,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
-      <div className="w-full h-[100dvh] sm:h-[844px] sm:max-h-[90vh] sm:w-[430px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
