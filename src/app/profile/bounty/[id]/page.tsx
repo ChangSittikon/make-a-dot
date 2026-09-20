@@ -130,22 +130,24 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
         <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
           <div className="mx-auto flex flex-col gap-5">
             {/* Title & Price Section */}
-            <div className="flex justify-between items-start">
-              <div className="flex-1 pr-4">
-                <span className="inline-block bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full mb-3 tracking-wider">
+            <div className="flex flex-col mb-2">
+              <div className="flex justify-between items-start mb-3">
+                <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider">
                   {bounty.urgencyState}
                 </span>
-                <h1 className="text-2xl font-bold mb-3 text-brand-black leading-tight line-clamp-3">
-                  {bounty.rawDescription}
-                </h1>
-                <div className="flex gap-4 text-[13px] text-gray-500 font-medium">
-                  <span className="flex items-center"><i className="fas fa-building mr-1.5 opacity-70"></i> {bounty.entityType}</span>
-                  <span className="flex items-center"><i className="fas fa-clock mr-1.5 opacity-70"></i> โพสต์เมื่อ 2 วันที่แล้ว</span>
+                <div className="text-right">
+                  <p className="text-[26px] font-extrabold text-brand-black leading-none mb-1 tracking-tight">฿{prizeTHB}</p>
+                  <p className="text-[10px] text-gray-400 font-medium tracking-wide">ค่าตอบแทน</p>
                 </div>
               </div>
-              <div className="text-right shrink-0">
-                <p className="text-[28px] font-extrabold text-brand-black leading-none mb-1 tracking-tight">฿{prizeTHB}</p>
-                <p className="text-[11px] text-gray-400 font-medium tracking-wide">ค่าตอบแทน</p>
+              
+              <h1 className="text-[22px] font-bold mb-4 text-brand-black leading-snug line-clamp-3">
+                {bounty.rawDescription}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 font-medium">
+                <span className="flex items-center"><i className="fas fa-building mr-1.5 opacity-70"></i> {bounty.entityType}</span>
+                <span className="flex items-center"><i className="fas fa-clock mr-1.5 opacity-70"></i> โพสต์เมื่อ 2 วันที่แล้ว</span>
               </div>
             </div>
 
