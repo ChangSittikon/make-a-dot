@@ -45,7 +45,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   // Calculate some mock dashboard data if it's not strictly in DB
   const totalBudget = project.budgetSatang / 100 || 0;
-  const fundedBudget = escrow?.totalAmountSatang ? escrow.totalAmountSatang / 100 : 0;
+  // If no escrow record yet but we have a budget, assume it's funded via Rollover Ledger Transaction
+  const fundedBudget = escrow?.totalAmountSatang ? escrow.totalAmountSatang / 100 : totalBudget;
   const fundingPercent = totalBudget > 0 ? Math.round((fundedBudget / totalBudget) * 100) : 0;
 
   let totalRevShareDistributed = 0;

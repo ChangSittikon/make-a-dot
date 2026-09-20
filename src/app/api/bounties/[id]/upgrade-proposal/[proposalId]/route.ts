@@ -50,6 +50,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     // --- APPROVAL & CONVERSION ENGINE LOGIC ---
 
+    let createdProjectId = '';
+
     // 1. Update this proposal to APPROVED, and others to REJECTED
     await prisma.$transaction(async (tx) => {
       // Approve selected
@@ -81,6 +83,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           budgetSatang: bounty.bountyPrizeSatang,
         }
       });
+      createdProjectId = newProject.id;
 
       // Add proposer as a ProjectMember
       await tx.projectMember.create({
@@ -128,6 +131,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ 
       success: true, 
       message: 'Project upgraded and funds rolled over successfully!',
+      projectId: createdProjectId
     });
 
   } catch (error) {

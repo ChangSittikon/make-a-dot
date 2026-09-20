@@ -21,8 +21,14 @@ export default function ProposalActionButtons({ bountyId, proposalId }: { bounty
       });
       
       if (res.ok) {
-        alert(action === 'APPROVE' ? 'อนุมัติสำเร็จ!' : 'ปฏิเสธสำเร็จ!');
-        router.refresh(); // reload server component
+        const data = await res.json();
+        alert(action === 'APPROVE' ? 'อนุมัติสำเร็จ! ระบบกำลังพาไปหน้าโครงการ' : 'ปฏิเสธสำเร็จ!');
+        
+        if (action === 'APPROVE' && data.projectId) {
+          router.push(`/project/${data.projectId}`);
+        } else {
+          router.refresh(); // reload server component
+        }
       } else {
         const data = await res.json();
         alert(data.error || 'เกิดข้อผิดพลาด');
