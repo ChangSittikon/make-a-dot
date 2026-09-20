@@ -99,5 +99,5 @@ export const createEndorsementSchema = z.object({
 export const addMemberSchema = z.object({
   userId: z.string().min(1),
   role: z.enum(['OWNER', 'MEMBER', 'CONTRACTOR', 'INVESTOR']).default('MEMBER'),
-  equityPercentage: basisPointsSchema.default(0),
+  revSharePercentage: basisPointsSchema.default(0),
 });

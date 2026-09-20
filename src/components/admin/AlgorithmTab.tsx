@@ -90,7 +90,7 @@ export function AlgorithmTab({
             <tr>
               <th className="px-6 py-4">คำถาม & คำตอบ (Options)</th>
               <th className="px-4 py-4 w-32 text-center" title="💰 ทุน/งบประมาณ (-5 ถึง +5)">💰 Budget</th>
-              <th className="px-4 py-4 w-32 text-center" title="💪 การลงแรง/หุ้นส่วน (-5 ถึง +5)">💪 Sweat Eq.</th>
+              <th className="px-4 py-4 w-32 text-center" title="💪 การลงแรง/ส่วนแบ่งรายได้ (-5 ถึง +5)">💪 Sweat Eq.</th>
               <th className="px-4 py-4 w-32 text-center" title="🧠 ทักษะ/ความเชี่ยวชาญ (-5 ถึง +5)">🧠 Skill</th>
               <th className="px-4 py-4 w-32 text-center" title="⏱️ ระยะเวลา/ความเร่งด่วน (-5 ถึง +5)">⏱️ Timeline</th>
               <th className="px-4 py-4 w-24 text-center">จัดการ</th>

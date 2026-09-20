@@ -27,7 +27,7 @@
     "id": "1788443789923",
     "timestamp": "2026-09-03T13:56:29.923Z",
     "action": "Redesigned Project Details Page",
-    "details": "Transformed the /project/[id] page into a dashboard summarizing the Big Picture (Budget/Equity), missing roles, and the connected team, focusing on the Make A Dot concept."
+    "details": "Transformed the /project/[id] page into a dashboard summarizing the Big Picture (Budget/Rev-Share), missing roles, and the connected team, focusing on the Make A Dot concept."
   },
   {
     "id": "1788450658510",

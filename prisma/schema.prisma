@@ -50,9 +50,9 @@ model Node {
   order      Int      @default(0)
 
   // For INPUT-type nodes (used by BountyFlowApp, etc.)
-  inputType   String?  // TEXT, TEXTAREA, NUMBER, OPTIONS, MAGIC_SEARCH (null = classic option-based)
-  fieldName   String?  // API field name e.g. "title", "rawDescription", "bountyPrize", "occupationId", "skillTags"
-  suggestions String?  // JSON array of suggestion chips e.g. '["React","Node.js"]'
+  inputType   String? // TEXT, TEXTAREA, NUMBER, OPTIONS, MAGIC_SEARCH (null = classic option-based)
+  fieldName   String? // API field name e.g. "title", "rawDescription", "bountyPrize", "occupationId", "skillTags"
+  suggestions String? // JSON array of suggestion chips e.g. '["React","Node.js"]'
 
   options  Option[] @relation("NodeOptions")
   incoming Option[] @relation("TargetNode")
@@ -100,8 +100,13 @@ model User {
   trustScore   Int     @default(0)
 
   // Auth.js Relations
-  accounts Account[]
-  sessions Session[]
+  wallet Wallet?
+
+  disputesFiled    Dispute[]        @relation("Plaintiff")
+  disputesDefended Dispute[]        @relation("Defendant")
+  arbitratorVotes  ArbitratorVote[] @relation("Arbitrator")
+  accounts         Account[]
+  sessions         Session[]
 
   // Core Relations
   directorProfile      DomainDirector?
@@ -110,7 +115,7 @@ model User {
   canvasProposals      CollaborationCanvas[] @relation("CanvasProposer")
   guaranteesGiven      GuarantorNode[]       @relation("GuarantorUser")
   endorsementsReceived Endorsement[]         @relation("EndorsedUser")
-  equitySplits         EquitySplitMember[]
+  revShareSplits       RevShareSplitMember[]
 
   // Bounty Protocol Relations
   problemsRequested ProblemNode[] @relation("Requester") // ปัญหาที่ user นี้ตั้งค่าหัว
@@ -182,7 +187,7 @@ model DomainDirector {
 
   // ผลประโยชน์ — ส่วนแบ่งจาก Platform Fee (basis points: 2000 = 20.00%)
   profitSharePercentage Int @default(2000)
-  equityPoints          Int @default(0) // คะแนนหุ้นส่วนสะสม
+  trustPoints           Int @default(0) // คะแนนส่วนแบ่งรายได้สะสม
   totalEarnedSatang     Int @default(0) // รายได้สะสม (สตางค์)
 
   // Relations
@@ -206,8 +211,10 @@ model Project {
   ownerId     String
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
 
-  status       String @default("DRAFT") // DRAFT, SIMULATION, HOT_MISSION, ACTIVE, COMPLETED, CANCELLED
-  budgetSatang Int    @default(0) // งบประมาณรวม (สตางค์)
+  status            String @default("DRAFT") // DRAFT, SIMULATION, HOT_MISSION, ACTIVE, COMPLETED, CANCELLED
+  budgetSatang      Int    @default(0) // งบประมาณรวม (สตางค์)
+  fundingGoalSatang Int    @default(0) // เป้าหมายเงินทุนรวมที่ต้องการระดม
+  revShareOffered   Float  @default(0) // สัดส่วนส่วนแบ่งรายได้ (%) ที่เสนอ
 
   // Project Blueprint — แผนภาพรวมโปรเจกต์ (JSON)
   // e.g. {"vision": "...", "milestones": [...], "roles": [...], "successMetrics": "..."}
@@ -227,14 +234,14 @@ model Project {
   isEndorsed Boolean @default(false)
 
   // Relations
-  members      ProjectMember[]
-  canvas       CollaborationCanvas?
-  escrow       EscrowVault?
-  guarantor    GuarantorNode?
-  endorsements Endorsement[]
-  simulations  ProjectSimulation[]
-  equitySplit  EquitySplit? // ระบบแบ่งสัดส่วน equity ของโปรเจกต์นี้
-  escrowNew    Escrow? // Phase 1 Escrow ล็อกเงิน/ทรัพยากร
+  members       ProjectMember[]
+  canvas        CollaborationCanvas?
+  escrow        EscrowVault?
+  guarantor     GuarantorNode?
+  endorsements  Endorsement[]
+  simulations   ProjectSimulation[]
+  revShareSplit RevShareSplit? // ระบบแบ่งสัดส่วน revShare ของโปรเจกต์นี้
+  escrowNew     Escrow? // Phase 1 Escrow ล็อกเงิน/ทรัพยากร
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -250,7 +257,7 @@ model ProjectMember {
   role String @default("MEMBER") // OWNER, MEMBER, CONTRACTOR, INVESTOR
 
   // ส่วนแบ่ง (basis points: 5000 = 50.00%)
-  equityPercentage Int @default(0)
+  revSharePercentage Int @default(0)
 
   status   String    @default("INVITED") // INVITED, ACCEPTED, REJECTED
   joinedAt DateTime?
@@ -340,6 +347,7 @@ model EscrowVault {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  dispute   Dispute?
 }
 
 model Milestone {
@@ -527,10 +535,10 @@ model FlowOption {
 }
 
 // ============================================================
-// PHASE 1: EQUITY SPLIT — ระบบแบ่งสัดส่วน (Rosetta Stone: DOT001)
+// PHASE 1: REV_SHARE SPLIT — ระบบแบ่งสัดส่วน (Rosetta Stone: DOT001)
 // ============================================================
 
-model EquitySplit {
+model RevShareSplit {
   id        String  @id @default(cuid())
   projectId String  @unique
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -546,19 +554,19 @@ model EquitySplit {
   lockedAt DateTime?
 
   // สมาชิกที่มีส่วนแบ่งใน Split นี้
-  members EquitySplitMember[]
+  members RevShareSplitMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// Junction Table: User ↔ EquitySplit (แต่ละคนได้กี่ % และบทบาทอะไร)
-model EquitySplitMember {
-  id            String      @id @default(cuid())
-  equitySplitId String
-  equitySplit   EquitySplit @relation(fields: [equitySplitId], references: [id], onDelete: Cascade)
-  userId        String
-  user          User        @relation(fields: [userId], references: [id])
+// Junction Table: User ↔ RevShareSplit (แต่ละคนได้กี่ % และบทบาทอะไร)
+model RevShareSplitMember {
+  id              String        @id @default(cuid())
+  revShareSplitId String
+  revShareSplit   RevShareSplit @relation(fields: [revShareSplitId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
 
   // บทบาทของ User ใน Project นี้ (อ้างอิง DOT001: Creator, Executor, Guarantor, Investor)
   role String @default("MEMBER") // OWNER, CREATOR, EXECUTOR, GUARANTOR, INVESTOR, ADVISOR
@@ -567,8 +575,8 @@ model EquitySplitMember {
   percentage Int @default(0)
 
   // DOT023: รูปแบบการแบ่งและเงื่อนไขเวลา
-  splitType         String @default("FIXED") // FIXED_PRICE, REVENUE_SHARE, EQUITY, SWEAT_EQUITY
-  vestingPeriodDays Int? // จำนวนวันที่ต้องทำงานถึงจะได้หุ้น (กรณี Sweat Equity)
+  splitType         String @default("FIXED") // FIXED_PRICE, REVENUE_SHARE, REV_SHARE, SWEAT_SHARE
+  vestingPeriodDays Int? // จำนวนวันที่ต้องทำงานถึงจะได้ส่วนแบ่ง (กรณี Sweat Share)
 
   // สถานะการยอมรับของ User คนนี้
   status     String    @default("PENDING") // PENDING, ACCEPTED, REJECTED, COUNTER_PROPOSED
@@ -576,7 +584,7 @@ model EquitySplitMember {
 
   createdAt DateTime @default(now())
 
-  @@unique([equitySplitId, userId])
+  @@unique([revShareSplitId, userId])
 }
 
 // ============================================================
@@ -619,7 +627,7 @@ model AgentLog {
   id String @id @default(cuid())
 
   // ประเภทการตัดสินใจของ AI
-  action       String // CODE_EDIT, DB_PUSH, GIT_COMMIT, SCHEMA_UPDATE, FLOW_CREATED, MATCH_EXECUTED, EQUITY_PROPOSED
+  action       String // CODE_EDIT, DB_PUSH, GIT_COMMIT, SCHEMA_UPDATE, FLOW_CREATED, MATCH_EXECUTED, REV_SHARE_PROPOSED
   decisionType String @default("EXECUTION") // PLANNING, EXECUTION, REVIEW, LEARNING
 
   // Rosetta Stone: การตัดสินใจนี้เกี่ยวข้องกับ DOT ไหน
@@ -628,7 +636,7 @@ model AgentLog {
 
   // รายละเอียด
   details String? // อธิบายว่า AI ตัดสินใจทำอะไร และเพราะอะไร
-  payload String? // JSON — ข้อมูลเพิ่มเติม (diff, matched users, proposed equity, etc.)
+  payload String? // JSON — ข้อมูลเพิ่มเติม (diff, matched users, proposed revShare, etc.)
 
   // สถานะ
   status   String  @default("SUCCESS") // SUCCESS, FAILED, PENDING, ROLLED_BACK
@@ -718,8 +726,11 @@ model ProblemNode {
 
   // ===== BOUNTY PROTOCOL (DOT012) =====
   bountyPrizeSatang Int     @default(0) // เงินรางวัลค่าหัว (สตางค์) — ถ้า 0 = แลกเปลี่ยน/ไม่ใช่เงินสด
-  bountyType        String  @default("CASH") // CASH, EQUITY, RESOURCE_SWAP, HYBRID
+  bountyType        String  @default("CASH") // CASH, REV_SHARE, RESOURCE_SWAP, HYBRID
   bountyDescription String? // อธิบายรางวัลเพิ่มเติม (เช่น "ฟรีค่าห้องอัดเสียง 3 วัน")
+
+  // การวิวัฒนาการปัญหา (Bounty-to-Project Conversion)
+  upgradedToProjectId String? @unique
 
   // ===== KPI & NEGOTIATION SANDBOX =====
   kpiDefinition  String? // JSON: [{"metric": "ยอดขาย", "target": "100 units", "deadline": "2026-12-31"}]
@@ -741,9 +752,9 @@ model ProblemNode {
   workType   WorkType? @relation(fields: [workTypeId], references: [id])
 
   // ===== REQUESTER PROFILE (Step 3: Cascading Options) =====
-  problemCategory      String? // หมวดหมู่ปัญหา ตาม Step 1 (เงิน/ธุรกิจ, งาน/อาชีพ, ฯลฯ)
-  requesterWorkTypeId  String? // WorkType.id ที่ผู้แจ้งปัญหาเลือก (Layer 1)
-  requesterIndustryId  String? // Industry.id ที่ผู้แจ้งปัญหาเลือก (Layer 2)
+  problemCategory     String? // หมวดหมู่ปัญหา ตาม Step 1 (เงิน/ธุรกิจ, งาน/อาชีพ, ฯลฯ)
+  requesterWorkTypeId String? // WorkType.id ที่ผู้แจ้งปัญหาเลือก (Layer 1)
+  requesterIndustryId String? // Industry.id ที่ผู้แจ้งปัญหาเลือก (Layer 2)
 
   // ===== RELATIONS: Engine Connection =====
   // Requester: คนตั้งปัญหา (เจ้าของค่าหัว)
@@ -769,14 +780,14 @@ model ProblemNode {
   matchLogs        MatchMakingLog[] // ประวัติการจับคู่
 
   // Timestamps
-  publishedAt     DateTime? // เวลาที่เปิดรับสมัคร
-  matchedAt       DateTime? // เวลาที่ AI จับคู่สำเร็จ
-  startedAt       DateTime? // เวลาเริ่มงานจริง
-  completedAt     DateTime? // เวลาที่งานสำเร็จ
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  equityAndSplit  EquityAndSplit?
-  escrowCondition EscrowCondition?
+  publishedAt      DateTime? // เวลาที่เปิดรับสมัคร
+  matchedAt        DateTime? // เวลาที่ AI จับคู่สำเร็จ
+  startedAt        DateTime? // เวลาเริ่มงานจริง
+  completedAt      DateTime? // เวลาที่งานสำเร็จ
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  revShareAndSplit RevShareAndSplit?
+  escrowCondition  EscrowCondition?
 }
 
 // Junction Table: ProblemNode ↔ SkillTag (M:N)
@@ -893,7 +904,7 @@ model User_Requester {
 
   currentPainPoint String?
   urgencyLevel     String? // e.g., 24 ชม., 1 สัปดาห์, ไม่รีบ
-  availableAssets  String? // e.g., มีเงินจ่าย, มีเปอร์เซ็นต์หุ้นให้, มีเครดิต
+  availableAssets  String? // e.g., มีเงินจ่าย, มีเปอร์เซ็นต์ส่วนแบ่งให้, มีเครดิต
 }
 
 model User_Solver {
@@ -902,22 +913,22 @@ model User_Solver {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   historicalSuccess    Int     @default(0)
-  expectedCompensation String? // e.g., เงินสด, หุ้นส่วน, เวลาแลกเวลา
+  expectedCompensation String? // e.g., เงินสด, ส่วนแบ่งรายได้, เวลาแลกเวลา
   availability         String? // e.g., ว่างทันที, รับเฉพาะเสาร์-อาทิตย์
 }
 
 // ============================================================
-// DOT023: EQUITY AND ESCROW
+// DOT023: REV_SHARE AND ESCROW
 // ============================================================
 
-model EquityAndSplit {
+model RevShareAndSplit {
   id            String      @id @default(cuid())
   problemNodeId String      @unique
   problemNode   ProblemNode @relation(fields: [problemNodeId], references: [id], onDelete: Cascade)
 
-  splitType     String // Fixed Price, Revenue Share, Equity, Sweat Equity
+  splitType     String // Fixed Price, Revenue Share, Rev-Share, Sweat Share
   percentage    Float   @default(0)
-  vestingPeriod String? // ระยะเวลาที่ต้องอยู่ถึงจะได้หุ้น
+  vestingPeriod String? // ระยะเวลาที่ต้องอยู่ถึงจะได้ส่วนแบ่ง
 }
 
 model EscrowCondition {
@@ -927,5 +938,77 @@ model EscrowCondition {
 
   lockedAmount   Float   @default(0)
   releaseTrigger String // งานเสร็จ 100%, ถึงวันที่กำหนด
-  penaltyClause  String? // ริบเงิน, ลดสัดส่วนหุ้น
+  penaltyClause  String? // ริบเงิน, ลดสัดส่วนส่วนแบ่ง
+}
+
+// ============================================================
+// PILLAR 6: UNIFIED LEDGER & WALLET
+// ============================================================
+
+model Wallet {
+  id            String @id @default(cuid())
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance       Int    @default(0) // ยอดเงินที่ถอนได้ (Satang)
+  lockedBalance Int    @default(0) // ยอดที่ถูกล็อกใน Escrow หรือ Stake (Satang)
+
+  transactions LedgerTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LedgerTransaction {
+  id       String @id @default(cuid())
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  amount Int // จำนวนเงิน (Satang) บวกคือเข้า ลบคือออก
+  type   String // DEPOSIT, WITHDRAWAL, STAKE_HOLD, ESCROW_RELEASE, TRANSFER
+  status String @default("COMPLETED") // PENDING, COMPLETED, FAILED, REVERTED
+
+  referenceId String? // อ้างอิง ID ของ Escrow, Project, หรือ Bounty ที่มาของ Transaction นี้
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// PILLAR 7: DISPUTE & ARBITRATION (ศาลลูกขุน)
+// ============================================================
+
+model Dispute {
+  id       String      @id @default(cuid())
+  escrowId String      @unique // 1 Dispute ต่อ 1 Escrow (ต่อ 1 Milestone/Bounty)
+  escrow   EscrowVault @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+
+  plaintiffId String // ผู้ร้องเรียน
+  plaintiff   User   @relation("Plaintiff", fields: [plaintiffId], references: [id])
+
+  defendantId String // ผู้ถูกร้องเรียน
+  defendant   User   @relation("Defendant", fields: [defendantId], references: [id])
+
+  status String @default("OPEN") // OPEN, VOTING, RESOLVED, APPEALED_TO_ADMIN
+  reason String
+
+  votes ArbitratorVote[]
+
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model ArbitratorVote {
+  id        String  @id @default(cuid())
+  disputeId String
+  dispute   Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  arbitratorId String
+  arbitrator   User   @relation("Arbitrator", fields: [arbitratorId], references: [id])
+
+  verdict       String // SOLVER_WINS, REQUESTER_WINS, SPLIT
+  justification String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([disputeId, arbitratorId])
 }

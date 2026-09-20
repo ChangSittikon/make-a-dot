@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 // Reward type values — must match ProblemNode.bountyType in schema.prisma
-export type RewardType = "CASH" | "RESOURCE_SWAP" | "EQUITY" | "HYBRID";
+export type RewardType = "CASH" | "RESOURCE_SWAP" | "REV_SHARE" | "HYBRID";
 
 export interface DynamicRewardValue {
   bountyType: RewardType;
@@ -22,7 +22,7 @@ const QUICK_PICKS_THB = [100, 1_000, 10_000, 100_000, 500_000];
 const REWARD_TYPES: { type: RewardType; icon: string; label: string; placeholder: string }[] = [
   { type: "CASH",          icon: "fa-solid fa-money-bill-wave", label: "💰 เงินสด",          placeholder: "ระบุจำนวนเงิน (บาท)" },
   { type: "RESOURCE_SWAP", icon: "fa-solid fa-boxes-stacked",   label: "📦 สิ่งของ/ทรัพยากร", placeholder: "เช่น แล็ปท็อป, ห้องอัดเสียง 3 วัน..." },
-  { type: "EQUITY",        icon: "fa-solid fa-chart-pie",        label: "📈 หุ้น/ส่วนแบ่งกำไร", placeholder: "เช่น 5% equity ของบริษัท..." },
+  { type: "REV_SHARE",        icon: "fa-solid fa-chart-pie",        label: "📈 ส่วนแบ่ง/ส่วนแบ่งกำไร", placeholder: "เช่น 5% revShare ของบริษัท..." },
   { type: "HYBRID",        icon: "fa-solid fa-handshake-angle",  label: "🤝 ทำงานแลกเปลี่ยน",  placeholder: "เช่น ช่วยเขียนโค้ด แลกกับ คอร์สอบรม..." },
 ];
 

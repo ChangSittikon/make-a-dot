@@ -81,7 +81,7 @@ Here is an IDEAL example of a well-structured flow for the E-Sports industry:
       "question": "งบประมาณที่คุณพร้อมลงทุนในระยะแรก?",
       "order": 4,
       "options": [
-        { "id": "opt-005a", "label": "ยังไม่มีงบ เน้นแลกแรงงาน (Sweat Equity)", "icon": "fa-solid fa-hand-sparkles", "targetNodeId": "result-001", "order": 0 },
+        { "id": "opt-005a", "label": "ยังไม่มีงบ เน้นแลกแรงงาน (Sweat Share)", "icon": "fa-solid fa-hand-sparkles", "targetNodeId": "result-001", "order": 0 },
         { "id": "opt-005b", "label": "มีงบ 10,000 - 50,000 บาท", "icon": "fa-solid fa-wallet", "targetNodeId": "result-001", "order": 1 },
         { "id": "opt-005c", "label": "พร้อมลงทุนมากกว่า 50,000 บาท", "icon": "fa-solid fa-sack-dollar", "targetNodeId": "result-001", "order": 2 }
       ]
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
       skill: 'ต้องมีคำถามเจาะลึกทักษะ ความสามารถ หรือประสบการณ์ที่ต้องการ',
       timeline: 'ต้องมีคำถามเกี่ยวกับระยะเวลา กำหนดส่ง หรือไทม์ไลน์ของโปรเจกต์',
       risk: 'ต้องสอดแทรกคำถามประเมินความเสี่ยง อุปสรรค หรือข้อจำกัดที่อาจเกิดขึ้น',
-      sweat: 'ต้องมีคำถามเกี่ยวกับ Sweat Equity (การลงแรงแทนเงิน) เช่น ทักษะอะไรที่พร้อมลงแรง',
+      sweat: 'ต้องมีคำถามเกี่ยวกับ Sweat Share (การลงแรงแทนเงิน) เช่น ทักษะอะไรที่พร้อมลงแรง',
       location: 'ต้องมีคำถามเกี่ยวกับพื้นที่ ทำเล ภูมิภาค หรือสถานที่ทำงาน',
       collab: 'ต้องเน้นคำถามเกี่ยวกับการจับคู่ผู้ร่วมงาน ทีม หรือพาร์ทเนอร์ที่ต้องการ',
     };

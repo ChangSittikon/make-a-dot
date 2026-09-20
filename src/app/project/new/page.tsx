@@ -156,7 +156,7 @@ export default function ProjectBuilder() {
                 </div>
                 <p className="text-sm text-slate-400 mb-4">คุณมีไอเดียและเวลา แต่ขาดคนเขียนระบบหลังบ้านที่ต้องใช้ความปลอดภัยสูง</p>
                 <button className="w-full py-2 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold hover:bg-amber-500/20 transition">
-                  <i className="fa-solid fa-magnifying-glass mr-2"></i> ค้นหาพาร์ทเนอร์สายเทค (Sweat Equity)
+                  <i className="fa-solid fa-magnifying-glass mr-2"></i> ค้นหาพาร์ทเนอร์สายเทค (Sweat Share)
                 </button>
               </div>
 

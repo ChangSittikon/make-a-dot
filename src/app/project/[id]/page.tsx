@@ -48,13 +48,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const fundedBudget = escrow?.totalAmountSatang ? escrow.totalAmountSatang / 100 : 0;
   const fundingPercent = totalBudget > 0 ? Math.round((fundedBudget / totalBudget) * 100) : 0;
 
-  let totalEquityDistributed = 0;
-  members.forEach((m: any) => { totalEquityDistributed += (m.equityPercentage / 100) });
-  const availableEquity = Math.max(0, 100 - totalEquityDistributed);
+  let totalRevShareDistributed = 0;
+  members.forEach((m: any) => { totalRevShareDistributed += (m.revSharePercentage / 100) });
+  const availableRevShare = Math.max(0, 100 - totalRevShareDistributed);
 
   // Mock open roles (since we don't have a dedicated table for it yet, we just mock it for UX)
   const openRoles = [
-    { title: 'Frontend Developer', type: 'Sweat Equity', offer: '5%', icon: 'fa-code' },
+    { title: 'Frontend Developer', type: 'Sweat Share', offer: '5%', icon: 'fa-code' },
     { title: 'UX/UI Designer', type: 'Cash', offer: '฿15,000', icon: 'fa-pen-nib' }
   ];
 
@@ -105,19 +105,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 <p className="text-[9px] text-gray-400 mt-1.5 text-right">{fundingPercent}% Funded</p>
               </div>
 
-              {/* Equity Card */}
+              {/* RevShare Card */}
               <div className="bg-white dark:bg-[#1e2329] border border-gray-200 dark:border-gray-800 rounded-[20px] p-4 relative overflow-hidden shadow-sm">
                 <i className="fa-solid fa-chart-line absolute -right-2 -bottom-2 text-4xl text-gray-50 dark:text-gray-800/30"></i>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase mb-1">หุ้นส่วน (Equity)</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase mb-1">ส่วนแบ่งรายได้ (RevShare)</p>
                 <div className="flex items-end gap-1 mb-2">
-                  <h3 className="text-xl font-black text-gray-900 dark:text-white">{totalEquityDistributed}%</h3>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white">{totalRevShareDistributed}%</h3>
                   <span className="text-[10px] text-gray-400 mb-1">แบ่งแล้ว</span>
                 </div>
                 {/* Progress Bar */}
                 <div className="w-full bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${totalEquityDistributed}%` }}></div>
+                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${totalRevShareDistributed}%` }}></div>
                 </div>
-                <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1.5 text-right">เหลือ {availableEquity}% (Available)</p>
+                <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1.5 text-right">เหลือ {availableRevShare}% (Available)</p>
               </div>
             </div>
 
@@ -187,8 +187,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">{member.role}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-gray-900 dark:text-white">{member.equityPercentage / 100}%</p>
-                    <p className="text-[9px] text-gray-400 uppercase tracking-wider font-bold">Equity</p>
+                    <p className="text-sm font-black text-gray-900 dark:text-white">{member.revSharePercentage / 100}%</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wider font-bold">RevShare</p>
                   </div>
                 </div>
               ))}

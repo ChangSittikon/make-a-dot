@@ -249,8 +249,8 @@ export default async function ProfileSettingsPage() {
                 </div>
                 <div className="bg-white border border-gray-100 rounded-[14px] p-4 relative overflow-hidden shadow-sm">
                   <div className="absolute top-0 right-0 w-12 h-12 bg-[#FF1A1A] blur-[20px] opacity-10 rounded-full"></div>
-                  <p className="text-[10px] text-gray-500 mb-1 tracking-wide font-medium">Equity Points</p>
-                  <p className="text-xl font-black text-[#FF1A1A]">{directorData.equityPoints}</p>
+                  <p className="text-[10px] text-gray-500 mb-1 tracking-wide font-medium">Trust Points</p>
+                  <p className="text-xl font-black text-[#FF1A1A]">{directorData.trustPoints}</p>
                 </div>
               </section>
               

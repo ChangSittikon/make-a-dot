@@ -31,7 +31,7 @@ export async function POST(request: Request) {
           projectId: project.id,
           userId: user.id,
           role: 'OWNER',
-          equityPercentage: 10000, 
+          revSharePercentage: 10000, 
           status: 'ACCEPTED',
           joinedAt: new Date()
         }
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
           proposerId: user.id,
           splitType: 'REVENUE_SHARE',
           status: 'DRAFT',
-          smartSummary: 'This is a draft agreement. Please add resources to calculate equity automatically.'
+          smartSummary: 'This is a draft agreement. Please add resources to calculate revShare automatically.'
         }
       });
 

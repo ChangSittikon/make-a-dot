@@ -110,11 +110,11 @@ export default async function WalletPage() {
             </div>
           </div>
 
-          {/* Equity & Split Agreements Section (Make a Dot specific) */}
+          {/* RevShare & Split Agreements Section (Make a Dot specific) */}
           <div className="mt-4 px-4 space-y-3">
             <div className="bg-white dark:bg-[#1e2329] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors duration-300">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">การตกลงสัดส่วน (Equity Splits)</h3>
+                <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">การตกลงสัดส่วน (RevShare Splits)</h3>
                 <Link href="#" className="text-xs text-brand-red font-medium">ดูทั้งหมด</Link>
               </div>
               

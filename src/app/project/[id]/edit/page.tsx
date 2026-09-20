@@ -16,8 +16,8 @@ export default function ProjectBuilderPage({ params }: { params: Promise<{ id: s
   const [sections, setSections] = useState([ 
     { id: 'overview', title: 'ภาพรวมโปรเจกต์ (The Big Picture)', icon: 'fa-chart-pie', enabled: true, desc: 'จุดประสงค์ เป้าหมาย และสถานะของโครงการ' }, 
     { id: 'in_kind_capital', title: 'โครงสร้างเงินทุนไร้เงินสด (Bootstrapping Capital)', icon: 'fa-coins', enabled: true, desc: 'แสดงมูลค่าทรัพยากร (ของ/แรง) เทียบกับเงินสดที่ต้องการจริง (Cashless Gauge)' }, 
-    { id: 'resource_to_equity', title: 'การจัดสรรหุ้นส่วน (Resource-to-Equity)', icon: 'fa-scale-balanced', enabled: true, desc: 'คำนวณและแจกแจงหุ้นส่วนตามมูลค่าทรัพยากร (Sweat Equity) ที่แต่ละคนนำมาลง' }, 
-    { id: 'resource_matchmaker', title: 'กระดานแลกเปลี่ยนทรัพยากร (Resource Matchmaker)', icon: 'fa-handshake', enabled: true, desc: 'ประกาศหาทรัพยากรที่ขาด (คน/ของ/สถานที่) และเสนอแลกเปลี่ยนด้วย Sweat Equity' }, 
+    { id: 'resource_to_revShare', title: 'การจัดสรรส่วนแบ่งรายได้ (Resource-to-RevShare)', icon: 'fa-scale-balanced', enabled: true, desc: 'คำนวณและแจกแจงส่วนแบ่งรายได้ตามมูลค่าทรัพยากร (Sweat Share) ที่แต่ละคนนำมาลง' }, 
+    { id: 'resource_matchmaker', title: 'กระดานแลกเปลี่ยนทรัพยากร (Resource Matchmaker)', icon: 'fa-handshake', enabled: true, desc: 'ประกาศหาทรัพยากรที่ขาด (คน/ของ/สถานที่) และเสนอแลกเปลี่ยนด้วย Sweat Share' }, 
     { id: 'team_resources', title: 'ทีมงานปัจจุบัน (Connected Dots)', icon: 'fa-users', enabled: true, desc: 'รายชื่อทีมงาน และทรัพยากรที่พวกเขาได้สมทบไปแล้ว' }, 
     { id: 'simulator', title: 'จำลองจุดคุ้มทุน (Breakeven Simulator)', icon: 'fa-flask', enabled: false, desc: 'จำลองความคุ้มค่าและจุดคุ้มทุน เมื่อไม่ต้องจ่ายเงินก้อนเป็นค่าเช่า/ค่าแรงล่วงหน้า' }, 
     { id: 'trust', title: 'การรับรอง (Trust & Endorsements)', icon: 'fa-shield-halved', enabled: true, desc: 'การรับรองจาก Director และการค้ำประกันทรัพยากร' }, 

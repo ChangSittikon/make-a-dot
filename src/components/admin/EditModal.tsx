@@ -142,12 +142,14 @@ export function EditModal({
                   onChange={(e) => setInputType(e.target.value)}
                   className="w-full text-xs p-2 border border-purple-200 rounded bg-white mb-3"
                 >
-                  <option value="">ไม่ใช้ (Option-based ปกติ)</option>
-                  <option value="TEXT">TEXT — กล่องพิมพ์ข้อความ</option>
-                  <option value="TEXTAREA">TEXTAREA — กล่องพิมพ์ข้อความยาว</option>
-                  <option value="NUMBER">NUMBER — กล่องพิมพ์ตัวเลข</option>
-                  <option value="OPTIONS">OPTIONS — ตัวเลือกแบบ Card</option>
-                  <option value="MAGIC_SEARCH">MAGIC_SEARCH — ค้นหาอาชีพ/ทักษะอัจฉริยะ</option>
+                  <option value="">ไม่มี (Option-based แบบคลิกเลือก)</option>
+                  <option value="TEXT">TEXT — กรอกข้อความสั้นๆ</option>
+                  <option value="TEXTAREA">TEXTAREA — กรอกข้อความยาว</option>
+                  <option value="NUMBER">NUMBER — กรอกตัวเลข</option>
+                  <option value="OPTIONS">OPTIONS — คลิกตัวเลือกแบบ Card</option>
+                  <option value="MAGIC_SEARCH">MAGIC_SEARCH — ค้นหาอาชีพ/ทักษะอัตโนมัติ</option>
+                  <option value="DYNAMIC_REWARD">DYNAMIC_REWARD — ระบบคำนวณค่าตอบแทน</option>
+                  <option value="CASCADING_OPTIONS">CASCADING_OPTIONS — เลือกหมวดหมู่ 2 ชั้น</option>
                 </select>
 
                 {isInputNode && (
@@ -161,15 +163,17 @@ export function EditModal({
                       className="w-full text-xs p-2 border border-purple-200 rounded bg-white mb-3"
                     >
                       <option value="">-- เลือก Field ใน ProblemNode --</option>
-                      <option value="title">title (หัวข้อปัญหา / Quest Title)</option>
-                      <option value="rawDescription">rawDescription (คำอธิบายปัญหาแบบละเอียด)</option>
-                      <option value="description">description (คำอธิบายเพิ่มเติม)</option>
-                      <option value="bountyPrize">bountyPrize (มูลค่าเงินรางวัลค่าตอบแทน)</option>
-                      <option value="resourceType">resourceType (ประเภทค่าตอบแทน CASH / SWAP / EQUITY)</option>
-                      <option value="magicSearch">magicSearch / occupation & skills (ค้นหาอาชีพและทักษะ)</option>
-                      <option value="entityType">entityType (ประเภทผู้แจ้ง: INDIVIDUAL / SME / STARTUP)</option>
-                      <option value="primaryGap">primaryGap (ช่องว่าง: SKILL_GAP / RESOURCE_GAP ฯลฯ)</option>
-                      <option value="urgencyState">urgencyState (ความเร่งด่วน: NORMAL / URGENT / HOT_MISSION)</option>
+                      <option value="problemCategory">problemCategory (หมวดหมู่ปัญหา เช่น เงิน, งาน)</option>
+                      <option value="bountyReward">bountyReward (Dynamic Reward Input)</option>
+                      <option value="requesterProfile">requesterProfile (Cascading WorkType/Industry)</option>
+                      <option value="magicSearch">magicSearch (ค้นหาอาชีพ/ทักษะ)</option>
+                      <option value="rawDescription">rawDescription (คำอธิบายรายละเอียด)</option>
+                      <option value="title">title (หัวข้อปัญหา)</option>
+                      <option value="bountyPrize">bountyPrize (มูลค่าค่าตอบแทน)</option>
+                      <option value="resourceType">resourceType (รูปแบบค่าตอบแทน CASH / SWAP)</option>
+                      <option value="entityType">entityType (ประเภทผู้แจ้ง INDIVIDUAL / SME)</option>
+                      <option value="primaryGap">primaryGap (ช่องโหว่ปัญหา SKILL_GAP / RESOURCE_GAP)</option>
+                      <option value="urgencyState">urgencyState (ความเร่งด่วน NORMAL / URGENT)</option>
                     </select>
 
                     <label className="block text-[10px] font-bold text-purple-500 uppercase mb-1 mt-2">

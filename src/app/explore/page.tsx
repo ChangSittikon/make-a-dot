@@ -27,17 +27,16 @@ export default async function ExplorePage() {
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-white dark:bg-[#161a1e] relative flex flex-col overflow-hidden shadow-2xl transition-colors duration-300">
         
         {/* Search Experience */}
-        <header className="px-5 py-4 flex items-center gap-3 sticky top-0 bg-white/90 dark:bg-[#1e2329]/90 backdrop-blur-md z-20">
-          <div className="relative flex-1">
-            <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <header className="px-5 py-4 sticky top-0 bg-white/90 dark:bg-[#1e2329]/90 backdrop-blur-md z-20">
+          <div className="relative w-full flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 pl-4">
+            <i className="fa-solid fa-search text-gray-400"></i>
             <input 
               type="text" 
-              placeholder="ค้นหาโปรเจกต์, อุตสาหกรรม, สายงาน..." 
-              className="w-full bg-gray-100 dark:bg-[#2b3139] text-gray-900 dark:text-white rounded-full py-2.5 pl-10 pr-10 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-red placeholder-gray-500" 
+              placeholder="ค้นหาโปรเจกต์, ภารกิจปัญหา, อุตสาหกรรม..." 
+              className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 px-3 text-sm focus:outline-none"
             />
-            <i className="fa-solid fa-sliders absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <AuthButton session={session} />
           </div>
-          <AuthButton session={session} />
         </header>
 
         <main className="flex-1 overflow-y-auto pb-6 space-y-6 scrollable-content">

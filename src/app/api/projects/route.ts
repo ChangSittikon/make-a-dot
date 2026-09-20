@@ -49,13 +49,13 @@ export async function POST(request: Request) {
         data,
       });
 
-      // 2. Create ProjectMember for Owner (100% equity initially)
+      // 2. Create ProjectMember for Owner (100% revShare initially)
       await tx.projectMember.create({
         data: {
           projectId: project.id,
           userId: data.ownerId,
           role: 'OWNER',
-          equityPercentage: 10000, // 100%
+          revSharePercentage: 10000, // 100%
           status: 'ACCEPTED',
           joinedAt: new Date()
         }
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
           proposerId: data.ownerId,
           splitType: 'REVENUE_SHARE',
           status: 'DRAFT',
-          smartSummary: 'This is a draft agreement. Please add resources to calculate equity automatically.'
+          smartSummary: 'This is a draft agreement. Please add resources to calculate revShare automatically.'
         }
       });
 

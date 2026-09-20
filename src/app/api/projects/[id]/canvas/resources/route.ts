@@ -47,10 +47,10 @@ export async function POST(
         return acc;
       }, {} as Record<string, number>);
 
-      // Update equity percentages in ProjectMember (basis points: 10000 = 100%)
+      // Update revShare percentages in ProjectMember (basis points: 10000 = 100%)
       if (totalValueSatang > 0) {
         for (const contributorId of Object.keys(contributorTotals)) {
-          const equityBasisPoints = Math.floor((contributorTotals[contributorId] / totalValueSatang) * 10000);
+          const revShareBasisPoints = Math.floor((contributorTotals[contributorId] / totalValueSatang) * 10000);
           
           await tx.projectMember.updateMany({
             where: {
@@ -58,7 +58,7 @@ export async function POST(
               userId: contributorId
             },
             data: {
-              equityPercentage: equityBasisPoints
+              revSharePercentage: revShareBasisPoints
             }
           });
         }

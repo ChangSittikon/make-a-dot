@@ -1,13 +1,16 @@
+﻿const fs = require('fs');
+
+const newContent = `
 ## [CORE RULE] SCHEMA STRICTNESS & DEFENSIVE CODING
 **Trigger**: บังคับใช้กฎนี้เฉพาะเมื่อต้องเขียน/แก้ไข **API, Database (Prisma), Data Fetching** หรือ **State ที่ผูกกับ Database**
 
 **1. ZERO GUESSING**
 ห้ามเดาหรือสมมติชื่อ Field, Model, หรือ Relation **เด็ดขาด**
-- ถ้าไม่แน่ใจ -> หยุด -> ไปอ่าน `prisma/schema.prisma` ก่อนเสมอ
+- ถ้าไม่แน่ใจ -> หยุด -> ไปอ่าน \`prisma/schema.prisma\` ก่อนเสมอ
 - ห้ามพิมพ์ชื่อ field จากความจำ แม้จะใช้ชื่อนั้นมาก่อนในบทสนทนา
 
 **2. ALWAYS VERIFY**
-ต้องอ่านไฟล์ `prisma/schema.prisma` **ก่อนเสมอ** เพื่อดึงชื่อตัวแปร, Type, และโครงสร้าง Relation ที่ถูกต้อง 100%
+ต้องอ่านไฟล์ \`prisma/schema.prisma\` **ก่อนเสมอ** เพื่อดึงชื่อตัวแปร, Type, และโครงสร้าง Relation ที่ถูกต้อง 100%
 - รวมถึง: ชื่อ Model, ชื่อ Field, @relation, Enum values
 - ไม่มีข้อยกเว้น แม้แต่ field ที่ "ดูง่าย" ก็ต้องยืนยันจาก schema
 
@@ -27,8 +30,8 @@
 **Trigger**: บังคับใช้ทุกครั้งที่มีการเขียน Database Script, Migration, Seed หรือสร้าง UI ที่มีข้อมูลประกอบ
 
 **1. NO DESTRUCTIVE DATA MUTATION**
-- ห้ามใช้คำสั่ง `deleteMany`, `drop`, `truncate` หรือวิธีการล้างกระดานเพื่อสร้างใหม่เด็ดขาด
-- การเขียนสคริปต์จัดการข้อมูลต้องใช้สถาปัตยกรรมแบบ `Idempotent` (รันซ้ำได้ไม่พัง) โดยใช้คำสั่ง `upsert` (Update or Insert) เสมอ
+- ห้ามใช้คำสั่ง \`deleteMany\`, \`drop\`, \`truncate\` หรือวิธีการล้างกระดานเพื่อสร้างใหม่เด็ดขาด
+- การเขียนสคริปต์จัดการข้อมูลต้องใช้สถาปัตยกรรมแบบ \`Idempotent\` (รันซ้ำได้ไม่พัง) โดยใช้คำสั่ง \`upsert\` (Update or Insert) เสมอ
 
 **2. SINGLE SOURCE OF TRUTH (TEXT OVER PIXELS)**
 - ข้อความที่เป็น Text Requirements (ที่ User พิมพ์สั่ง) คือ "ความจริงสูงสุด (Absolute Truth)"
@@ -50,3 +53,7 @@
 **2. DATA AS CODE (โครงสร้างหลักคือหน้าที่ของโค้ด)**
 - Admin UI มีไว้สำหรับทีม Business ใช้แก้ไขคำผิดเล็กๆ น้อยๆ (Typos) หรือปรับจุกจิกหน้างานในอนาคตเท่านั้น
 - การวางโครงสร้างหลัก (Initial Setup) และการเปลี่ยนแปลงระดับโครงสร้าง ถือเป็นความรับผิดชอบของโปรแกรมเมอร์ (คุณ) ที่ต้องจัดการให้เสร็จสมบูรณ์ผ่านสคริปต์และโค้ด 100%
+`;
+
+fs.writeFileSync('GEMINI.md', newContent.trim(), 'utf8');
+console.log('Fixed markdown formatting for rule parser');

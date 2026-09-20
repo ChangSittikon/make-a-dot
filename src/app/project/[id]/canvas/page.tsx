@@ -147,7 +147,7 @@ export default function CanvasPage({ params }: { params: Promise<{ id: string }>
   const colors = ['#FF1A1A', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
   const segments = project.members?.map((member: any, idx: number) => ({
     label: member.user?.name || member.role,
-    percentage: member.equityPercentage / 100, // basis points to %
+    percentage: member.revSharePercentage / 100, // basis points to %
     color: colors[idx % colors.length]
   })) || [];
 

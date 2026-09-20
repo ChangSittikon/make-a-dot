@@ -176,9 +176,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleSaveNode = (questionText: string, newOptions: any[], extras?: { inputType?: string; fieldName?: string; suggestions?: string }) => {
-    if (!editingNode) return;
-    setNodes(nodes.map(n => {
+  const handleSaveNode = async (questionText: string, newOptions: any[], extras?: { inputType?: string; fieldName?: string; suggestions?: string }) => {
+    if (!editingNode || !activeIndustryId) return;
+    
+    const updatedNodes = nodes.map(n => {
       if (n.id === editingNode.id) {
         return {
           ...n,
@@ -196,8 +197,24 @@ export default function AdminPage() {
         };
       }
       return n;
-    }));
+    });
+    
+    setNodes(updatedNodes);
     setEditModalOpen(false);
+
+    // Auto-save to DB to prevent user confusion
+    try {
+      setSaving(true);
+      await fetch(`/api/flow/${activeIndustryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes: updatedNodes })
+      });
+    } catch (err) {
+      console.error('Auto-save error:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const activeIndustry = industries.find(i => i.id === activeIndustryId);
@@ -654,7 +671,7 @@ export default function AdminPage() {
                             { id: 'skill', label: '🧠 ถามทักษะ', desc: 'เจาะลึกทักษะที่ต้องการ' },
                             { id: 'timeline', label: '📅 ไทม์ไลน์', desc: 'ถามเรื่องระยะเวลาและกำหนดส่ง' },
                             { id: 'risk', label: '⚠️ ประเมินความเสี่ยง', desc: 'สอดแทรกคำถามด้านความเสี่ยง' },
-                            { id: 'sweat', label: '💪 Sweat Equity', desc: 'คำถามเรื่องการลงแรงแทนเงิน' },
+                            { id: 'sweat', label: '💪 Sweat Share', desc: 'คำถามเรื่องการลงแรงแทนเงิน' },
                             { id: 'location', label: '📍 พื้นที่/ทำเล', desc: 'ถามเรื่องสถานที่และภูมิภาค' },
                             { id: 'collab', label: '🤝 หาพาร์ทเนอร์', desc: 'เน้นคำถามจับคู่ผู้ร่วมงาน' },
                           ].map(chip => {
@@ -724,12 +741,28 @@ export default function AdminPage() {
           fieldName={editingNode?.fieldName}
           suggestions={editingNode?.suggestions}
           onSave={handleSaveNode}
-          onDelete={() => {
-            if (editingNode && confirm("คุณต้องการลบคำถามนี้ใช่หรือไม่?")) {
-              setNodes(nodes.filter(n => n.id !== editingNode.id));
-              setEditModalOpen(false);
-            }
-          }}
+            onDelete={async () => {
+              if (editingNode && confirm("คุณแน่ใจหรือไม่ที่จะลบคำถามนี้?")) {
+                const updatedNodes = nodes.filter(n => n.id !== editingNode.id);
+                setNodes(updatedNodes);
+                setEditModalOpen(false);
+                
+                if (activeIndustryId) {
+                  try {
+                    setSaving(true);
+                    await fetch(`/api/flow/${activeIndustryId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ nodes: updatedNodes })
+                    });
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    setSaving(false);
+                  }
+                }
+              }
+            }}
         />
       )}
     </div>

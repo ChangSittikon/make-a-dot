@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const {
       rawDescription,          // String! (TEXTAREA step) — non-nullable
       problemCategory,         // String? (OPTIONS step 1)
-      bountyType,              // String  (DYNAMIC_REWARD — CASH/RESOURCE_SWAP/EQUITY/HYBRID)
+      bountyType,              // String  (DYNAMIC_REWARD — CASH/RESOURCE_SWAP/REV_SHARE/HYBRID)
       bountyPrizeSatang,       // Int     (DYNAMIC_REWARD — already in satang from frontend)
       bountyDescription,       // String? (DYNAMIC_REWARD — text description for non-cash)
       requesterWorkTypeId,     // String? (CASCADING_OPTIONS layer 1 — WorkType.id)
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       typeof primaryGap === "string" && primaryGap.trim() ? primaryGap.trim() : "SKILL_GAP";
 
     const safeBountyType: string =
-      ["CASH", "RESOURCE_SWAP", "EQUITY", "HYBRID"].includes(bountyType) ? bountyType : "CASH";
+      ["CASH", "RESOURCE_SWAP", "REV_SHARE", "HYBRID"].includes(bountyType) ? bountyType : "CASH";
 
     const safeBountyPrizeSatang: number =
       typeof bountyPrizeSatang === "number" && bountyPrizeSatang >= 0

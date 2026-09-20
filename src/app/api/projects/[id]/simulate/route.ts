@@ -32,7 +32,7 @@ export async function POST(
     if (scenarioType === 'BEST_CASE') {
       projectedRevenue = Math.floor(budget * 1.5); // 150% return
       escrowStatus = 'FULLY_RELEASED';
-      impactSummary = 'โครงการบรรลุเป้าหมายสูงสุด สมาชิกทุกคนได้รับส่วนแบ่ง 150% ตามสัดส่วน Equity, ไม่มีการฟ้องร้อง, ไม่ต้องดึงเงินค้ำประกัน';
+      impactSummary = 'โครงการบรรลุเป้าหมายสูงสุด สมาชิกทุกคนได้รับส่วนแบ่ง 150% ตามสัดส่วน RevShare, ไม่มีการฟ้องร้อง, ไม่ต้องดึงเงินค้ำประกัน';
     } else if (scenarioType === 'EXPECTED') {
       projectedRevenue = budget; // 100% return
       escrowStatus = 'FULLY_RELEASED';

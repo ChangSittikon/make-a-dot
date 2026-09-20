@@ -125,7 +125,7 @@ export default async function EcosystemDashboard() {
                       <tbody>
                         <tr>
                           <td className="p-2 border-b border-slate-100">Project Ownership</td>
-                          <td className="p-2 border-b border-slate-100 text-emerald-600 font-bold">แบ่งหุ้นส่วน % ตามสัดส่วนลงแรง</td>
+                          <td className="p-2 border-b border-slate-100 text-emerald-600 font-bold">แบ่งส่วนแบ่งรายได้ % ตามสัดส่วนลงแรง</td>
                         </tr>
                         <tr>
                           <td className="p-2 border-b border-slate-100">Capital (ทุน)</td>
