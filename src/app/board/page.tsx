@@ -72,24 +72,22 @@ function BoardContent() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-[#fdfdfd] relative flex flex-col overflow-hidden shadow-2xl">
-        <div className="absolute top-4 right-4 z-[60]">
-          <ClientAuthButton />
-        </div>
         <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
           <div className="mx-auto">
-            {/* Search & Filter */}
-            <div className="mb-4 flex gap-3">
-              <div className="flex-1 relative">
-                <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input 
-                  type="text" 
-                  placeholder={activeTab === 'BOUNTY' ? "ค้นหาเควสต์ อาชีพ ทักษะ..." : "ค้นหาโปรเจกต์ อุตสาหกรรม..."} 
-                  className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-200 shadow-sm text-sm"
-                />
-              </div>
-              <button className="bg-white border border-gray-100 px-5 py-3 rounded-2xl hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm font-medium">
-                <i className="fa-solid fa-sliders"></i> ตัวกรอง
+            {/* Search, Filter & Auth */}
+            <div className="mb-4 flex items-center bg-white border border-gray-100 rounded-full p-1 pl-4 shadow-sm">
+              <i className="fa-solid fa-search text-gray-400"></i>
+              <input 
+                type="text" 
+                placeholder={activeTab === 'BOUNTY' ? "ค้นหาเควสต์ อาชีพ ทักษะ..." : "ค้นหาโปรเจกต์ หาคนร่วมทีม..."} 
+                className="flex-1 bg-transparent px-3 text-sm focus:outline-none"
+              />
+              <button className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition">
+                <i className="fa-solid fa-sliders"></i>
               </button>
+              <div className="ml-1">
+                <ClientAuthButton />
+              </div>
             </div>
 
             {/* Segmented Control */}
