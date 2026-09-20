@@ -1,13 +1,20 @@
 import Link from 'next/link';
 import { BottomTabBar } from '@/components/shared/BottomTabBar';
+import { auth } from '@/auth';
+import AuthButton from '@/components/AuthButton';
 
-export default function WalletPage() {
+export default async function WalletPage() {
+  const session = await auth();
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[#161a1e] font-prompt sm:py-10 transition-colors duration-300">
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-gray-50 dark:bg-[#161a1e] relative flex flex-col overflow-hidden shadow-2xl text-gray-900 dark:text-gray-100 transition-colors duration-300">
         
+        <div className="absolute top-4 right-4 z-[60]">
+          <AuthButton session={session} />
+        </div>
+
         {/* Header Tabs (Overview, Futures, Spot, Funding) */}
-        <header className="px-5 py-4 flex gap-4 text-sm font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1e2329] transition-colors duration-300">
+        <header className="px-5 py-4 pt-5 pr-32 flex gap-4 text-sm font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1e2329] transition-colors duration-300">
           <span className="text-brand-red font-bold">ภาพรวม (Overview)</span>
           <span>Escrow</span>
           <span>สัดส่วน</span>

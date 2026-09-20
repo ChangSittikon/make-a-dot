@@ -2,8 +2,11 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { BottomTabBar } from '@/components/shared/BottomTabBar';
+import { auth } from '@/auth';
+import AuthButton from '@/components/AuthButton';
 
 export default async function ExplorePage() {
+  const session = await auth();
   const projects = await prisma.project.findMany({
     include: {
       industry: true,
@@ -24,8 +27,8 @@ export default async function ExplorePage() {
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-white dark:bg-[#161a1e] relative flex flex-col overflow-hidden shadow-2xl transition-colors duration-300">
         
         {/* Search Experience */}
-        <header className="px-5 py-4 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-[#1e2329]/90 backdrop-blur-md z-20">
-          <div className="relative w-full">
+        <header className="px-5 py-4 flex items-center gap-3 sticky top-0 bg-white/90 dark:bg-[#1e2329]/90 backdrop-blur-md z-20">
+          <div className="relative flex-1">
             <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
             <input 
               type="text" 
@@ -34,6 +37,7 @@ export default async function ExplorePage() {
             />
             <i className="fa-solid fa-sliders absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
           </div>
+          <AuthButton session={session} />
         </header>
 
         <main className="flex-1 overflow-y-auto pb-6 space-y-6 scrollable-content">

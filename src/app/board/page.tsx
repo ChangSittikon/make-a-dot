@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { BottomTabBar } from '@/components/shared/BottomTabBar';
+import ClientAuthButton from '@/components/ClientAuthButton';
 
 type TabType = 'BOUNTY' | 'PROJECT';
 
@@ -71,6 +72,9 @@ function BoardContent() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-[#fdfdfd] relative flex flex-col overflow-hidden shadow-2xl">
+        <div className="absolute top-4 right-4 z-[60]">
+          <ClientAuthButton />
+        </div>
         <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
           <div className="mx-auto">
             {/* Search & Filter */}
