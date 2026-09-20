@@ -178,7 +178,7 @@ function BoardContent() {
                             </div>
                           </div>
                           <Link 
-                            href={`/profile/bounty/${bounty.id}/negotiate`} 
+                            href={`/profile/bounty/${bounty.id}`} 
                             className="bg-brand-red text-white text-[10px] px-4 py-1.5 rounded-full font-bold hover:bg-red-700 transition shadow-sm shadow-red-200"
                           >
                             รับงาน (เจรจา)

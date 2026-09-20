@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth-mock';
 import UpgradeBountyButton from './UpgradeBountyButton';
 import ProposalActionButtons from './ProposalActionButtons';
+import NegotiationSandbox from './NegotiationSandbox';
 import { prisma } from '@/lib/prisma';
 import Image from 'next/image';
 
@@ -14,6 +15,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
   let bounty = await prisma.problemNode.findUnique({
     where: { id: resolvedParams.id },
     include: {
+      requester: true,
       upgradeProposals: {
         include: { proposer: true },
         orderBy: { createdAt: 'desc' }
@@ -37,7 +39,8 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
         requesterId: user?.id || "",
       },
       include: {
-        upgradeProposals: {
+        requester: true,
+      upgradeProposals: {
           include: { proposer: true },
           orderBy: { createdAt: 'desc' }
         }
@@ -92,7 +95,8 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
     bounty = await prisma.problemNode.findUnique({
       where: { id: resolvedParams.id },
       include: {
-        upgradeProposals: {
+        requester: true,
+      upgradeProposals: {
           include: { proposer: true },
           orderBy: { createdAt: 'desc' }
         }
@@ -204,25 +208,12 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               </div>
             )}
 
-            {/* Escrow Section (Visible for prototyping) */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-2">
-              <h2 className="text-lg font-bold mb-4 text-brand-black">ระบบค้ำประกัน <span className="text-gray-400 font-normal text-sm ml-1">(Escrow)</span></h2>
-              <div className="bg-red-50/50 p-4 rounded-xl border border-red-100/50 mb-5">
-                <div className="flex items-center text-brand-red font-bold text-sm mb-2">
-                  <i className="fas fa-lock mr-2"></i> CASH ESCROW
-                </div>
-                <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                  ค่าตอบแทน ฿{prizeTHB} ถูกค้ำประกันไว้ในระบบเรียบร้อยแล้ว หากส่งมอบงานผ่าน จะได้รับเงินทันที
-                </p>
-              </div>
-              
-              <Link 
-                href={`/profile/bounty/${resolvedParams.id}/negotiate`} 
-                className="block w-full bg-brand-red text-white text-center px-4 py-3.5 rounded-xl hover:bg-red-700 transition shadow-sm shadow-red-200 font-bold text-sm mb-3"
-              >
-                รับงาน (เจรจา)
-              </Link>
-            </div>
+            {/* Negotiation Sandbox (Visible for freelancer/prototyping) */}
+            <NegotiationSandbox 
+              bountyId={resolvedParams.id} 
+              prizeTHB={prizeTHB} 
+              requesterName={bounty.requester?.name || 'System Admin'} 
+            />
           </div>
         </main>
       </div>
