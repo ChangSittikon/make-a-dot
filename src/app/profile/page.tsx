@@ -63,14 +63,21 @@ export default async function ProfilePage() {
             <UniversalProfileCard user={user} stats={stats} />
           )}
 
-          {/* Bounty Hub Access */}
+          {/* Quick Access Dashboard */}
           <div className="mt-8">
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <Link href="/profile/bounty/manage" className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition border border-gray-100">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-xl text-gray-700">
                   <i className="fa-solid fa-list-check"></i>
                 </div>
-                <span className="text-sm font-bold text-gray-800">จัดการปัญหาและรางวัล</span>
+                <span className="text-sm font-bold text-gray-800 text-center">จัดการปัญหาและรางวัล</span>
+              </Link>
+              
+              <Link href="/profile/projects/manage" className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition border border-gray-100">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-xl text-gray-700">
+                  <i className="fa-solid fa-layer-group"></i>
+                </div>
+                <span className="text-sm font-bold text-gray-800 text-center">จัดการโปรเจกต์</span>
               </Link>
             </div>
           </div>
