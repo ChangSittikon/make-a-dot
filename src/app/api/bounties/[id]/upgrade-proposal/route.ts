@@ -10,11 +10,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const expertRoles = ['PROFESSIONAL', 'GUARANTOR', 'DIRECTOR', 'ADMIN'];
-    if (!expertRoles.includes(user.role)) {
-      return NextResponse.json({ error: 'เพียงผู้เชี่ยวชาญ (Tier 2-5) เท่านั้นที่สามารถเสนออัปเกรดได้' }, { status: 403 });
-    }
-
     const body = await req.json();
     const { vision, proposedRole } = body;
 

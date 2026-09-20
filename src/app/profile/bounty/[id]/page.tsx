@@ -5,9 +5,6 @@ import UpgradeBountyButton from './UpgradeBountyButton';
 
 export default async function BountyDetailPage({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
-  const role = user?.role || 'USER';
-  const expertRoles = ['PROFESSIONAL', 'GUARANTOR', 'DIRECTOR', 'ADMIN'];
-  const isExpert = expertRoles.includes(role);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
@@ -75,9 +72,7 @@ export default async function BountyDetailPage({ params }: { params: { id: strin
               รับงาน (เจรจา)
             </Link>
 
-            {isExpert && (
-              <UpgradeBountyButton bountyId={params.id} />
-            )}
+            <UpgradeBountyButton bountyId={params.id} />
           </div>
         </div>
       </div>
