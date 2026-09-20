@@ -35,10 +35,10 @@ export default function UniversalProfileCard({ user, stats }: { user: any, stats
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-4 relative z-10">
-        <div className="bg-gray-50 p-4 rounded-2xl">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">โปรเจกต์ที่ตั้งต้น</p>
-          <p className="text-2xl font-black text-gray-900 mt-1">{stats.ownedProjects} <span className="text-sm font-medium text-gray-400">จุด</span></p>
-        </div>
+        <Link href="/profile/projects/manage" className="bg-gray-50 p-4 rounded-2xl flex flex-col justify-center items-center text-center cursor-pointer hover:bg-gray-100 transition-colors">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">โปรเจกต์ของฉัน</p>
+          <p className="text-2xl font-black text-gray-900 mt-1">{stats.ownedProjects} <span className="text-sm font-medium text-gray-400">งาน</span></p>
+        </Link>
         <div className="bg-gray-50 p-4 rounded-2xl flex flex-col justify-center items-center text-center border border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
           <i className="fa-solid fa-arrow-up text-brand-red mb-1"></i>
           <p className="text-xs font-bold text-gray-600">อัปเกรดเป็น<br/>ผู้เชี่ยวชาญ</p>
