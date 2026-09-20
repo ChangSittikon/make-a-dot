@@ -13,9 +13,20 @@ export async function GET(request: Request) {
       where: industryId ? { industryId } : undefined,
       include: {
         industry: true,
-      }
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            image: true
+          }
+        },
+        _count: {
+          select: { members: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     });
-    return NextResponse.json(projects);
+    return NextResponse.json({ success: true, projects });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
   }
