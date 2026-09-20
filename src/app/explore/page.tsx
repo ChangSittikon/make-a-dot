@@ -63,7 +63,7 @@ export default async function ExplorePage() {
           <section className="px-5">
             <div className="flex items-end justify-between mb-3">
               <h3 className="font-bold text-gray-900 dark:text-white text-sm">ค้นหาตามอุตสาหกรรม</h3>
-              <Link href="/project" className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline">
+              <Link href="/board?tab=PROJECT" className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline">
                 ดูทั้งหมด <i className="fa-solid fa-chevron-right text-[8px] ml-0.5"></i>
               </Link>
             </div>
