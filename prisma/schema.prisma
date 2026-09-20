@@ -102,9 +102,10 @@ model User {
   // Auth.js Relations
   wallet Wallet?
 
-  disputesFiled    Dispute[]        @relation("Plaintiff")
-  disputesDefended Dispute[]        @relation("Defendant")
-  arbitratorVotes  ArbitratorVote[] @relation("Arbitrator")
+  disputesFiled    Dispute[]         @relation("Plaintiff")
+  disputesDefended Dispute[]         @relation("Defendant")
+  arbitratorVotes  ArbitratorVote[]  @relation("Arbitrator")
+  upgradeProposals UpgradeProposal[]
   accounts         Account[]
   sessions         Session[]
 
@@ -730,7 +731,8 @@ model ProblemNode {
   bountyDescription String? // อธิบายรางวัลเพิ่มเติม (เช่น "ฟรีค่าห้องอัดเสียง 3 วัน")
 
   // การวิวัฒนาการปัญหา (Bounty-to-Project Conversion)
-  upgradedToProjectId String? @unique
+  upgradedToProjectId String?           @unique
+  upgradeProposals    UpgradeProposal[]
 
   // ===== KPI & NEGOTIATION SANDBOX =====
   kpiDefinition  String? // JSON: [{"metric": "ยอดขาย", "target": "100 units", "deadline": "2026-12-31"}]
@@ -1011,4 +1013,25 @@ model ArbitratorVote {
   createdAt DateTime @default(now())
 
   @@unique([disputeId, arbitratorId])
+}
+
+// ============================================================
+// PILLAR 8: UPGRADE PROPOSALS (Bounty to Project)
+// ============================================================
+
+model UpgradeProposal {
+  id       String      @id @default(cuid())
+  bountyId String
+  bounty   ProblemNode @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+
+  proposerId String
+  proposer   User   @relation(fields: [proposerId], references: [id], onDelete: Cascade)
+
+  vision       String
+  proposedRole String // e.g., SWEAT_SHARE, INVESTOR, PROJECT_MANAGER
+
+  status String @default("PENDING") // PENDING, APPROVED, REJECTED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

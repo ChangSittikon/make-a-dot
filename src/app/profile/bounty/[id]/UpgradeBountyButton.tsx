@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function UpgradeBountyButton({ bountyId }: { bountyId: string }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [vision, setVision] = useState('');
   const [role, setRole] = useState('SWEAT_SHARE');
@@ -23,8 +25,11 @@ export default function UpgradeBountyButton({ bountyId }: { bountyId: string }) 
       const data = await res.json();
       
       if (res.ok) {
-        setMessage('ยื่นข้อเสนอสำเร็จ! (Test)');
-        setTimeout(() => setIsOpen(false), 2000);
+        setMessage('ยื่นข้อเสนอสำเร็จ!');
+        setTimeout(() => {
+          setIsOpen(false);
+          router.refresh();
+        }, 1500);
       } else {
         setMessage(data.error || 'เกิดข้อผิดพลาด');
       }
