@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { BottomTabBar } from '@/components/shared/BottomTabBar';
 
 export default function BountyHubPage() {
   const [bounties, setBounties] = useState<any[]>([]);
@@ -30,15 +31,9 @@ export default function BountyHubPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
         <div className="px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-              <i className="fa-solid fa-arrow-left text-gray-600"></i>
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">ปัญหาและค่าตอบแทน (Bounty Hub)</h1>
-              <p className="text-xs text-gray-500">ศูนย์รวมปัญหาที่รอการแก้ไขแบบ Outcome-based</p>
-            </div>
-          </div>
+          <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+            <i className="fa-solid fa-arrow-left text-gray-600"></i>
+          </Link>
           <Link href="/profile/bounty/create" className="w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-full hover:bg-red-700 transition shadow-sm">
             <i className="fa-solid fa-plus"></i>
           </Link>
@@ -81,7 +76,7 @@ export default function BountyHubPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1">
+          <div className="grid gap-4 grid-cols-1 pb-10">
             {bounties.map((bounty) => (
               <div key={bounty.id} className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition group flex flex-col h-full">
                 {/* Status & Urgency */}
@@ -155,6 +150,7 @@ export default function BountyHubPage() {
         )}
       </div>
       </main>
+      <BottomTabBar />
     </div>
     </div>
   );
