@@ -1,5 +1,6 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getCurrentUser } from "@/lib/auth-mock";
 
 const prisma = new PrismaClient();
 
@@ -43,16 +44,13 @@ export async function POST(req: Request) {
         ? Math.round(bountyPrizeSatang)
         : 0;
 
-    // ===== FALLBACK REQUESTER (no auth yet) =====
-    let user = await prisma.user.findFirst();
+    // ===== GET CENTRALIZED MOCK USER =====
+    const user = await getCurrentUser();
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          name: "Visionary User",
-          email: "visionary@makeadot.com",
-          role: "ADMIN",
-        },
-      });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     // ===== PREPARE SKILL TAGS M:N =====
