@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import UpgradeBountyButton from '../UpgradeBountyButton';
 
 export default function NegotiatePage() {
   const params = useParams();
@@ -227,9 +228,14 @@ export default function NegotiatePage() {
             >
               {isSubmitting ? 'กำลังดำเนินการ...' : 'ยืนยันข้อตกลง (Accept)'}
             </button>
-            <p className="text-center text-[10px] text-gray-400 mt-3">
+            <p className="text-center text-[10px] text-gray-400 mt-3 mb-4">
               เมื่อกดปุ่มนี้ ระบบจะทำการล็อกทรัพยากร (Escrow) และเริ่มนับเวลาทำงานทันที
             </p>
+            
+            <div className="pt-4 border-t border-white/10">
+              <p className="text-center text-xs text-gray-300 font-medium mb-3">หรือมองว่าปัญหานี้ใหญ่เกินกว่าจะทำคนเดียว?</p>
+              <UpgradeBountyButton bountyId={bountyId} />
+            </div>
           </div>
           
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col h-64">

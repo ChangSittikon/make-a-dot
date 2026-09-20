@@ -222,8 +222,6 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               >
                 รับงาน (เจรจา)
               </Link>
-
-              <UpgradeBountyButton bountyId={resolvedParams.id} />
             </div>
           </div>
         </main>
