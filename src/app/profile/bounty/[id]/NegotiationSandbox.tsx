@@ -46,24 +46,7 @@ export default function NegotiationSandbox({ bountyId, prizeTHB, requesterName }
   };
 
   return (
-    <div className="mt-6 flex flex-col gap-6 border-t border-gray-200 pt-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">The Negotiation Sandbox</h1>
-          <p className="text-xs text-gray-500">
-            เจรจาขอบเขตงานและเงื่อนไขการส่งมอบกับ <span className="font-medium text-brand-red">{requesterName}</span>
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-xl font-bold text-gray-900">
-            ฿{prizeTHB}
-          </p>
-          <p className="text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full mt-1 border border-red-100 font-medium inline-block">
-            CASH ESCROW
-          </p>
-        </div>
-      </div>
-
+    <div className="mt-2 flex flex-col gap-6 pt-2">
       {/* Scope & KPIs */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-sm font-bold mb-4 flex items-center gap-2">

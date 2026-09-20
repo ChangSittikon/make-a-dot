@@ -44,9 +44,9 @@ export default function UpgradeBountyButton({ bountyId }: { bountyId: string }) 
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="mt-4 block w-full bg-gray-900 text-white text-center px-4 py-3 rounded-md hover:bg-black transition font-medium"
+        className="block w-full bg-brand-red text-white text-center px-4 py-3.5 rounded-xl font-bold hover:bg-red-700 transition shadow-sm shadow-red-200 text-sm"
       >
-        ยื่นข้อเสนออัปเกรด (Propose Project Upgrade)
+        ยื่นข้อเสนออัปเกรด
       </button>
 
       {isOpen && (
