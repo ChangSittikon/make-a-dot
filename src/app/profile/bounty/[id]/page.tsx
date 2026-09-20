@@ -113,8 +113,8 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
         {/* Header */}
         <div className="bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/profile/bounty" className="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full hover:bg-gray-100 transition-colors border border-gray-100">
-              <i className="fa-solid fa-arrow-left text-gray-600"></i>
+            <Link href="/board" className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition">
+              <i className="fa-solid fa-arrow-left"></i>
             </Link>
             <div>
               <h1 className="text-xl font-bold text-gray-900 leading-none mb-1">รายละเอียดงาน</h1>
