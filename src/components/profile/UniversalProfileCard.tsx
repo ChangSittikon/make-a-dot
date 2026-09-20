@@ -64,10 +64,10 @@ export default function UniversalProfileCard({ user, stats }: { user: any, stats
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-4 relative z-10">
-        <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+        <Link href="/profile/projects/manage" className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex flex-col justify-center items-center text-center cursor-pointer hover:bg-blue-50 transition-colors">
           <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">โปรเจกต์ที่เข้าร่วม</p>
           <p className="text-2xl font-black text-gray-900 mt-1">{stats.joinedProjects} <span className="text-sm font-medium text-gray-400">งาน</span></p>
-        </div>
+        </Link>
         <div className="bg-gray-50 p-4 rounded-2xl flex flex-col justify-center items-center text-center border border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
           <i className="fa-solid fa-shield-halved text-purple-500 mb-1"></i>
           <p className="text-xs font-bold text-gray-600">ยืนยันตัวตนเพื่อ<br/>เป็นผู้ค้ำประกัน</p>
