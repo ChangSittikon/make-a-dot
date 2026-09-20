@@ -28,18 +28,6 @@ export default function BountyHubPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div className="px-5 py-4 flex items-center justify-between">
-          <Link href="/profile" className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-            <i className="fa-solid fa-arrow-left text-gray-600"></i>
-          </Link>
-          <Link href="/profile/bounty/create" className="w-10 h-10 flex items-center justify-center bg-brand-red text-white rounded-full hover:bg-red-700 transition shadow-sm">
-            <i className="fa-solid fa-plus"></i>
-          </Link>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
         <div className="mx-auto">
