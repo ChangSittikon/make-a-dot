@@ -1,7 +1,14 @@
 import React from 'react';
 import Link from 'next/link';
+import { getCurrentUser } from '@/lib/auth-mock';
+import UpgradeBountyButton from './UpgradeBountyButton';
 
-export default function BountyDetailPage() {
+export default async function BountyDetailPage({ params }: { params: { id: string } }) {
+  const user = await getCurrentUser();
+  const role = user?.role || 'USER';
+  const expertRoles = ['PROFESSIONAL', 'GUARANTOR', 'DIRECTOR', 'ADMIN'];
+  const isExpert = expertRoles.includes(role);
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
@@ -60,12 +67,17 @@ export default function BountyDetailPage() {
                 ค่าตอบแทน ฿50,000 ถูกค้ำประกันไว้ในระบบเรียบร้อยแล้ว หากส่งมอบงานผ่าน จะได้รับเงินทันที
               </p>
             </div>
+            
             <Link 
-              href="/profile/bounty/placeholder-id/negotiate" 
+              href={`/profile/bounty/${params.id}/negotiate`} 
               className="mt-4 block w-full bg-[#FF1A1A] text-white text-center px-4 py-3 rounded-md hover:bg-red-700 transition font-medium"
             >
               รับงาน (เจรจา)
             </Link>
+
+            {isExpert && (
+              <UpgradeBountyButton bountyId={params.id} />
+            )}
           </div>
         </div>
       </div>
