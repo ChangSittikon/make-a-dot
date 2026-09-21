@@ -21,8 +21,8 @@ export default async function EcosystemDashboard() {
   const totalBudgetTHB = totalBudgetSatang / 100;
 
   return (
-    <div className="flex justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
-      <div className="w-full sm:w-[430px] min-h-screen sm:min-h-[900px] sm:max-h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-gray-50 relative flex flex-col overflow-hidden shadow-2xl">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-gray-50 relative flex flex-col overflow-hidden shadow-2xl">
         
         <header className="p-6 bg-white sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-4">

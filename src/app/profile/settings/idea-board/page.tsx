@@ -216,8 +216,8 @@ export default function IdeaBoardPage() {
   };
 
   return (
-    <div className="flex justify-center min-h-screen bg-gray-50 font-prompt sm:py-10 transition-colors">
-      <div className="w-full sm:w-[430px] min-h-screen sm:min-h-[900px] sm:max-h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-white relative flex flex-col overflow-hidden shadow-2xl">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10 transition-colors">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-white relative flex flex-col overflow-hidden shadow-2xl">
         
         <header className="px-5 py-4 flex items-center justify-between z-20 bg-white border-b border-gray-200">
           <div className="flex items-center gap-3">

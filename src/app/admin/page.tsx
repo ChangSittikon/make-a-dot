@@ -21,8 +21,8 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="flex justify-center min-h-screen bg-gray-50 dark:bg-[#161a1e] font-prompt sm:py-10 transition-colors duration-300">
-      <div className="w-full sm:w-[430px] min-h-screen sm:min-h-[900px] sm:max-h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-gray-50 dark:bg-[#161a1e] relative flex flex-col overflow-hidden shadow-2xl transition-colors duration-300">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[#161a1e] font-prompt sm:py-10 transition-colors duration-300">
+      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-gray-50 dark:bg-[#161a1e] relative flex flex-col overflow-hidden shadow-2xl transition-colors duration-300">
         
         {/* Header Profile Section */}
         <div className="bg-white dark:bg-[#1e2329] px-6 py-8 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4 relative overflow-hidden transition-colors duration-300">
