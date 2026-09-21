@@ -11,16 +11,24 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
   const resolvedParams = await params;
   const user = await getCurrentUser();
   
+  const bountyInclude = {
+    requester: true,
+    occupation: true,
+    requiredSkills: {
+      include: {
+        skillTag: true,
+      },
+    },
+    upgradeProposals: {
+      include: { proposer: true },
+      orderBy: { createdAt: 'desc' as const },
+    },
+  };
+
   // Try to fetch bounty, otherwise fallback to mock
   let bounty = await prisma.problemNode.findUnique({
     where: { id: resolvedParams.id },
-    include: {
-      requester: true,
-      upgradeProposals: {
-        include: { proposer: true },
-        orderBy: { createdAt: 'desc' }
-      }
-    }
+    include: bountyInclude,
   });
 
   
@@ -38,13 +46,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
         bountyPrizeSatang: 5000000,
         requesterId: user?.id || "",
       },
-      include: {
-        requester: true,
-      upgradeProposals: {
-          include: { proposer: true },
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+      include: bountyInclude,
     });
 
     // Seed mock proposals if we just created the bounty
@@ -94,13 +96,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
     // Re-fetch to get the new proposals
     bounty = await prisma.problemNode.findUnique({
       where: { id: resolvedParams.id },
-      include: {
-        requester: true,
-      upgradeProposals: {
-          include: { proposer: true },
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+      include: bountyInclude,
     });
   }
 
@@ -110,6 +106,41 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
 
   const isRequester = user?.id === bounty.requesterId;
   const prizeTHB = (bounty.bountyPrizeSatang / 100).toLocaleString();
+
+  // Parse Step 5 targets (Occupations & Skills) for Solvers
+  const targetOccupations: { id?: string; name: string }[] = [];
+  const targetSkills: { id?: string; name: string }[] = [];
+
+  if (bounty.occupation) {
+    targetOccupations.push({ id: bounty.occupation.id, name: bounty.occupation.name });
+  }
+  if (Array.isArray(bounty.requiredSkills)) {
+    bounty.requiredSkills.forEach((rs: { skillTag?: { id: string; name: string } }) => {
+      if (rs.skillTag?.name) {
+        targetSkills.push({ id: rs.skillTag.id, name: rs.skillTag.name });
+      }
+    });
+  }
+
+  if (bounty.deepAttributes) {
+    try {
+      const parsed = JSON.parse(bounty.deepAttributes);
+      if (Array.isArray(parsed.targetOccupations)) {
+        parsed.targetOccupations.forEach((occ: { id?: string; name?: string }) => {
+          if (occ?.name && !targetOccupations.some((o) => o.name.toLowerCase() === occ.name!.toLowerCase())) {
+            targetOccupations.push({ id: occ.id, name: occ.name });
+          }
+        });
+      }
+      if (Array.isArray(parsed.targetSkills)) {
+        parsed.targetSkills.forEach((sk: { id?: string; name?: string }) => {
+          if (sk?.name && !targetSkills.some((s) => s.name.toLowerCase() === sk.name!.toLowerCase())) {
+            targetSkills.push({ id: sk.id, name: sk.name });
+          }
+        });
+      }
+    } catch {}
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
@@ -157,10 +188,35 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               <p className="text-gray-600 text-sm leading-relaxed mb-5">
                 {bounty.rawDescription}
               </p>
-              <div className="flex flex-wrap gap-2">
-                {/* Fallback tags */}
-                <span className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">React</span>
-                <span className="bg-gray-50 border border-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">Node.js</span>
+              
+              {/* Target Experts & Skills (from Step 5) */}
+              <div className="pt-4 border-t border-gray-100 space-y-2.5">
+                <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  ผู้เชี่ยวชาญ & ทักษะที่ต้องการ (Target Roles & Skills)
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {targetOccupations.map((occ, idx) => (
+                    <span
+                      key={`occ-${idx}`}
+                      className="bg-red-50 border border-red-100 text-brand-red px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <i className="fa-solid fa-briefcase text-[10px]" />
+                      {occ.name}
+                    </span>
+                  ))}
+                  {targetSkills.map((sk, idx) => (
+                    <span
+                      key={`skill-${idx}`}
+                      className="bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5"
+                    >
+                      <i className="fa-solid fa-tag text-gray-400 text-[9px]" />
+                      {sk.name}
+                    </span>
+                  ))}
+                  {targetOccupations.length === 0 && targetSkills.length === 0 && (
+                    <span className="text-xs text-gray-400 italic">ไม่ระบุทักษะเฉพาะเจาะจง</span>
+                  )}
+                </div>
               </div>
             </div>
 

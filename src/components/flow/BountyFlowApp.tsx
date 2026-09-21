@@ -93,6 +93,7 @@ export function BountyFlowApp() {
   const [universeDots, setUniverseDots] = useState<FloatingDot[]>([]);
 
   const [showSummary, setShowSummary] = useState(false);
+  const [createdBountyId, setCreatedBountyId] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const currentStep = flowSteps[currentStepIndex];
@@ -344,9 +345,11 @@ export function BountyFlowApp() {
 
     if (selectedOccupations.length > 0) {
       payload.occupationId = selectedOccupations[0].id;
+      payload.selectedOccupations = selectedOccupations;
     }
     if (selectedSkills.length > 0) {
       payload.skillTags = selectedSkills.map((s) => s.id);
+      payload.selectedSkills = selectedSkills;
     }
 
     try {
@@ -360,6 +363,9 @@ export function BountyFlowApp() {
       // Hold on the initial text for 4 seconds as requested
       setTimeout(() => {
         if (data.success) {
+          if (data.problemNodeId) {
+            setCreatedBountyId(data.problemNodeId);
+          }
           runFinalSequence();
         } else {
           alert("เกิดข้อผิดพลาด: " + (data.error ?? "Unknown error"));
@@ -720,8 +726,14 @@ export function BountyFlowApp() {
                           <div className="grid grid-cols-2 gap-3">
                             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">ผู้เชี่ยวชาญเป้าหมาย</div>
-                               <div className="text-[12px] font-bold text-brand-black truncate">
-                                 {selectedOccupations.length > 0 ? selectedOccupations[0].name : (cascadeValue?.requesterIndustryId ? "คัดกรองจากวงการ" : "ไม่ระบุ")}
+                               <div className="text-[12px] font-bold text-brand-black truncate" title={selectedOccupations.map((o) => o.name).concat(selectedSkills.map((s) => s.name)).join(", ")}>
+                                 {selectedOccupations.length > 0
+                                   ? selectedOccupations.map((o) => o.name).join(", ")
+                                   : selectedSkills.length > 0
+                                   ? selectedSkills.map((s) => s.name).join(", ")
+                                   : cascadeValue?.requesterIndustryId
+                                   ? "คัดกรองจากวงการ"
+                                   : "ไม่ระบุ"}
                                </div>
                             </div>
                             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
@@ -752,7 +764,7 @@ export function BountyFlowApp() {
                         </div>
                         
                         <div className="mt-6 flex flex-col items-center gap-3">
-                           <Link href="/profile/bounty" className="inline-flex items-center justify-center gap-2 bg-brand-black text-white text-[13px] font-bold px-6 py-3.5 rounded-full hover:bg-brand-red transition-all w-full shadow-lg shadow-black/10 active:scale-95">
+                           <Link href={createdBountyId ? `/profile/bounty/${createdBountyId}` : "/profile/bounty/manage"} className="inline-flex items-center justify-center gap-2 bg-brand-black text-white text-[13px] font-bold px-6 py-3.5 rounded-full hover:bg-brand-red transition-all w-full shadow-lg shadow-black/10 active:scale-95">
                              เก็บใบการ์ด & ดูสถานะปัญหานี้ <i className="fa-solid fa-arrow-right text-[11px]" />
                            </Link>
                            <p className="text-[10px] text-gray-400 font-medium text-center">

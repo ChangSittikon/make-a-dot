@@ -18,9 +18,12 @@ export async function POST(req: Request) {
       requesterIndustryId,     // String? (CASCADING_OPTIONS layer 2 — Industry.id)
       occupationId,            // String? (MAGIC_SEARCH — selected occupation)
       skillTags,               // string[] (MAGIC_SEARCH — SkillTag IDs)
+      selectedOccupations,     // Array of { id: string, name: string }
+      selectedSkills,          // Array of { id: string, name: string }
       entityType,              // String? (optional)
       primaryGap,              // String? (optional)
       urgencyState,            // String? (optional)
+      deepAttributes,          // String? or Object
     } = body;
 
     // ===== GUARD NON-NULLABLE FIELDS (RULE 2: DYNAMIC & TYPE-SAFE FIRST) =====
@@ -61,10 +64,15 @@ export async function POST(req: Request) {
     }
 
     // ===== SANITIZE OCCUPATION ID (PREVENT P2003 FOREIGN KEY ERROR) =====
+    let targetOccId = typeof occupationId === "string" ? occupationId.trim() : undefined;
+    if (!targetOccId && Array.isArray(selectedOccupations) && selectedOccupations.length > 0) {
+      targetOccId = selectedOccupations[0]?.id;
+    }
+
     let safeOccupationId: string | undefined = undefined;
-    if (typeof occupationId === "string" && occupationId.trim() && !occupationId.startsWith("custom-")) {
+    if (targetOccId && !targetOccId.startsWith("custom-")) {
       const occExists = await prisma.occupation.findUnique({
-        where: { id: occupationId.trim() },
+        where: { id: targetOccId },
         select: { id: true },
       });
       if (occExists) {
@@ -73,24 +81,49 @@ export async function POST(req: Request) {
     }
 
     // ===== SANITIZE SKILL TAGS (M:N) =====
+    const candidateSkillIds: string[] = [];
+    if (Array.isArray(skillTags)) {
+      candidateSkillIds.push(...skillTags);
+    }
+    if (Array.isArray(selectedSkills)) {
+      candidateSkillIds.push(...selectedSkills.map((s: { id: string }) => s.id));
+    }
+
     let validSkillTags: { skillTag: { connect: { id: string } } }[] = [];
-    if (Array.isArray(skillTags) && skillTags.length > 0) {
-      const cleanIds = skillTags.filter(
-        (id): id is string => typeof id === "string" && id.trim() !== "" && !id.startsWith("custom-")
-      );
-      if (cleanIds.length > 0) {
-        const existingSkills = await prisma.skillTag.findMany({
-          where: { id: { in: cleanIds } },
-          select: { id: true },
-        });
-        validSkillTags = existingSkills.map((s) => ({
-          skillTag: { connect: { id: s.id } },
-        }));
-      }
+    const cleanIds = Array.from(new Set(candidateSkillIds)).filter(
+      (id): id is string => typeof id === "string" && id.trim() !== "" && !id.startsWith("custom-")
+    );
+    if (cleanIds.length > 0) {
+      const existingSkills = await prisma.skillTag.findMany({
+        where: { id: { in: cleanIds } },
+        select: { id: true },
+      });
+      validSkillTags = existingSkills.map((s) => ({
+        skillTag: { connect: { id: s.id } },
+      }));
     }
 
     const problemSkillTags =
       validSkillTags.length > 0 ? { create: validSkillTags } : undefined;
+
+    // ===== ASSEMBLE DEEP ATTRIBUTES (PRESERVE ALL STEP 5 SELECTIONS FOR MATCHMAKING) =====
+    const deepData: Record<string, unknown> = {};
+    if (typeof deepAttributes === "string" && deepAttributes.trim()) {
+      try {
+        Object.assign(deepData, JSON.parse(deepAttributes));
+      } catch {
+        deepData.rawAttributes = deepAttributes;
+      }
+    } else if (typeof deepAttributes === "object" && deepAttributes !== null) {
+      Object.assign(deepData, deepAttributes);
+    }
+
+    if (Array.isArray(selectedOccupations) && selectedOccupations.length > 0) {
+      deepData.targetOccupations = selectedOccupations;
+    }
+    if (Array.isArray(selectedSkills) && selectedSkills.length > 0) {
+      deepData.targetSkills = selectedSkills;
+    }
 
     // ===== CREATE ProblemNode =====
     const problemNode = await prisma.problemNode.create({
@@ -104,6 +137,9 @@ export async function POST(req: Request) {
           typeof urgencyState === "string" && urgencyState.trim()
             ? urgencyState
             : "NORMAL",
+
+        // Deep Attributes (all Step 5 roles & skills preserved)
+        deepAttributes: Object.keys(deepData).length > 0 ? JSON.stringify(deepData) : null,
 
         // Step 1 — Category
         problemCategory:
