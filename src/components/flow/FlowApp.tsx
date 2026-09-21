@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BreathingDot } from "@/components/flow/BreathingDot";
 import { CardOption } from "@/components/flow/CardOption";
@@ -30,7 +30,7 @@ interface Industry {
   domainDirector?: {
     displayName: string;
     avatarUrl: string | null;
-  };
+  } | null;
 }
 
 interface FloatingDot {
@@ -54,20 +54,34 @@ const dummyResults = [
   { name: "ทีม ABC", tags: "รับจ้างผลิตวิดีโอ", avatarUrl: "https://i.pravatar.cc/150?img=47" },
 ];
 
-export function FlowApp({ session, children }: { session: any, children?: React.ReactNode }) {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [industry, setIndustry] = useState<Industry | null>(null);
-  const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
+export function FlowApp({ 
+  session, 
+  children,
+  initialIndustry = null,
+  initialNodes = []
+}: { 
+  session: any; 
+  children?: React.ReactNode;
+  initialIndustry?: Industry | null;
+  initialNodes?: Node[];
+}) {
+  const [nodes, setNodes] = useState<Node[]>(initialNodes);
+  const [industry, setIndustry] = useState<Industry | null>(initialIndustry);
   
-  const [displayedText, setDisplayedText] = useState("");
-  const [isTyping, setIsTyping] = useState(true);
-  const [showOptions, setShowOptions] = useState(false);
+  const startNode = initialNodes.find(n => n.type === 'START') || initialNodes[0];
+  const [currentNodeId, setCurrentNodeId] = useState<string | null>(startNode?.id || null);
+  
+  const [displayedText, setDisplayedText] = useState(startNode?.question || "");
+  const [isTyping, setIsTyping] = useState(false);
+  const [showOptions, setShowOptions] = useState(initialNodes.length > 0);
   const [showResults, setShowResults] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialNodes.length === 0);
 
   // Quantum Universe State
   const [universeDots, setUniverseDots] = useState<FloatingDot[]>([]);
-  const [dotPosition, setDotPosition] = useState<'center' | 'text'>('center');
+  const [dotPosition, setDotPosition] = useState<'center' | 'text'>(initialNodes.length > 0 ? 'text' : 'center');
+
+  const isFirstMount = useRef(true);
 
   // Initialize Universe
   useEffect(() => {
@@ -83,8 +97,10 @@ export function FlowApp({ session, children }: { session: any, children?: React.
     setUniverseDots(dots);
   }, []);
 
-  // Fetch logic tree on mount
+  // Fetch logic tree on mount only if not pre-fetched from server
   useEffect(() => {
+    if (initialNodes.length > 0) return;
+
     fetch('/api/industries', { cache: 'no-store' })
       .then(res => res.json())
       .then(inds => {
@@ -97,14 +113,17 @@ export function FlowApp({ session, children }: { session: any, children?: React.
       .then(res => res.json())
       .then((data: Node[]) => {
         setNodes(data);
-        const startNode = data.find(n => n.type === 'START') || data[0];
-        if (startNode) {
-          setCurrentNodeId(startNode.id);
+        const start = data.find(n => n.type === 'START') || data[0];
+        if (start) {
+          setCurrentNodeId(start.id);
+          setDisplayedText(start.question || "");
+          setShowOptions(true);
+          setDotPosition('text');
         }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialNodes.length]);
 
   const currentNode = nodes.find(n => n.id === currentNodeId);
 
@@ -130,13 +149,20 @@ export function FlowApp({ session, children }: { session: any, children?: React.
 
   // Trigger typing when current node changes
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      if (initialNodes.length > 0) {
+        return;
+      }
+    }
+
     if (currentNode && !showResults) {
       const timer = setTimeout(() => {
         typeText(currentNode.question || "...");
-      }, 500);
+      }, 200);
       return () => clearTimeout(timer);
     }
-  }, [currentNode, showResults, typeText]);
+  }, [currentNodeId, showResults, typeText, initialNodes.length]);
 
   const router = useRouter();
 
@@ -228,7 +254,17 @@ export function FlowApp({ session, children }: { session: any, children?: React.
   };
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center bg-gray-50 font-prompt">กำลังสร้างจักรวาล...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10 transition-colors duration-500">
+        <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-white relative flex flex-col overflow-hidden shadow-2xl items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <BreathingDot size={28} />
+            <p className="text-xs text-gray-400 font-medium">กำลังโหลด...</p>
+          </div>
+          <BottomTabBar />
+        </div>
+      </div>
+    );
   }
 
   return (
