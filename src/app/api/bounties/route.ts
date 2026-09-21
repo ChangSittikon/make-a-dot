@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-mock";
-
-const prisma = new PrismaClient();
+import { auth } from "@/auth";
 
 export async function POST(req: Request) {
   try {
@@ -44,8 +43,16 @@ export async function POST(req: Request) {
         ? Math.round(bountyPrizeSatang)
         : 0;
 
-    // ===== GET CENTRALIZED MOCK USER =====
-    const user = await getCurrentUser();
+    // ===== GET AUTH / CENTRALIZED MOCK USER =====
+    const session = await auth();
+    let user = session?.user?.email
+      ? await prisma.user.findUnique({ where: { email: session.user.email } })
+      : null;
+
+    if (!user) {
+      user = await getCurrentUser();
+    }
+
     if (!user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -53,15 +60,37 @@ export async function POST(req: Request) {
       );
     }
 
-    // ===== PREPARE SKILL TAGS M:N =====
+    // ===== SANITIZE OCCUPATION ID (PREVENT P2003 FOREIGN KEY ERROR) =====
+    let safeOccupationId: string | undefined = undefined;
+    if (typeof occupationId === "string" && occupationId.trim() && !occupationId.startsWith("custom-")) {
+      const occExists = await prisma.occupation.findUnique({
+        where: { id: occupationId.trim() },
+        select: { id: true },
+      });
+      if (occExists) {
+        safeOccupationId = occExists.id;
+      }
+    }
+
+    // ===== SANITIZE SKILL TAGS (M:N) =====
+    let validSkillTags: { skillTag: { connect: { id: string } } }[] = [];
+    if (Array.isArray(skillTags) && skillTags.length > 0) {
+      const cleanIds = skillTags.filter(
+        (id): id is string => typeof id === "string" && id.trim() !== "" && !id.startsWith("custom-")
+      );
+      if (cleanIds.length > 0) {
+        const existingSkills = await prisma.skillTag.findMany({
+          where: { id: { in: cleanIds } },
+          select: { id: true },
+        });
+        validSkillTags = existingSkills.map((s) => ({
+          skillTag: { connect: { id: s.id } },
+        }));
+      }
+    }
+
     const problemSkillTags =
-      Array.isArray(skillTags) && skillTags.length > 0
-        ? {
-            create: skillTags.map((tagId: string) => ({
-              skillTag: { connect: { id: tagId } },
-            })),
-          }
-        : undefined;
+      validSkillTags.length > 0 ? { create: validSkillTags } : undefined;
 
     // ===== CREATE ProblemNode =====
     const problemNode = await prisma.problemNode.create({
@@ -101,10 +130,7 @@ export async function POST(req: Request) {
             : null,
 
         // Step 5 — Skills (MAGIC_SEARCH)
-        occupationId:
-          typeof occupationId === "string" && occupationId.trim()
-            ? occupationId.trim()
-            : undefined,
+        occupationId: safeOccupationId,
         requiredSkills: problemSkillTags,
 
         // Requester FK

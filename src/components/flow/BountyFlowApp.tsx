@@ -278,17 +278,25 @@ export function BountyFlowApp() {
       setSelectedOccupations((prev) => prev.filter((o) => o.name.toLowerCase() !== sug.toLowerCase()));
       setSelectedSkills((prev) => prev.filter((s) => s.name.toLowerCase() !== sug.toLowerCase()));
     } else {
+      const synonyms: Record<string, string> = {
+        "โปรแกรมเมอร์": "Software Engineer",
+        "นักออกแบบ": "UX/UI Designer",
+      };
+      const searchTarget = synonyms[sug]?.toLowerCase() || sug.toLowerCase();
+
       let matchedOcc: TaxonomyItem | null = null;
       let matchedSkill: TaxonomyItem | null = null;
 
       for (const ind of taxonomyIndustries) {
         for (const occ of ind.occupations || []) {
-          if (occ.name.toLowerCase() === sug.toLowerCase()) {
+          const occNameLower = occ.name.toLowerCase();
+          if (occNameLower === sug.toLowerCase() || occNameLower === searchTarget) {
             matchedOcc = { id: occ.id, name: occ.name };
             break;
           }
           for (const sk of occ.skillTags || []) {
-            if (sk.name.toLowerCase() === sug.toLowerCase()) {
+            const skNameLower = sk.name.toLowerCase();
+            if (skNameLower === sug.toLowerCase() || skNameLower === searchTarget) {
               matchedSkill = { id: sk.id, name: sk.name };
               break;
             }
