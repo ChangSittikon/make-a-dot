@@ -269,6 +269,48 @@ export function BountyFlowApp() {
     setSearchTerm(""); setFilteredMatches([]);
   };
 
+  const toggleSuggestion = (sug: string) => {
+    const isSelected =
+      selectedOccupations.some((o) => o.name.toLowerCase() === sug.toLowerCase()) ||
+      selectedSkills.some((s) => s.name.toLowerCase() === sug.toLowerCase());
+
+    if (isSelected) {
+      setSelectedOccupations((prev) => prev.filter((o) => o.name.toLowerCase() !== sug.toLowerCase()));
+      setSelectedSkills((prev) => prev.filter((s) => s.name.toLowerCase() !== sug.toLowerCase()));
+    } else {
+      let matchedOcc: TaxonomyItem | null = null;
+      let matchedSkill: TaxonomyItem | null = null;
+
+      for (const ind of taxonomyIndustries) {
+        for (const occ of ind.occupations || []) {
+          if (occ.name.toLowerCase() === sug.toLowerCase()) {
+            matchedOcc = { id: occ.id, name: occ.name };
+            break;
+          }
+          for (const sk of occ.skillTags || []) {
+            if (sk.name.toLowerCase() === sug.toLowerCase()) {
+              matchedSkill = { id: sk.id, name: sk.name };
+              break;
+            }
+          }
+          if (matchedOcc || matchedSkill) break;
+        }
+        if (matchedOcc || matchedSkill) break;
+      }
+
+      if (matchedOcc) {
+        setSelectedOccupations((prev) => [...prev, matchedOcc!]);
+      } else if (matchedSkill) {
+        setSelectedSkills((prev) => [...prev, matchedSkill!]);
+      } else {
+        setSelectedOccupations((prev) => [
+          ...prev,
+          { id: `custom-${Date.now()}-${sug}`, name: sug },
+        ]);
+      }
+    }
+  };
+
   const submitBounty = async (finalAnswers: Record<string, string>) => {
     setShowInput(false);
     setIsSubmitting(true);
@@ -455,11 +497,31 @@ export function BountyFlowApp() {
             
             {currentStep.suggestions && currentStep.suggestions.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2 justify-center">
-                  {currentStep.suggestions.map((sug, idx) => (
-                    <button key={idx} onClick={() => setSearchTerm(sug)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#F5F5F7] border border-transparent text-gray-600 rounded-full text-[13px] font-medium hover:bg-white hover:border-gray-200 hover:shadow-sm hover:text-brand-black active:scale-95 transition-all duration-300 cursor-pointer">
+                {currentStep.suggestions.map((sug, idx) => {
+                  const isSelected =
+                    selectedOccupations.some((o) => o.name.toLowerCase() === sug.toLowerCase()) ||
+                    selectedSkills.some((s) => s.name.toLowerCase() === sug.toLowerCase());
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => toggleSuggestion(sug)}
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium active:scale-95 transition-all duration-300 cursor-pointer ${
+                        isSelected
+                          ? "bg-red-50 border border-brand-red text-brand-red shadow-sm"
+                          : "bg-[#F5F5F7] border border-transparent text-gray-600 hover:bg-white hover:border-gray-200 hover:shadow-sm hover:text-brand-black"
+                      }`}
+                    >
+                      {isSelected ? (
+                        <i className="fa-solid fa-check text-[11px] text-brand-red" />
+                      ) : (
+                        <i className="fa-solid fa-plus text-[10px] text-gray-400" />
+                      )}
                       {sug}
                     </button>
-                  ))}
+                  );
+                })}
               </div>
             )}
           </motion.div>
