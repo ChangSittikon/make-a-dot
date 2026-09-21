@@ -51,6 +51,38 @@ export default async function SettingsPage() {
 
         <main className="flex-1 overflow-y-auto px-5 py-6 pb-24 space-y-6">
           
+          {/* Admin Command Center (Tier 5) */}
+          <section>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm flex items-center gap-1.5">
+                <i className="fa-solid fa-shield-halved text-brand-red text-xs"></i>
+                แผงควบคุมแอดมิน (Tier 5)
+              </h3>
+              <span className="text-[10px] font-bold text-brand-red bg-red-50 dark:bg-brand-red/20 px-2 py-0.5 rounded-full border border-red-100 dark:border-brand-red/30">
+                ADMIN ACCESS
+              </span>
+            </div>
+            
+            <Link
+              href="/admin/expert-monitoring"
+              className="block bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white rounded-2xl p-4 shadow-md hover:shadow-lg hover:brightness-105 transition-all relative overflow-hidden group"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-xs">
+                    <i className="fa-solid fa-chart-line text-[9px]"></i> ดีมานด์ผู้เชี่ยวชาญ
+                  </span>
+                  <i className="fa-solid fa-arrow-right text-white/80 group-hover:translate-x-1 transition-transform text-xs"></i>
+                </div>
+                <h4 className="text-base font-extrabold text-white">มอนิเตอร์แท็กผู้เชี่ยวชาญ</h4>
+                <p className="text-[11px] text-white/80 mt-0.5 leading-relaxed">
+                  ตรวจสอบสเปกที่ Requester แท็ก (อาชีพ, ทักษะ Step 5) สรุปภาพรวมและเจาะลึก
+                </p>
+              </div>
+              <i className="fa-solid fa-user-gear absolute -right-3 -bottom-3 text-6xl text-white/10 group-hover:scale-110 transition-transform"></i>
+            </Link>
+          </section>
+
           {/* Settings Section */}
           <section>
             <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm px-1">ตั้งค่า</h3>

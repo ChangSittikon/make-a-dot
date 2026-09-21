@@ -103,6 +103,25 @@ export default async function ProfileSettingsPage() {
                 </h3> 
 
                 <Link  
+                  href="/admin/expert-monitoring" 
+                  className="flex items-center justify-between p-3 bg-red-50/50 rounded-xl border border-red-100 hover:border-red-300 hover:bg-red-50 transition-colors group" 
+                > 
+                  <div className="flex items-center gap-4"> 
+                    <div className="w-10 h-10 rounded-full bg-red-100 text-brand-red flex items-center justify-center shrink-0 group-hover:bg-brand-red group-hover:text-white transition-colors"> 
+                      <i className="fa-solid fa-chart-line text-sm"></i> 
+                    </div> 
+                    <div> 
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-bold text-gray-900 text-sm group-hover:text-brand-red transition-colors">มอนิเตอร์แท็กผู้เชี่ยวชาญ</h4> 
+                        <span className="text-[9px] font-bold bg-brand-red text-white px-1.5 py-0.2 rounded-full">ใหม่</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">ดูภาพรวมดีมานด์ & สเปกที่ User ระบุใน Step 5</p> 
+                    </div> 
+                  </div> 
+                  <i className="fa-solid fa-chevron-right text-gray-300 group-hover:text-brand-red transition-colors text-xs"></i> 
+                </Link> 
+
+                <Link  
                   href="/profile/settings/idea-board" 
                   className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 hover:border-gray-300 hover:bg-gray-50 transition-colors group" 
                 > 
