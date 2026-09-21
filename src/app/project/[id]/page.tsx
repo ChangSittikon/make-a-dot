@@ -1,11 +1,13 @@
 'use client';
 import { useState, use, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import TrustShield from '@/components/shared/TrustShield';
 import TrustTimeline from '@/components/shared/TrustTimeline';
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   
   const [project, setProject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +28,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     }
     fetchProject();
   }, [id]);
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/board');
+    }
+  };
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center font-prompt text-gray-500">กำลังโหลดโปรเจกต์...</div>;
@@ -65,9 +75,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         
         {/* Header Section */}
         <header className="px-5 py-4 sticky top-0 bg-white/90 dark:bg-[#1e2329]/90 backdrop-blur-md z-30 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2"> 
-          <Link href="/explore" className="w-8 h-8 flex items-center justify-center bg-gray-50 dark:bg-[#2b3139] rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300 shrink-0"> 
+          <button 
+            type="button"
+            onClick={handleBack} 
+            className="w-8 h-8 flex items-center justify-center bg-gray-50 dark:bg-[#2b3139] rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300 shrink-0"
+            title="ย้อนกลับ"
+          > 
             <i className="fa-solid fa-arrow-left"></i> 
-          </Link> 
+          </button> 
           <div className="flex-1 min-w-0 pl-1"> 
             <h1 className="text-sm font-bold text-gray-900 dark:text-white truncate">{project.title}</h1> 
             <p className="text-[10px] text-gray-500 dark:text-gray-400">{project.industry?.name || 'General'}</p> 
