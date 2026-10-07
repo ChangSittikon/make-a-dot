@@ -17,12 +17,12 @@ export function BottomTabBar() {
         <span className={`text-[10px] tracking-wide ${pathname === '/' ? 'font-medium' : 'font-normal'}`}>หน้าหลัก</span>
       </Link>
 
-      {/* 2. Explore Tab */}
-      <Link href="/explore" className={`flex flex-col items-center gap-1.5 w-[20%] transition-colors ${pathname === '/explore' ? 'text-brand-red' : 'text-gray-400 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300'}`}>
-        <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/explore' ? 1.5 : 1.2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zm-7.518-.267A8.25 8.25 0 1120.25 10.5M8.288 14.212A5.25 5.25 0 1117.25 10.5" />
+      {/* 2. Ecosystem Tab */}
+      <Link href="/ecosystem" className={`flex flex-col items-center gap-1.5 w-[20%] transition-colors ${pathname === '/ecosystem' ? 'text-brand-red' : 'text-gray-400 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300'}`}>
+        <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={pathname === '/ecosystem' ? 1.5 : 1.2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
         </svg>
-        <span className={`text-[10px] tracking-wide ${pathname === '/explore' ? 'font-medium' : 'font-normal'}`}>สำรวจ</span>
+        <span className={`text-[10px] tracking-wide ${pathname === '/ecosystem' ? 'font-medium' : 'font-normal'}`}>เชื่อมดอท</span>
       </Link>
 
       {/* 3. Board (Marketplace) Tab */}
