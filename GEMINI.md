@@ -1,3 +1,29 @@
+## [CORE RULE] STRICT GIT WORKFLOW & REFACTORING DISCIPLINE
+**Trigger**: บังคับใช้ทุกครั้งที่มีการเขียนโค้ด, แก้ไขไฟล์, รันคำสั่ง หรือจบงานในโปรเจกต์นี้
+
+**1. THE CHECKPOINT RULE (COMMIT ทันทีเมื่อผ่าน)**
+- ห้ามปล่อยให้โค้ดค้าง Uncommitted ข้ามเซสชัน หรือสะสมงานหลายฟีเจอร์เด็ดขาด
+- ทันทีที่ฟังก์ชัน/คอมโพเนนต์ทำงานได้ผ่าน หรือ Type-check (`npx tsc --noEmit`) ผ่าน ให้รัน `git commit` ทันทีเพื่อสร้าง Checkpoint
+- ห้ามสร้างไฟล์สำรองแบบ Manual เช่น `_old.tsx` หรือ `_backup.tsx` ให้ใช้ Git Commit เป็น Single Source of Truth
+
+**2. THE END OF SESSION RULE (MANDATORY PUSH)**
+- เมื่องานย่อยหรือ Task สำเร็จสมบูรณ์ หรือก่อนสิ้นสุดการตอบ **ต้องสรุป Commit และสั่ง `git push origin main` ขึ้น GitHub เสมอ**
+- ห้ามปล่อยให้โค้ดที่ Commit แล้วค้างอยู่ใน Local Machine ข้ามวันเด็ดขาด เพื่อป้องกันความเสี่ยงข้อมูลสูญหาย
+
+**3. COMPONENT FILE SIZE HARD LIMIT (ห้ามเกิน 300 บรรทัด)**
+- ไฟล์ React Component/Page มีขนาดห้ามเกิน 300 บรรทัดเด็ดขาด
+- หากหน้าจอมีหลาย Tab, หลาย Modal, หรือข้อมูลจำลองขนาดใหญ่ **ต้องแยก (Extract) เป็นโฟลเดอร์โมดูลย่อย (`/tabs`, `/types.ts`, `/constants.ts`) ตั้งแต่แรก** ห้ามเขียนอัดรวมในไฟล์เดียว
+
+**4. NO BLIND BATCH SCRIPT OVERWRITES**
+- ห้ามใช้ Shell Script (PowerShell / Bash) ตัดแปะโค้ดทีละหลายร้อยบรรทัดแบบสุ่มเสี่ยงเด็ดขาด
+- ต้องใช้เครื่องมือ Patching ระดับบรรทัดที่แม่นยำ และรันตรวจสอบ Type-check ทุกครั้ง
+
+**5. SECURITY & DATABASE ISOLATION**
+- ห้ามฝัง Personal Access Token (PAT) ใน Git Remote URL หรือบันทึกลงใน Git Config เด็ดขาด
+- ห้าม Track ไฟล์ฐานข้อมูล Local SQLite (`prisma/*.db`, `*.db-journal`) ขึ้น Git Repo เด็ดขาด
+
+---
+
 ## [CORE RULE] SCHEMA STRICTNESS & DEFENSIVE CODING
 **Trigger**: บังคับใช้กฎนี้เฉพาะเมื่อต้องเขียน/แก้ไข **API, Database (Prisma), Data Fetching** หรือ **State ที่ผูกกับ Database**
 
