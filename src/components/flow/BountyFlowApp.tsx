@@ -6,6 +6,7 @@ import { BreathingDot } from "@/components/flow/BreathingDot";
 import { CardOption } from "@/components/flow/CardOption";
 import { DynamicRewardInput, DynamicRewardValue } from "@/components/flow/inputs/DynamicRewardInput";
 import { CascadingOptionsInput, CascadingValue } from "@/components/flow/inputs/CascadingOptionsInput";
+import BountySummaryCard from "@/components/bounty/BountySummaryCard";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -67,6 +68,7 @@ const panelVariants = {
   exit: { opacity: 0, y: -20, scale: 0.95 },
 };
 
+
 export function BountyFlowApp() {
   const router = useRouter();
 
@@ -94,9 +96,24 @@ export function BountyFlowApp() {
 
   const [showSummary, setShowSummary] = useState(false);
   const [createdBountyId, setCreatedBountyId] = useState<string | null>(null);
+  const [userProfileId, setUserProfileId] = useState<string>("");
+
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [industrySuggestions, setIndustrySuggestions] = useState<string[]>([]);
+  const [loadingAiSuggestions, setLoadingAiSuggestions] = useState(false);
+  const [aiImpactScale, setAiImpactScale] = useState<string>("LOCAL");
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const currentStep = flowSteps[currentStepIndex];
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user?.id) setUserProfileId(data.user.id);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/bounty-flow", { cache: "no-store" })
@@ -134,6 +151,73 @@ export function BountyFlowApp() {
     });
     setFilteredMatches(matches.slice(0, 8));
   }, [searchTerm, taxonomyIndustries]);
+
+  useEffect(() => {
+    if (currentStep?.type === "MAGIC_SEARCH") {
+      // 1. Layer 2 (Taxonomy): Derive suggestions synchronously from local taxonomy
+      let instantList: string[] = [];
+      
+      const userIndustry = cascadeValue?.requesterIndustryName;
+      if (userIndustry) {
+        const matchedInd = taxonomyIndustries.find((ind) => 
+          ind.name.toLowerCase().includes(userIndustry.toLowerCase()) || 
+          userIndustry.toLowerCase().includes(ind.name.toLowerCase())
+        );
+        if (matchedInd && matchedInd.occupations && matchedInd.occupations.length > 0) {
+          instantList = matchedInd.occupations.map((o) => o.name).slice(0, 6);
+        }
+      }
+
+      if (instantList.length === 0 && answers.problemCategory) {
+        const catMap: Record<string, string[]> = {
+          "เงิน/ธุรกิจ": ["นักบัญชี", "ที่ปรึกษาธุรกิจ", "นักวิเคราะห์การเงิน", "นักการตลาด"],
+          "งาน/อาชีพ": ["HR", "โค้ชพัฒนาตนเอง", "ที่ปรึกษาการงาน", "วิศวกร"],
+          "สุขภาพ": ["แพทย์ทั่วไป", "นักกายภาพบำบัด", "พยาบาลวิชาชีพ", "นักโภชนาการ"],
+          "ความสัมพันธ์": ["นักจิตวิทยาการปรึกษา", "ไลฟ์โค้ช", "ที่ปรึกษาครอบครัว"],
+          "โปรเจกต์/ไอเดีย": ["Software Engineer", "UX/UI Designer", "Project Manager", "นักการตลาด"],
+          "กฎหมาย": ["ทนายความ", "ที่ปรึกษากฎหมาย", "นิติกร"],
+        };
+        instantList = catMap[answers.problemCategory] || [];
+      }
+
+      if (instantList.length === 0) {
+        instantList = ["ช่างเทคนิค/ซ่อมบำรุง", "ที่ปรึกษาธุรกิจ", "นักบัญชี", "ทนายความ", "Software Engineer", "นักการตลาด"];
+      }
+
+      setIndustrySuggestions(instantList);
+
+      // 2. Layer 1 (AI): Fetch enriched suggestions in background
+      const desc = answers.rawDescription || "";
+      if (desc.trim().length >= 5) {
+        setLoadingAiSuggestions(true);
+        fetch("/api/flow/suggest-experts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rawDescription: desc,
+            problemCategory: answers.problemCategory || null,
+            requesterIndustryName: cascadeValue?.requesterIndustryName || null,
+            requesterWorkTypeName: cascadeValue?.requesterWorkTypeName || null,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && Array.isArray(data.suggestions) && data.suggestions.length > 0) {
+              setAiSuggestions(data.suggestions);
+            }
+            if (data.impactScale) {
+              setAiImpactScale(data.impactScale);
+            }
+          })
+          .catch((err) => {
+            console.warn("[suggest-experts] Background AI fetch error:", err);
+          })
+          .finally(() => {
+            setLoadingAiSuggestions(false);
+          });
+      }
+    }
+  }, [currentStep?.type, cascadeValue?.requesterIndustryName, cascadeValue?.requesterWorkTypeName, answers.rawDescription, answers.problemCategory, taxonomyIndustries]);
 
   useEffect(() => {
     const dots = Array.from({ length: 40 }).map((_, i) => ({
@@ -341,6 +425,8 @@ export function BountyFlowApp() {
     if (cascadeValue) {
       payload.requesterWorkTypeId = cascadeValue.requesterWorkTypeId;
       payload.requesterIndustryId = cascadeValue.requesterIndustryId;
+      payload.requesterWorkTypeName = cascadeValue.requesterWorkTypeName;
+      payload.requesterIndustryName = cascadeValue.requesterIndustryName;
     }
 
     if (selectedOccupations.length > 0) {
@@ -351,6 +437,9 @@ export function BountyFlowApp() {
       payload.skillTags = selectedSkills.map((s) => s.id);
       payload.selectedSkills = selectedSkills;
     }
+
+    // Include AI-assessed impact scale
+    payload.impactScale = aiImpactScale;
 
     try {
       const res = await fetch("/api/bounties", {
@@ -365,6 +454,9 @@ export function BountyFlowApp() {
         if (data.success) {
           if (data.problemNodeId) {
             setCreatedBountyId(data.problemNodeId);
+          }
+          if (data.userProfileId) {
+            setUserProfileId(data.userProfileId);
           }
           runFinalSequence();
         } else {
@@ -390,6 +482,44 @@ export function BountyFlowApp() {
       }, 2500);
     }, 2000);
   };
+
+  const handleEdit = () => {
+    setIsSubmitting(false);
+    setShowSummary(false);
+    setUniverseDots((prev) => prev.map((dot) => ({ ...dot, opacity: Math.random() * 0.3 + 0.1 })));
+    setCurrentStepIndex(flowSteps.length > 0 ? flowSteps.length - 1 : 0);
+    setShowInput(true);
+  };
+
+  const handleBack = () => {
+    if (isSubmitting) {
+      handleEdit();
+      return;
+    }
+    if (currentStepIndex > 0) {
+      setShowInput(false);
+      setCurrentStepIndex((prev) => prev - 1);
+      return;
+    }
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  };
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (isSubmitting) {
+        handleEdit();
+      } else if (currentStepIndex > 0) {
+        setShowInput(false);
+        setCurrentStepIndex((prev) => prev - 1);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [isSubmitting, currentStepIndex]);
 
   const renderInput = () => {
     if (!showInput || !currentStep) return null;
@@ -493,51 +623,130 @@ export function BountyFlowApp() {
                 <i className="fa-solid fa-arrow-up text-sm" />
               </button>
               
-              {filteredMatches.length > 0 && (
+              {(filteredMatches.length > 0 || (searchTerm.trim() && filteredMatches.length === 0)) && (
                 <div className="absolute left-0 right-0 bottom-full mb-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50 max-h-56 overflow-y-auto">
-                  <div className="p-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">ผลการค้นหาข้อมูลจากฐานข้อมูล</div>
-                  {filteredMatches.map((m, idx) => (
-                    <div key={idx} onClick={() => selectMatch(m)} className="px-4 py-3 hover:bg-red-50/50 cursor-pointer flex items-center justify-between border-b border-gray-50 last:border-b-0 transition-colors">
+                  {filteredMatches.length > 0 ? (
+                    <>
+                      <div className="p-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">ผลการค้นหาจากฐานข้อมูล</div>
+                      {filteredMatches.map((m, idx) => (
+                        <div key={idx} onClick={() => selectMatch(m)} className="px-4 py-3 hover:bg-red-50/50 cursor-pointer flex items-center justify-between border-b border-gray-50 last:border-b-0 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <i className={`fa-solid ${m.type === "occupation" ? "fa-briefcase text-brand-red" : "fa-bolt text-brand-red"} text-xs w-4 text-center`} />
+                            <span className="text-sm font-medium text-gray-800">{m.item.name}</span>
+                            <span className="text-xs text-gray-400 font-light">({m.parentName})</span>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div 
+                      onClick={() => {
+                        const customSkill = { id: `custom-${Date.now()}`, name: searchTerm.trim() };
+                        setSelectedSkills((prev) => [...prev, customSkill]);
+                        setSearchTerm("");
+                      }}
+                      className="px-4 py-3 hover:bg-red-50/50 cursor-pointer flex items-center justify-between transition-colors"
+                    >
                       <div className="flex items-center gap-2">
-                        <i className={`fa-solid ${m.type === "occupation" ? "fa-briefcase text-brand-red" : "fa-bolt text-brand-red"} text-xs w-4 text-center`} />
-                        <span className="text-sm font-medium text-gray-800">{m.item.name}</span>
-                        <span className="text-xs text-gray-400 font-light">({m.parentName})</span>
+                        <i className="fa-solid fa-plus text-brand-red text-xs w-4 text-center" />
+                        <span className="text-sm font-medium text-gray-800">เพิ่ม "{searchTerm.trim()}" เป็นแท็กใหม่</span>
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
             
-            {currentStep.suggestions && currentStep.suggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2 justify-center">
-                {currentStep.suggestions.map((sug, idx) => {
-                  const isSelected =
-                    selectedOccupations.some((o) => o.name.toLowerCase() === sug.toLowerCase()) ||
-                    selectedSkills.some((s) => s.name.toLowerCase() === sug.toLowerCase());
+            {/* 2-Layer Suggestions: Layer 1 (AI Specific) + Layer 2 (Industry Taxonomy) */}
+            <div className="mt-2.5 w-full space-y-3.5">
+              
+              {/* ชั้นที่ 1: วิเคราะห์ตรงกับปัญหาที่คุณระบุ (AI Specific) */}
+              {(aiSuggestions.length > 0 || loadingAiSuggestions) && (
+                <div className="bg-red-50/20 border border-red-100/60 rounded-2xl p-3">
+                  <div className="text-[11px] font-semibold text-gray-500 flex items-center justify-between mb-2 select-none px-1">
+                    <span className="flex items-center gap-1.5 text-gray-800">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse inline-block" />
+                      วิเคราะห์ตรงกับปัญหาที่คุณระบุ
+                    </span>
+                    {loadingAiSuggestions && (
+                      <span className="text-[10px] text-gray-400 font-normal">กำลังวิเคราะห์...</span>
+                    )}
+                  </div>
 
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => toggleSuggestion(sug)}
-                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium active:scale-95 transition-all duration-300 cursor-pointer ${
-                        isSelected
-                          ? "bg-red-50 border border-brand-red text-brand-red shadow-sm"
-                          : "bg-[#F5F5F7] border border-transparent text-gray-600 hover:bg-white hover:border-gray-200 hover:shadow-sm hover:text-brand-black"
-                      }`}
-                    >
-                      {isSelected ? (
-                        <i className="fa-solid fa-check text-[11px] text-brand-red" />
-                      ) : (
-                        <i className="fa-solid fa-plus text-[10px] text-gray-400" />
-                      )}
-                      {sug}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                  <div className="flex flex-wrap gap-1.5 justify-center">
+                    {aiSuggestions.map((sug, idx) => {
+                      const isSelected =
+                        selectedOccupations.some((o) => o.name.toLowerCase() === sug.toLowerCase()) ||
+                        selectedSkills.some((s) => s.name.toLowerCase() === sug.toLowerCase());
+
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => toggleSuggestion(sug)}
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium active:scale-95 transition-all duration-300 cursor-pointer ${
+                            isSelected
+                              ? "bg-brand-red text-white shadow-xs font-semibold"
+                              : "bg-white border border-gray-200/80 text-gray-700 hover:border-brand-red hover:text-brand-red shadow-2xs"
+                          }`}
+                        >
+                          {isSelected ? (
+                            <i className="fa-solid fa-check text-[10px] text-white" />
+                          ) : (
+                            <i className="fa-solid fa-plus text-[9px] text-gray-400" />
+                          )}
+                          <span>{sug}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ชั้นที่ 2: อาชีพแนะนำตามสายงาน (Industry / Taxonomy) */}
+              {industrySuggestions.length > 0 && (
+                <div className="bg-gray-50/70 border border-gray-200/60 rounded-2xl p-3">
+                  <div className="text-[11px] font-semibold text-gray-500 flex items-center justify-between mb-2 select-none px-1">
+                    <span className="flex items-center gap-1.5 text-gray-800">
+                      <i className="fa-solid fa-briefcase text-[10px] text-gray-400" />
+                      {cascadeValue?.requesterIndustryName 
+                        ? `อาชีพในสายงาน${cascadeValue.requesterIndustryName}` 
+                        : "อาชีพแนะนำตามหมวดหมู่"}
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-mono">TAXONOMY</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 justify-center">
+                    {industrySuggestions.map((sug, idx) => {
+                      const isSelected =
+                        selectedOccupations.some((o) => o.name.toLowerCase() === sug.toLowerCase()) ||
+                        selectedSkills.some((s) => s.name.toLowerCase() === sug.toLowerCase());
+
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => toggleSuggestion(sug)}
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium active:scale-95 transition-all duration-300 cursor-pointer ${
+                            isSelected
+                              ? "bg-gray-900 text-white shadow-xs font-semibold"
+                              : "bg-white border border-gray-200/80 text-gray-700 hover:border-gray-900 hover:text-gray-900 shadow-2xs"
+                          }`}
+                        >
+                          {isSelected ? (
+                            <i className="fa-solid fa-check text-[10px] text-white" />
+                          ) : (
+                            <i className="fa-solid fa-plus text-[9px] text-gray-400" />
+                          )}
+                          <span>{sug}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            </div>
           </motion.div>
         );
 
@@ -598,20 +807,16 @@ export function BountyFlowApp() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10 transition-colors duration-500">
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-white relative flex flex-col overflow-hidden shadow-2xl">
         <header className="px-5 py-4 flex items-center justify-between z-50 sticky top-0 bg-transparent">
-          {currentStepIndex > 0 ? (
-            <button onClick={() => {
-              setCurrentStepIndex(currentStepIndex - 1);
-              setShowInput(true);
-            }} className="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
-              <i className="fa-solid fa-arrow-left text-gray-500 text-sm" />
-            </button>
-          ) : (
-            <Link href="/" className="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
-              <i className="fa-solid fa-arrow-left text-gray-500 text-sm" />
-            </Link>
-          )}
+          <button 
+            type="button"
+            onClick={handleBack}
+            className="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-full hover:bg-gray-100 active:scale-95 transition-all cursor-pointer shadow-2xs"
+            title="ย้อนกลับ"
+          >
+            <i className="fa-solid fa-arrow-left text-gray-500 text-sm" />
+          </button>
           <div className="text-xs font-bold text-gray-400">
-            {isSubmitting ? "FINALIZING..." : `STEP ${currentStepIndex + 1} OF ${flowSteps.length}`}
+            {showSummary ? "ใบสรุปงาน" : isSubmitting ? "กำลังเชื่อมโยง..." : `STEP ${currentStepIndex + 1} OF ${flowSteps.length}`}
           </div>
         </header>
 
@@ -675,106 +880,68 @@ export function BountyFlowApp() {
                 transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
                 className="flex-1 px-6 py-6 pb-24 flex flex-col justify-center items-center w-full"
               >
-                <div className="mb-6 mt-8 text-center flex flex-col items-center w-full">
-                  {!showSummary && (
-                    <motion.div layoutId="nong-dot" className="inline-flex items-center justify-center z-50 mb-8">
-                      <BreathingDot size={32} color="red" />
+                <div className={`mb-6 mt-4 w-full transition-all duration-500 ${showSummary ? 'text-left' : 'text-center flex flex-col items-center'}`}>
+                  <div className={`h-8 mb-3 flex items-end ${showSummary ? 'justify-start' : 'justify-center'}`}>
+                    <motion.div 
+                      layoutId="nong-dot" 
+                      transition={{ layout: { type: "spring", stiffness: 60, damping: 11, mass: 1.2 } }} 
+                      className="inline-flex items-center justify-center z-50"
+                    >
+                      <BreathingDot size={showSummary ? 18 : 28} />
                     </motion.div>
-                  )}
-                  <h2 className={`font-bold text-gray-900 leading-snug mb-6 transition-all duration-500 ${showSummary ? 'text-lg text-left w-full' : 'text-2xl text-center'}`}>
+                  </div>
+                  <h2 className={`font-bold text-gray-900 leading-snug transition-all duration-500 ${showSummary ? 'text-xl' : 'text-2xl'}`}>
                     {displayedText}
                     {isTyping && <span className="inline-block w-2 h-5 bg-brand-red ml-1 animate-[blink_1s_infinite]" />}
                   </h2>
-
-                  {showSummary && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.6, delay: 0.2, ease: [0.32, 0.72, 0, 1] }}
-                      className="w-full text-left"
-                    >
-                      <div className="bg-white border border-gray-200 rounded-[24px] p-6 shadow-xl relative overflow-hidden group">
-                        
-                        {/* Aesthetic Header */}
-                        <div className="flex items-start justify-between mb-5 border-b border-gray-100 pb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100 shadow-sm">
-                              <i className="fa-solid fa-certificate text-xl text-brand-black" />
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-bold text-gray-900 tracking-wide uppercase">ใบการ์ดแก้ปัญหา</h3>
-                              <p className="text-[10px] text-gray-500 font-mono mt-0.5">ID: {answers.problemCategory?.substring(0,3).toUpperCase() || 'SYS'}-{Math.floor(Math.random()*9000)+1000}</p>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <span className="bg-blue-50 text-blue-600 border border-blue-200 text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">
-                              <i className="fa-solid fa-spinner fa-spin mr-1" /> อยู่ระหว่างดำเนินการ
-                            </span>
-                            <span className="text-[9px] text-gray-400 mt-1">กรองข้อมูลเบื้องต้นสำเร็จ</span>
-                          </div>
-                        </div>
-
-                        {/* Details */}
-                        <div className="space-y-4">
-                          <div>
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">สรุปปัญหา / ความต้องการ</div>
-                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-[13px] text-gray-700 leading-relaxed font-medium">
-                              "{answers.rawDescription?.substring(0, 120) || "ไม่ระบุรายละเอียด"}{answers.rawDescription?.length > 120 ? '...' : ''}"
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                               <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">ผู้เชี่ยวชาญเป้าหมาย</div>
-                               <div className="text-[12px] font-bold text-brand-black truncate" title={selectedOccupations.map((o) => o.name).concat(selectedSkills.map((s) => s.name)).join(", ")}>
-                                 {selectedOccupations.length > 0
-                                   ? selectedOccupations.map((o) => o.name).join(", ")
-                                   : selectedSkills.length > 0
-                                   ? selectedSkills.map((s) => s.name).join(", ")
-                                   : cascadeValue?.requesterIndustryId
-                                   ? "คัดกรองจากวงการ"
-                                   : "ไม่ระบุ"}
-                               </div>
-                            </div>
-                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                               <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">รางวัลตอบแทน</div>
-                               <div className="text-[12px] font-bold text-brand-red truncate">
-                                 {rewardValue?.bountyType === "CASH" ? `฿${(rewardValue.bountyPrizeSatang / 100).toLocaleString()}` : rewardValue?.bountyDescription || "-"}
-                               </div>
-                            </div>
-                          </div>
-                          
-                          {/* Checklist Guideline */}
-                          <div className="bg-red-50/50 rounded-xl p-4 border border-red-100/50 mt-2">
-                             <div className="text-[11px] font-bold text-brand-red mb-2 flex items-center gap-1.5">
-                               <i className="fa-solid fa-list-check" /> เช็คลิสต์แนวทาง / เตรียมพร้อมก่อนพบผู้เชี่ยวชาญ
-                             </div>
-                             <ul className="space-y-2">
-                               <li className="flex items-start gap-2 text-[12px] text-gray-700">
-                                 <i className="fa-regular fa-square text-gray-400 mt-0.5" /> ทบทวนใบสรุปนี้เพื่อความเข้าใจที่ตรงกัน
-                               </li>
-                               <li className="flex items-start gap-2 text-[12px] text-gray-700">
-                                 <i className="fa-regular fa-square text-gray-400 mt-0.5" /> เตรียมไฟล์ข้อมูลเพิ่มเติม (ถ้ามี)
-                               </li>
-                               <li className="flex items-start gap-2 text-[12px] text-gray-700">
-                                 <i className="fa-regular fa-square text-gray-400 mt-0.5" /> รอการตอบรับจากผู้เชี่ยวชาญผ่านระบบ
-                               </li>
-                             </ul>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-6 flex flex-col items-center gap-3">
-                           <Link href={createdBountyId ? `/profile/bounty/${createdBountyId}` : "/profile/bounty/manage"} className="inline-flex items-center justify-center gap-2 bg-brand-black text-white text-[13px] font-bold px-6 py-3.5 rounded-full hover:bg-brand-red transition-all w-full shadow-lg shadow-black/10 active:scale-95">
-                             เก็บใบการ์ด & ดูสถานะปัญหานี้ <i className="fa-solid fa-arrow-right text-[11px]" />
-                           </Link>
-                           <p className="text-[10px] text-gray-400 font-medium text-center">
-                             *ใบการ์ดนี้ใช้เสมือนใบเชิญผู้เชี่ยวชาญสำหรับการแก้ปัญหาลำดับถัดไป
-                           </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
                 </div>
+
+                {showSummary && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.6, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
+                    className="w-full text-left"
+                  >
+                    <BountySummaryCard
+                      bountyId={createdBountyId}
+                      statusLabel="พร้อมส่งตัว"
+                      rawDescription={answers.rawDescription}
+                      requesterProfileId={userProfileId || createdBountyId || "USER-01"}
+                      requesterWorkTypeName={cascadeValue?.requesterWorkTypeName}
+                      requesterIndustryName={cascadeValue?.requesterIndustryName}
+                      targetOccupations={selectedOccupations}
+                      targetSkills={selectedSkills}
+                      rewardText={
+                        rewardValue?.bountyType === "CASH" 
+                          ? `฿${(rewardValue.bountyPrizeSatang / 100).toLocaleString()}` 
+                          : rewardValue?.bountyDescription || "ตามตกลง"
+                      }
+                      impactScale={aiImpactScale}
+                      isRequester={true}
+                      actions={
+                        <div className="flex items-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={handleEdit}
+                            className="inline-flex items-center justify-center gap-1.5 bg-gray-100 text-gray-700 text-[13px] font-bold px-4 py-3.5 rounded-2xl hover:bg-gray-200 transition-all active:scale-95 cursor-pointer shrink-0"
+                          >
+                            <i className="fa-solid fa-pen-to-square text-[11px] text-gray-500" />
+                            <span>แก้ไข</span>
+                          </button>
+
+                          <Link 
+                            href={createdBountyId ? `/profile/bounty/${createdBountyId}` : "/profile/bounty/manage"} 
+                            className="inline-flex items-center justify-center gap-1.5 bg-brand-red text-white text-[13px] font-bold px-4 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex-1 shadow-lg shadow-red-500/25 active:scale-95 cursor-pointer text-center whitespace-nowrap"
+                          >
+                            <span>ยืนยันข้อมูลเข้าระบบ</span>
+                            <i className="fa-solid fa-arrow-right text-[11px]" />
+                          </Link>
+                        </div>
+                      }
+                    />
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

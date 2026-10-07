@@ -28,14 +28,14 @@ function BoardContent() {
     async function fetchData() {
       setLoading(true);
       try {
-        if (activeTab === 'BOUNTY' && bounties.length === 0) {
-          const res = await fetch('/api/bounties');
+        if (activeTab === 'BOUNTY') {
+          const res = await fetch('/api/bounties', { cache: 'no-store' });
           const data = await res.json();
           if (data.success) {
             setBounties(data.bounties);
           }
-        } else if (activeTab === 'PROJECT' && projects.length === 0) {
-          const res = await fetch('/api/projects');
+        } else if (activeTab === 'PROJECT') {
+          const res = await fetch('/api/projects', { cache: 'no-store' });
           const data = await res.json();
           if (data.success && data.projects) {
             setProjects(data.projects);
@@ -54,8 +54,13 @@ function BoardContent() {
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
+      case 'OPEN':
       case 'HOT_MISSION':
         return { text: 'HOT_MISSION', color: 'text-brand-red', dot: 'bg-brand-red animate-pulse', bg: 'bg-red-50', border: 'border-red-100' };
+      case 'NEGOTIATING':
+        return { text: 'กำลังเจรจา', color: 'text-amber-700', dot: 'bg-amber-500 animate-pulse', bg: 'bg-amber-50', border: 'border-amber-200' };
+      case 'MATCHING':
+        return { text: 'จับคู่ทีม', color: 'text-indigo-600', dot: 'bg-indigo-500 animate-pulse', bg: 'bg-indigo-50', border: 'border-indigo-100' };
       case 'DRAFT':
         return { text: 'DRAFT', color: 'text-gray-500', dot: 'bg-gray-400', bg: 'bg-gray-50', border: 'border-gray-100' };
       case 'SIMULATION':
@@ -65,7 +70,7 @@ function BoardContent() {
       case 'COMPLETED':
         return { text: 'COMPLETED', color: 'text-emerald-600', dot: 'bg-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-100' };
       default:
-        return { text: status, color: 'text-gray-600', dot: 'bg-gray-400', bg: 'bg-gray-50', border: 'border-gray-200' };
+        return { text: status || 'OPEN', color: 'text-gray-600', dot: 'bg-gray-400', bg: 'bg-gray-50', border: 'border-gray-200' };
     }
   };
 
@@ -135,13 +140,15 @@ function BoardContent() {
                       </Link>
                     </div>
                   ) : (
-                    bounties.map((bounty) => (
+                    bounties.map((bounty) => {
+                      const statusInfo = getStatusDisplay(bounty.status || 'OPEN');
+                      return (
                       <div key={bounty.id} className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-gray-50 transition group flex flex-col h-full">
                         <div className="flex justify-between items-start mb-2.5">
                           <div className="flex gap-2">
-                            <span className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-red-100">
-                              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                              HOT_MISSION
+                            <span className={`inline-flex items-center gap-1.5 ${statusInfo.bg} ${statusInfo.color} text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border ${statusInfo.border}`}>
+                              <span className={`w-1.5 h-1.5 ${statusInfo.dot} rounded-full`}></span>
+                              {statusInfo.text}
                             </span>
                           </div>
                           <div className="text-right">
@@ -150,7 +157,7 @@ function BoardContent() {
                                 ? `฿${(bounty.bountyPrizeSatang / 100).toLocaleString()}` 
                                 : 'รอเจรจา'}
                             </p>
-                            <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wide mt-0.5">ค่าหัว</p>
+                            <p className="text-[9px] text-gray-500 font-medium uppercase tracking-wide mt-0.5">ค่าตอบแทน</p>
                           </div>
                         </div>
 
@@ -185,7 +192,8 @@ function BoardContent() {
                           </Link>
                         </div>
                       </div>
-                    ))
+                    );
+                  })
                   )
                 )}
 

@@ -1,11 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth-mock';
-import UpgradeBountyButton from './UpgradeBountyButton';
-import ProposalActionButtons from './ProposalActionButtons';
-import NegotiationSandbox from './NegotiationSandbox';
 import { prisma } from '@/lib/prisma';
-import Image from 'next/image';
+import BountySummaryCard from '@/components/bounty/BountySummaryCard';
+import BountyNegotiationInbox from '@/components/bounty/BountyNegotiationInbox';
+import SolverActionSection from '@/components/bounty/SolverActionSection';
+import StickySolverBar from '@/components/bounty/StickySolverBar';
 
 export default async function BountyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -14,6 +14,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
   const bountyInclude = {
     requester: true,
     occupation: true,
+    workType: true,
     requiredSkills: {
       include: {
         skillTag: true,
@@ -21,6 +22,10 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
     },
     upgradeProposals: {
       include: { proposer: true },
+      orderBy: { createdAt: 'desc' as const },
+    },
+    negotiations: {
+      include: { solver: true },
       orderBy: { createdAt: 'desc' as const },
     },
   };
@@ -104,7 +109,9 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
   // Fallbacks if bounty is still null for some reason
   if (!bounty) return <div>Not Found</div>;
 
-  const isRequester = user?.id === bounty.requesterId;
+  const isAdmin = user?.role === 'ADMIN';
+  const isBountyOwner = Boolean(user && user.id === bounty.requesterId);
+  const isRequester = !user || isBountyOwner || isAdmin;
   const prizeTHB = (bounty.bountyPrizeSatang / 100).toLocaleString();
 
   // Parse Step 5 targets (Occupations & Skills) for Solvers
@@ -142,9 +149,65 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
     } catch {}
   }
 
+  // Resolve Requester Profile (Occupation / Industry / Profile ID)
+  let requesterWorkTypeName = bounty.workType?.name || "รับจ้างทั่วไป";
+  let requesterIndustryName = "ก่อสร้างและอสังหาริมทรัพย์";
+
+  if (bounty.requesterWorkTypeId) {
+    const wt = await prisma.workType.findUnique({
+      where: { id: bounty.requesterWorkTypeId },
+      select: { name: true },
+    });
+    if (wt?.name) requesterWorkTypeName = wt.name;
+  }
+
+  if (bounty.requesterIndustryId) {
+    const ind = await prisma.industry.findUnique({
+      where: { id: bounty.requesterIndustryId },
+      select: { name: true },
+    });
+    if (ind?.name) requesterIndustryName = ind.name;
+  }
+
+  if (bounty.deepAttributes) {
+    try {
+      const parsed = JSON.parse(bounty.deepAttributes);
+      if (parsed.requesterWorkTypeName) requesterWorkTypeName = parsed.requesterWorkTypeName;
+      if (parsed.requesterIndustryName) requesterIndustryName = parsed.requesterIndustryName;
+      if (parsed.cascadeValue?.requesterWorkTypeName) requesterWorkTypeName = parsed.cascadeValue.requesterWorkTypeName;
+      if (parsed.cascadeValue?.requesterIndustryName) requesterIndustryName = parsed.cascadeValue.requesterIndustryName;
+    } catch {}
+  }
+
+  const rewardText =
+    bounty.bountyType === "CASH"
+      ? `฿${prizeTHB}`
+      : bounty.bountyDescription || (bounty.bountyPrizeSatang > 0 ? `฿${prizeTHB}` : "ตามตกลง");
+
+  const statusLabel =
+    bounty.status === "OPEN"
+      ? "พร้อมส่งตัว"
+      : bounty.status === "MATCHING"
+      ? "กำลังจับคู่"
+      : bounty.status === "NEGOTIATING"
+      ? "กำลังเจรจา"
+      : bounty.status === "ACTIVE"
+      ? "กำลังดำเนินการ"
+      : bounty.status === "COMPLETED"
+      ? "สำเร็จ"
+      : "พร้อมส่งตัว";
+
+  const requesterProfileId = bounty.requester?.id || bounty.requesterId || user?.id || bounty.id;
+
+  // Read impactScale directly from the bounty record
+  const bountyImpactScale = (bounty as Record<string, unknown>).impactScale as string | undefined;
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
-      <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl">
+      <div 
+        id="mobile-phone-frame"
+        className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-brand-gray-light relative flex flex-col overflow-hidden shadow-2xl"
+      >
         {/* Header */}
         <div className="bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -160,120 +223,56 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
         
         <main className="flex-1 overflow-y-auto hide-scrollbar p-5">
           <div className="mx-auto flex flex-col gap-5">
-            {/* Title & Price Section */}
-            <div className="flex flex-col mb-2">
-              <div className="flex justify-between items-start mb-3">
-                <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider">
-                  {bounty.urgencyState}
-                </span>
-                <div className="text-right">
-                  <p className="text-[26px] font-extrabold text-brand-black leading-none mb-1 tracking-tight">฿{prizeTHB}</p>
-                  <p className="text-[10px] text-gray-400 font-medium tracking-wide">ค่าตอบแทน</p>
-                </div>
-              </div>
-              
-              <h1 className="text-[22px] font-bold mb-4 text-brand-black leading-snug line-clamp-3">
-                {bounty.rawDescription}
-              </h1>
-              
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 font-medium">
-                <span className="flex items-center"><i className="fas fa-building mr-1.5 opacity-70"></i> {bounty.entityType}</span>
-                <span className="flex items-center"><i className="fas fa-clock mr-1.5 opacity-70"></i> โพสต์เมื่อ 2 วันที่แล้ว</span>
-              </div>
-            </div>
+            {/* ใบสรุปงาน (Summary Card) */}
+            <BountySummaryCard
+              bountyId={bounty.id}
+              statusLabel={statusLabel}
+              rawDescription={bounty.rawDescription}
+              requesterName={bounty.requester?.name || undefined}
+              requesterProfileId={requesterProfileId}
+              requesterWorkTypeName={requesterWorkTypeName}
+              requesterIndustryName={requesterIndustryName}
+              targetOccupations={targetOccupations}
+              targetSkills={targetSkills}
+              rewardText={rewardText}
+              impactScale={bountyImpactScale || "LOCAL"}
+              isRequester={isRequester}
+            />
 
-            {/* Description Section */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold mb-3 text-brand-black">รายละเอียดงาน <span className="text-gray-400 font-normal text-sm ml-1">(Description)</span></h2>
-              <p className="text-gray-600 text-sm leading-relaxed mb-5">
-                {bounty.rawDescription}
-              </p>
-              
-              {/* Target Experts & Skills (from Step 5) */}
-              <div className="pt-4 border-t border-gray-100 space-y-2.5">
-                <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  ผู้เชี่ยวชาญ & ทักษะที่ต้องการ (Target Roles & Skills)
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {targetOccupations.map((occ, idx) => (
-                    <span
-                      key={`occ-${idx}`}
-                      className="bg-red-50 border border-red-100 text-brand-red px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-xs"
-                    >
-                      <i className="fa-solid fa-briefcase text-[10px]" />
-                      {occ.name}
-                    </span>
-                  ))}
-                  {targetSkills.map((sk, idx) => (
-                    <span
-                      key={`skill-${idx}`}
-                      className="bg-gray-50 border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5"
-                    >
-                      <i className="fa-solid fa-tag text-gray-400 text-[9px]" />
-                      {sk.name}
-                    </span>
-                  ))}
-                  {targetOccupations.length === 0 && targetSkills.length === 0 && (
-                    <span className="text-xs text-gray-400 italic">ไม่ระบุทักษะเฉพาะเจาะจง</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Requester Inbox Section */}
+            {/* Requester Inbox Section (Dual Tabs: ผู้เสนอตัวรับงาน & ข้อเสนออัปเกรด) */}
             {isRequester && (
-              <div className="mt-2">
-                <h2 className="text-lg font-bold mb-3 text-brand-black px-1 flex items-center justify-between">
-                  <span>ข้อเสนออัปเกรด <span className="bg-brand-black text-white text-xs px-2 py-0.5 rounded-full ml-2">{bounty.upgradeProposals?.length || 0}</span></span>
-                </h2>
-                <div className="space-y-4">
-                  {(!bounty.upgradeProposals || bounty.upgradeProposals.length === 0) ? (
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center py-8">
-                      <p className="text-gray-400 text-sm font-medium">ยังไม่มีข้อเสนออัปเกรดในขณะนี้</p>
-                      <p className="text-xs text-gray-300 mt-1">รอผู้เชี่ยวชาญยื่นข้อเสนอโครงการ</p>
-                    </div>
-                  ) : (
-                    bounty.upgradeProposals.map(proposal => (
-                      <div key={proposal.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-200 to-gray-100 border border-gray-200 shrink-0"></div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-900 leading-none mb-1">{proposal.proposer.name}</p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md tracking-wider">
-                                TIER {proposal.proposer.role === 'USER' ? '1' : proposal.proposer.role === 'PROFESSIONAL' ? '2' : proposal.proposer.role === 'GUARANTOR' ? '3' : proposal.proposer.role === 'DIRECTOR' ? '4' : '5'} ({proposal.proposer.role})
-                              </span>
-                              <span className="text-xs text-gray-400 font-medium">ขอเป็น {proposal.proposedRole.replace('_', ' ')}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-gray-50 rounded-xl p-3.5 mb-4 border border-gray-100">
-                          <p className="text-xs text-gray-600 leading-relaxed italic">"{proposal.vision}"</p>
-                        </div>
-                        
-                        {proposal.status === 'PENDING' ? (
-                          <ProposalActionButtons bountyId={bounty.id} proposalId={proposal.id} />
-                        ) : (
-                          <div className="text-center py-2 text-xs font-bold text-gray-400 bg-gray-50 rounded-xl border border-gray-100">
-                            {proposal.status}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              <BountyNegotiationInbox
+                bountyId={bounty.id}
+                initialNegotiations={(bounty.negotiations as any) || []}
+                initialUpgradeProposals={(bounty.upgradeProposals as any) || []}
+              />
             )}
 
-            {/* Negotiation Sandbox (Visible for freelancer/prototyping) */}
-            <NegotiationSandbox 
-              bountyId={resolvedParams.id} 
-              prizeTHB={prizeTHB} 
-              requesterName={bounty.requester?.name || 'System Admin'} 
+            {/* Solver Action Section (ปุ่มรับงานเจรจา + Negotiation Modal) */}
+            <SolverActionSection
+              bountyId={bounty.id}
+              initialPrizeTHB={bounty.bountyPrizeSatang / 100}
+              currentUserRole={user?.role || "USER"}
+              isRequester={!isAdmin && isBountyOwner}
+              bountyStatus={bounty.status}
+              myNegotiationStatus={
+                bounty.negotiations?.find((n) => n.solverId === user?.id)?.status || null
+              }
             />
           </div>
         </main>
+
+        {/* Sticky Bottom Bar for Instant Action (Always visible at bottom) */}
+        <StickySolverBar
+          bountyId={bounty.id}
+          initialPrizeTHB={bounty.bountyPrizeSatang / 100}
+          prizeText={rewardText}
+          bountyStatus={bounty.status}
+          currentUserRole={user?.role || "USER"}
+          myNegotiationStatus={
+            bounty.negotiations?.find((n) => n.solverId === user?.id)?.status || null
+          }
+        />
       </div>
     </div>
   );

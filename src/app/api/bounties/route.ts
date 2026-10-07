@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-mock";
 import { auth } from "@/auth";
+import { VALID_IMPACT_SCALES } from "@/config/taxonomy";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
@@ -16,6 +19,8 @@ export async function POST(req: Request) {
       bountyDescription,       // String? (DYNAMIC_REWARD — text description for non-cash)
       requesterWorkTypeId,     // String? (CASCADING_OPTIONS layer 1 — WorkType.id)
       requesterIndustryId,     // String? (CASCADING_OPTIONS layer 2 — Industry.id)
+      requesterWorkTypeName,   // String? (CASCADING_OPTIONS layer 1 name)
+      requesterIndustryName,   // String? (CASCADING_OPTIONS layer 2 name)
       occupationId,            // String? (MAGIC_SEARCH — selected occupation)
       skillTags,               // string[] (MAGIC_SEARCH — SkillTag IDs)
       selectedOccupations,     // Array of { id: string, name: string }
@@ -24,6 +29,7 @@ export async function POST(req: Request) {
       primaryGap,              // String? (optional)
       urgencyState,            // String? (optional)
       deepAttributes,          // String? or Object
+      impactScale,
     } = body;
 
     // ===== GUARD NON-NULLABLE FIELDS (RULE 2: DYNAMIC & TYPE-SAFE FIRST) =====
@@ -45,6 +51,11 @@ export async function POST(req: Request) {
       typeof bountyPrizeSatang === "number" && bountyPrizeSatang >= 0
         ? Math.round(bountyPrizeSatang)
         : 0;
+
+    const safeImpactScale: string =
+      typeof impactScale === "string" && VALID_IMPACT_SCALES.includes(impactScale.toUpperCase() as any)
+        ? impactScale.toUpperCase()
+        : "LOCAL";
 
     // ===== GET AUTH / CENTRALIZED MOCK USER =====
     const session = await auth();
@@ -123,6 +134,24 @@ export async function POST(req: Request) {
     }
     if (Array.isArray(selectedSkills) && selectedSkills.length > 0) {
       deepData.targetSkills = selectedSkills;
+
+      // Automatically capture custom tags for AI taxonomy learning
+      const extractedCustomTags = selectedSkills
+        .filter((s: { id?: string; name?: string }) => s?.id?.startsWith("custom-") || (s?.name && !s?.id))
+        .map((s: { name: string }) => s.name.trim())
+        .filter(Boolean);
+
+      if (extractedCustomTags.length > 0) {
+        const existingCustom = Array.isArray(deepData.customTags) ? deepData.customTags : [];
+        deepData.customTags = Array.from(new Set([...existingCustom, ...extractedCustomTags]));
+      }
+    }
+
+    if (typeof requesterWorkTypeName === "string" && requesterWorkTypeName.trim()) {
+      deepData.requesterWorkTypeName = requesterWorkTypeName.trim();
+    }
+    if (typeof requesterIndustryName === "string" && requesterIndustryName.trim()) {
+      deepData.requesterIndustryName = requesterIndustryName.trim();
     }
 
     // ===== CREATE ProblemNode =====
@@ -133,6 +162,7 @@ export async function POST(req: Request) {
         entityType: safeEntityType,
         primaryGap: safePrimaryGap,
         status: "OPEN",
+        impactScale: safeImpactScale,
         urgencyState:
           typeof urgencyState === "string" && urgencyState.trim()
             ? urgencyState
@@ -189,7 +219,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, problemNodeId: problemNode.id });
+    return NextResponse.json({ success: true, problemNodeId: problemNode.id, userProfileId: user.id });
   } catch (error) {
     console.error("[POST /api/bounties] Failed:", error);
     return NextResponse.json(
@@ -202,7 +232,11 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const bounties = await prisma.problemNode.findMany({
-      where: { status: "OPEN" },
+      where: {
+        status: {
+          in: ["OPEN", "MATCHING", "NEGOTIATING"],
+        },
+      },
       orderBy: { createdAt: "desc" },
       include: {
         occupation: true,
