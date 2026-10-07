@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const industries = await prisma.industry.findMany({
       where: { parentId: null },
-      select: { id: true, name: true, icon: true, domainDirector: true },
+      select: { id: true, name: true, icon: true, domainDirector: true, order: true },
       orderBy: { order: "asc" },
     });
     // Return array directly to match existing FlowApp.tsx expectation

@@ -168,14 +168,24 @@ export default function ExpertDemandMonitoringPage() {
               </h1>
             </div>
           </div>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="w-9 h-9 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:text-brand-red transition"
-            title="รีเฟรชข้อมูล"
-          >
-            <i className={`fa-solid fa-rotate text-xs ${loading ? 'fa-spin text-brand-red' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/taxonomy"
+              className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-brand-red text-xs font-bold transition flex items-center gap-1.5 border border-red-100"
+              title="จัดการผัง 3 Layer และคำศัพท์ที่ AI เรียนรู้"
+            >
+              <i className="fa-solid fa-brain text-[11px]" />
+              <span className="hidden sm:inline">AI Taxonomy</span>
+            </Link>
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className="w-9 h-9 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:text-brand-red transition"
+              title="รีเฟรชข้อมูล"
+            >
+              <i className={`fa-solid fa-rotate text-xs ${loading ? 'fa-spin text-brand-red' : ''}`} />
+            </button>
+          </div>
         </header>
 
         {/* Tab Selector */}

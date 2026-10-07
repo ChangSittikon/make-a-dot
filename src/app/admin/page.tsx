@@ -63,24 +63,58 @@ export default async function SettingsPage() {
               </span>
             </div>
             
-            <Link
-              href="/admin/expert-monitoring"
-              className="block bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white rounded-2xl p-4 shadow-md hover:shadow-lg hover:brightness-105 transition-all relative overflow-hidden group"
-            >
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-xs">
-                    <i className="fa-solid fa-chart-line text-[9px]"></i> ดีมานด์ผู้เชี่ยวชาญ
-                  </span>
-                  <i className="fa-solid fa-arrow-right text-white/80 group-hover:translate-x-1 transition-transform text-xs"></i>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Link
+                href="/profile/settings/flow-builder"
+                className="block bg-white dark:bg-[#1e2329] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow relative overflow-hidden group"
+              >
+                <div className="flex items-center gap-3 mb-2 relative z-10">
+                  <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                    <i className="fa-solid fa-code-branch text-brand-black dark:text-white text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">Flow Builder</h4>
+                    <p className="text-[10px] text-gray-500">ปรับแต่งขั้นตอน Flow ของระบบ</p>
+                  </div>
                 </div>
-                <h4 className="text-base font-extrabold text-white">มอนิเตอร์แท็กผู้เชี่ยวชาญ</h4>
-                <p className="text-[11px] text-white/80 mt-0.5 leading-relaxed">
-                  ตรวจสอบสเปกที่ Requester แท็ก (อาชีพ, ทักษะ Step 5) สรุปภาพรวมและเจาะลึก
-                </p>
-              </div>
-              <i className="fa-solid fa-user-gear absolute -right-3 -bottom-3 text-6xl text-white/10 group-hover:scale-110 transition-transform"></i>
-            </Link>
+                <i className="fa-solid fa-code-branch absolute -right-2 -bottom-2 text-5xl text-gray-50 dark:text-gray-800/50 group-hover:scale-110 transition-transform"></i>
+              </Link>
+
+              <Link
+                href="/admin/expert-monitoring"
+                className="block bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white rounded-2xl p-4 shadow-md hover:shadow-lg hover:brightness-105 transition-all relative overflow-hidden group"
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="inline-flex items-center gap-1 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-xs">
+                      <i className="fa-solid fa-chart-line text-[9px]"></i> ศูนย์ข้อมูลผู้เชี่ยวชาญ
+                    </span>
+                    <i className="fa-solid fa-arrow-right text-white/80 group-hover:translate-x-1 transition-transform text-xs"></i>
+                  </div>
+                  <h4 className="text-base font-extrabold text-white">มอนิเตอร์ดีมานด์ผู้เชี่ยวชาญ</h4>
+                  <p className="text-[11px] text-white/80 mt-0.5 leading-relaxed">
+                    ดูความต้องการของ Requester (อาชีพ, ทักษะ Step 5) เพื่อปรับกลยุทธ์แพลตฟอร์ม
+                  </p>
+                </div>
+                <i className="fa-solid fa-user-gear absolute -right-3 -bottom-3 text-6xl text-white/10 group-hover:scale-110 transition-transform"></i>
+              </Link>
+
+              <Link
+                href="/admin/taxonomy"
+                className="block bg-white dark:bg-[#1e2329] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow relative overflow-hidden group sm:col-span-2"
+              >
+                <div className="flex items-center gap-3 mb-2 relative z-10">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                    <i className="fa-solid fa-tags text-blue-600 dark:text-blue-400 text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">Taxonomy (หมวดหมู่อาชีพ)</h4>
+                    <p className="text-[10px] text-gray-500">จัดการข้อมูล Layer 1-3 รูปแบบการทำงาน สายงาน และอาชีพ/ทักษะอัจฉริยะ (DOT017)</p>
+                  </div>
+                </div>
+                <i className="fa-solid fa-tags absolute -right-2 -bottom-2 text-5xl text-blue-50 dark:text-blue-900/10 group-hover:scale-110 transition-transform"></i>
+              </Link>
+            </div>
           </section>
 
           {/* Settings Section */}

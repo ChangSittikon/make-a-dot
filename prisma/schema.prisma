@@ -119,8 +119,9 @@ model User {
   revShareSplits       RevShareSplitMember[]
 
   // Bounty Protocol Relations
-  problemsRequested ProblemNode[] @relation("Requester") // ปัญหาที่ user นี้ตั้งค่าหัว
-  problemsSolved    ProblemNode[] @relation("Solver") // ปัญหาที่ user นี้แก้สำเร็จ
+  problemsRequested  ProblemNode[]       @relation("Requester") // ปัญหาที่ user นี้ตั้งค่าหัว
+  problemsSolved     ProblemNode[]       @relation("Solver") // ปัญหาที่ user นี้แก้สำเร็จ
+  bountyNegotiations BountyNegotiation[] @relation("SolverNegotiations")
 
   // DOT023, DOT024: Resources & Matching
   resourcesProvided  ProjectResource[] @relation("ResourceProvider")
@@ -213,6 +214,7 @@ model Project {
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
 
   status            String @default("DRAFT") // DRAFT, SIMULATION, HOT_MISSION, ACTIVE, COMPLETED, CANCELLED
+  impactScale       String @default("LOCAL") // MICRO, LOCAL, MACRO, STRUCTURAL, GLOBAL, MOONSHOT
   budgetSatang      Int    @default(0) // งบประมาณรวม (สตางค์)
   fundingGoalSatang Int    @default(0) // เป้าหมายเงินทุนรวมที่ต้องการระดม
   revShareOffered   Float  @default(0) // สัดส่วนส่วนแบ่งรายได้ (%) ที่เสนอ
@@ -721,6 +723,10 @@ model ProblemNode {
   primaryGap     String // ช่องว่างหลัก: SKILL_GAP, RESOURCE_GAP, NETWORK_GAP, CAPITAL_GAP, KNOWLEDGE_GAP
   urgencyState   String @default("NORMAL") // NORMAL, URGENT, CRITICAL, HOT_MISSION
 
+  // ===== IMPACT SCALE (DOT-IMPACT) =====
+  // MICRO (ตัวเอง/ครอบครัว), LOCAL (ชุมชน/ท้องถิ่น), MACRO (อุตสาหกรรม/ประเทศ), STRUCTURAL (โครงสร้างระบบ), GLOBAL (ระดับโลก), MOONSHOT (อนาคตมนุษยชาติ)
+  impactScale    String @default("LOCAL")
+
   // Deep Attributes — AI วิเคราะห์และเติม (JSON)
   // {"estimatedDays": 7, "requiredHeadcount": 2, "locationRequired": "กรุงเทพ", "remoteOk": true, "kpiDraft": "..."}
   deepAttributes String? // JSON String
@@ -788,8 +794,32 @@ model ProblemNode {
   completedAt      DateTime? // เวลาที่งานสำเร็จ
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  // Negotiations & KPI Proposals
+  negotiations     BountyNegotiation[]
   revShareAndSplit RevShareAndSplit?
   escrowCondition  EscrowCondition?
+}
+
+// ============================================================
+// PHASE 1.5: BOUNTY NEGOTIATION & KPI BUILDER
+// ============================================================
+
+model BountyNegotiation {
+  id            String      @id @default(cuid())
+  bountyId      String
+  bounty        ProblemNode @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  solverId      String
+  solver        User        @relation("SolverNegotiations", fields: [solverId], references: [id], onDelete: Cascade)
+  proposedKPI   String      // สิ่งที่จะส่งมอบ (KPI / Deliverables)
+  timeframeDays Int         // ระยะเวลา (วัน)
+  priceSatang   Int         // ราคาเสนอ (สตางค์)
+  status        String      @default("PENDING") // PENDING | ACCEPTED | REJECTED
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([bountyId])
+  @@index([solverId])
 }
 
 // Junction Table: ProblemNode ↔ SkillTag (M:N)
