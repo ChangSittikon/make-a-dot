@@ -24,6 +24,9 @@ import { SettingsGeneralView } from '../views/SettingsGeneralView';
 import { SettingsKnowledgeView } from '../views/SettingsKnowledgeView';
 import { SettingsDomainsView } from '../views/SettingsDomainsView';
 import { SettingsGitView } from '../views/SettingsGitView';
+import { TaxonomyView } from '../views/TaxonomyView';
+import { CapTableView } from '../views/CapTableView';
+import { BountyView } from '../views/BountyView';
 
 type ActiveView = 'Database' | 'Overview' | 'Analytics' | 'Users' | 'Storage' | 'Emails' | 'Secrets' | 'Jobs' | 'Edge functions' | 'SQL editor' | 'Logs' | 'Usage' | 'AI' | 'Taxonomy' | 'Cap Table Engine' | 'Bounty Quests' | string;
 
@@ -73,56 +76,9 @@ export function MoreTab() {
       case 'Domains': return <SettingsDomainsView />;
       case 'Git': return <SettingsGitView />;
       case 'Settings': return <SettingsGeneralView />;
-      case 'Taxonomy':
-        return (
-          <div className="max-w-4xl mx-auto">
-             <div className="flex items-start justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-semibold text-white mb-1">Taxonomy Manager</h1>
-                <p className="text-sm text-zinc-400">Manage 12 industry sectors, tags, and AI classification rules.</p>
-              </div>
-            </div>
-            <div className="flex flex-col items-center justify-center h-64 border border-dashed border-zinc-800/80 rounded-xl bg-zinc-900/20">
-               <Network className="w-10 h-10 text-zinc-600 mb-3" />
-               <p className="text-zinc-400 text-sm">Taxonomy Manager UI will be implemented here.</p>
-               <button className="mt-4 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-md text-sm transition-colors border border-zinc-700 shadow-sm">
-                 Sync with Prisma Seed
-               </button>
-            </div>
-          </div>
-        );
-
-      case 'Cap Table Engine':
-        return (
-          <div className="max-w-4xl mx-auto">
-             <div className="flex items-start justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-semibold text-white mb-1">Cap Table Engine</h1>
-                <p className="text-sm text-zinc-400">Configure equity split rules and simulation variables.</p>
-              </div>
-            </div>
-            <div className="flex flex-col items-center justify-center h-64 border border-dashed border-zinc-800/80 rounded-xl bg-zinc-900/20">
-               <FileSpreadsheet className="w-10 h-10 text-zinc-600 mb-3" />
-               <p className="text-zinc-400 text-sm">Cap Table Engine UI will be implemented here.</p>
-            </div>
-          </div>
-        );
-
-      case 'Bounty Quests':
-        return (
-          <div className="max-w-4xl mx-auto">
-             <div className="flex items-start justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-semibold text-white mb-1">Bounty Command Center</h1>
-                <p className="text-sm text-zinc-400">Monitor active quests, solver negotiations, and bounty payouts.</p>
-              </div>
-            </div>
-            <div className="flex flex-col items-center justify-center h-64 border border-dashed border-zinc-800/80 rounded-xl bg-zinc-900/20">
-               <Target className="w-10 h-10 text-zinc-600 mb-3" />
-               <p className="text-zinc-400 text-sm">Bounty Dashboard will be implemented here.</p>
-            </div>
-          </div>
-        );
+      case 'Taxonomy': return <TaxonomyView />;
+      case 'Cap Table Engine': return <CapTableView />;
+      case 'Bounty Quests': return <BountyView />;
 
       default:
         return (
