@@ -83,7 +83,7 @@ export const CapTableSimulation: React.FC<CapitalTabProps> = ({
   const chipCls = 'w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center';
 
   return (
-    <div className="@container w-full px-3 @2xl:px-4 py-4 space-y-4 font-prompt">
+    <div className="@container w-full px-2.5 sm:px-3.5 py-3 space-y-3.5 font-prompt">
       <style jsx>{`
         .cap-slider::-webkit-slider-thumb {
           -webkit-appearance: none;
