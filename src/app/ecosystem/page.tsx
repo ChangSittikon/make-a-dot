@@ -5,10 +5,9 @@ import { BottomTabBar } from '@/components/shared/BottomTabBar';
 import { MainTabType, CapTableItem } from '@/components/ecosystem/types';
 import {
   INITIAL_CAP_TABLE,
-  INDUSTRY_01_SUB_LIST,
-  SUB_INDUSTRIES_MAP,
   INDUSTRY_CAP_PRESETS,
 } from '@/components/ecosystem/constants';
+import { ALL_SUB_INDUSTRIES } from '@/components/ecosystem/allSubIndustries';
 import { ProcessingTab } from '@/components/ecosystem/tabs/ProcessingTab';
 import { CapitalTab } from '@/components/ecosystem/tabs/CapitalTab';
 import { SolverTab } from '@/components/ecosystem/tabs/SolverTab';
@@ -66,36 +65,28 @@ function EcosystemContent() {
 
   const handleSelectIndustryForCapTable = (indId: string) => {
     setSelectedIndustryId(indId);
-    if (indId === 'ind_01') {
-      setSelectedSubIndustryId('sub_01_res');
-      setSelectedSegmentId('seg_res_1');
-      const sub = INDUSTRY_01_SUB_LIST.find(s => s.id === 'sub_01_res')!;
-      const seg = sub.segments?.find(s => s.id === 'seg_res_1');
-      const preset = seg ? seg.preset : sub.preset;
-      setCapTableData([
-        { id: 'cash', name: 'เงินสด (Cash)', value: preset.cash.val, color: '#56b6f7' },
-        { id: 'sweat', name: 'หยาดเหงื่อแรงงาน (Sweat)', value: preset.sweat.val, color: '#9d9ff7' },
-        { id: 'equip', name: 'เครื่องมือ/อุปกรณ์ (Equip)', value: preset.equip.val, color: '#3bd18e' },
-        { id: 'venue', name: 'สถานที่/ออฟฟิศ (Venue)', value: preset.venue.val, color: '#a3e635' },
-        { id: 'ip', name: 'ทรัพย์สินทางปัญญา (IP)', value: preset.ip.val, color: '#f3e8c8' },
-      ]);
-    } else {
-      setSelectedSubIndustryId('');
-      setSelectedSegmentId('');
-      const preset = INDUSTRY_CAP_PRESETS[indId] || INDUSTRY_CAP_PRESETS.ind_01;
-      setCapTableData([
-        { id: 'cash', name: 'เงินสด (Cash)', value: preset.cash.val, color: '#56b6f7' },
-        { id: 'sweat', name: 'หยาดเหงื่อแรงงาน (Sweat)', value: preset.sweat.val, color: '#9d9ff7' },
-        { id: 'equip', name: 'เครื่องมือ/อุปกรณ์ (Equip)', value: preset.equip.val, color: '#3bd18e' },
-        { id: 'venue', name: 'สถานที่/ออฟฟิศ (Venue)', value: preset.venue.val, color: '#a3e635' },
-        { id: 'ip', name: 'ทรัพย์สินทางปัญญา (IP)', value: preset.ip.val, color: '#f3e8c8' },
-      ]);
-    }
+    const subList = ALL_SUB_INDUSTRIES[indId] || [];
+    const firstSub = subList[0] || null;
+    const firstSeg = firstSub?.segments && firstSub.segments.length > 0 ? firstSub.segments[0] : null;
+    setSelectedSubIndustryId(firstSub ? firstSub.id : '');
+    setSelectedSegmentId(firstSeg ? firstSeg.id : '');
+
+    const preset = firstSeg 
+      ? firstSeg.preset 
+      : (firstSub ? firstSub.preset : (INDUSTRY_CAP_PRESETS[indId] || INDUSTRY_CAP_PRESETS.ind_01));
+
+    setCapTableData([
+      { id: 'cash', name: 'เงินสด (Cash)', value: preset.cash.val, color: '#56b6f7' },
+      { id: 'sweat', name: 'หยาดเหงื่อแรงงาน (Sweat)', value: preset.sweat.val, color: '#9d9ff7' },
+      { id: 'equip', name: 'เครื่องมือ/อุปกรณ์ (Equip)', value: preset.equip.val, color: '#3bd18e' },
+      { id: 'venue', name: 'สถานที่/ออฟฟิศ (Venue)', value: preset.venue.val, color: '#a3e635' },
+      { id: 'ip', name: 'ทรัพย์สินทางปัญญา (IP)', value: preset.ip.val, color: '#f3e8c8' },
+    ]);
   };
 
   const handleSelectSubIndustry = (subId: string) => {
     setSelectedSubIndustryId(subId);
-    const subList = SUB_INDUSTRIES_MAP[selectedIndustryId] || [];
+    const subList = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
     const sub = subList.find(s => s.id === subId);
     if (sub) {
       const firstSeg = sub.segments && sub.segments.length > 0 ? sub.segments[0] : null;
@@ -113,7 +104,7 @@ function EcosystemContent() {
 
   const handleSelectSegment = (segId: string) => {
     setSelectedSegmentId(segId);
-    const subList = SUB_INDUSTRIES_MAP[selectedIndustryId] || [];
+    const subList = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
     const sub = subList.find(s => s.id === selectedSubIndustryId);
     if (sub && sub.segments) {
       const seg = sub.segments.find(s => s.id === segId);
@@ -130,7 +121,7 @@ function EcosystemContent() {
   };
 
   const handleResetPreset = () => {
-    const subList = SUB_INDUSTRIES_MAP[selectedIndustryId] || [];
+    const subList = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
     const activeSub = subList.find(s => s.id === selectedSubIndustryId);
     const activeSeg = activeSub?.segments?.find(s => s.id === selectedSegmentId);
     const currentPreset = activeSeg 

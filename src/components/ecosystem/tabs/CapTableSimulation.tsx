@@ -4,9 +4,9 @@ import React from 'react';
 import { CapTableItem } from '../types';
 import {
   INDUSTRIES_LIST,
-  SUB_INDUSTRIES_MAP,
   INDUSTRY_CAP_PRESETS,
 } from '../constants';
+import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
 
 interface CapitalTabProps {
   selectedIndustryId: string;
@@ -33,9 +33,9 @@ export const CapTableSimulation: React.FC<CapitalTabProps> = ({
 }) => {
   const currentIndustry = INDUSTRIES_LIST.find(i => i.id === selectedIndustryId) || INDUSTRIES_LIST[0];
   const totalValuation = capTableData.reduce((acc, cur) => acc + cur.value, 0);
-  const currentSubIndustries = SUB_INDUSTRIES_MAP[selectedIndustryId] || [];
-  const activeSubIndustry = currentSubIndustries.find(s => s.id === selectedSubIndustryId);
-  const activeSegment = activeSubIndustry?.segments?.find(s => s.id === selectedSegmentId);
+  const currentSubIndustries = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
+  const activeSubIndustry = currentSubIndustries.find(s => s.id === selectedSubIndustryId) || currentSubIndustries[0];
+  const activeSegment = activeSubIndustry?.segments?.find(s => s.id === selectedSegmentId) || activeSubIndustry?.segments?.[0];
   const currentPreset = activeSegment
     ? activeSegment.preset
     : activeSubIndustry
@@ -74,8 +74,8 @@ export const CapTableSimulation: React.FC<CapitalTabProps> = ({
 
   const hasSub = currentSubIndustries.length > 0;
   const hasSeg = !!(activeSubIndustry && activeSubIndustry.segments && activeSubIndustry.segments.length > 0);
-  const fieldCount = 1 + (hasSub ? 1 : 0) + (hasSeg ? 1 : 0);
-  const gridColsCls = ['', '@2xl:grid-cols-1', '@2xl:grid-cols-2', '@2xl:grid-cols-3'][fieldCount];
+  const fieldCount = (hasSub ? 1 : 0) + (hasSeg ? 1 : 0);
+  const gridColsCls = fieldCount >= 2 ? '@2xl:grid-cols-2' : 'grid-cols-1';
 
   const cardCls = 'bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] shadow-xs';
   const selectCls = 'w-full h-11 rounded-xl border border-gray-200 dark:border-[#2c313a] bg-white dark:bg-[#12141a] pl-3.5 pr-9 text-[13px] font-medium text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 appearance-none cursor-pointer text-ellipsis transition-colors';
@@ -109,49 +109,43 @@ export const CapTableSimulation: React.FC<CapitalTabProps> = ({
 
       {/* 1. Selector + Total Valuation */}
       <section className={`${cardCls} p-4 @2xl:p-5`}>
-        <div className="flex items-center gap-2.5 mb-4">
-          <span className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-[#102a4e] text-blue-600 dark:text-sky-400 flex items-center justify-center text-sm shrink-0">
-            <i className="fa-solid fa-chart-pie"></i>
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">จำลองโครงสร้างทุน</h2>
-            <p className="text-[10px] text-gray-400 leading-tight mt-0.5">Cap Table Simulation</p>
+        {/* Industry Focus Header */}
+        <div className="flex items-center justify-between gap-2.5 mb-4 pb-3.5 border-b border-gray-100 dark:border-[#262930]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/10 to-brand-red/10 border border-orange-500/20 text-brand-red dark:text-orange-400 flex items-center justify-center text-base shrink-0 shadow-2xs">
+              <i className={currentIndustry.icon || 'fa-solid fa-layer-group'}></i>
+            </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                  {currentIndustry.code}
+                </span>
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate">
+                  {currentIndustry.name}
+                </h2>
+              </div>
+              <p className="text-[10px] text-gray-400 leading-tight mt-0.5 truncate">
+                {currentIndustry.description}
+              </p>
+            </div>
           </div>
+          <span className="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+            {currentSubIndustries.length} หมวด
+          </span>
         </div>
 
+        {/* 2-Step Selectors */}
         <div className={`grid grid-cols-1 gap-3 ${gridColsCls}`}>
-          {/* Level 1 */}
-          <label className="block min-w-0">
-            <span className={labelCls}>
-              <span className={`${chipCls} bg-gray-800 dark:bg-gray-500`}>1</span>
-              สายงาน
-            </span>
-            <div className="relative">
-              <select
-                value={selectedIndustryId}
-                onChange={(e) => onSelectIndustry(e.target.value)}
-                className={selectCls}
-              >
-                {INDUSTRIES_LIST.map((ind) => (
-                  <option key={ind.id} value={ind.id} className="bg-white dark:bg-[#181a1f] text-gray-900 dark:text-white">
-                    {ind.code} {ind.name}
-                  </option>
-                ))}
-              </select>
-              <i className="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
-            </div>
-          </label>
-
-          {/* Level 2 */}
+          {/* Step 1: หมวดหลัก */}
           {hasSub && (
             <label className="block min-w-0">
               <span className={labelCls}>
-                <span className={`${chipCls} bg-blue-600`}>2</span>
+                <span className={`${chipCls} bg-blue-600`}>1</span>
                 หมวดหลัก
               </span>
               <div className="relative">
                 <select
-                  value={selectedSubIndustryId}
+                  value={selectedSubIndustryId || (currentSubIndustries[0]?.id ?? '')}
                   onChange={(e) => onSelectSubIndustry(e.target.value)}
                   className={selectCls}
                 >
@@ -166,16 +160,16 @@ export const CapTableSimulation: React.FC<CapitalTabProps> = ({
             </label>
           )}
 
-          {/* Level 3 */}
+          {/* Step 2: เจาะจงรูปแบบโครงการ */}
           {hasSeg && activeSubIndustry && activeSubIndustry.segments && (
             <label className="block min-w-0">
               <span className={labelCls}>
-                <span className={`${chipCls} bg-purple-600`}>3</span>
+                <span className={`${chipCls} bg-purple-600`}>2</span>
                 เจาะจงรูปแบบโครงการ
               </span>
               <div className="relative">
                 <select
-                  value={selectedSegmentId}
+                  value={selectedSegmentId || (activeSubIndustry.segments[0]?.id ?? '')}
                   onChange={(e) => onSelectSegment(e.target.value)}
                   className={selectCls}
                 >
