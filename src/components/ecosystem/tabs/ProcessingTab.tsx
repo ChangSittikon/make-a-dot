@@ -1,298 +1,437 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
+import React, { useState } from 'react';
+import { INDUSTRIES_LIST } from '../constants';
+import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
 
 interface ProcessingTabProps {
-  promptInput: string;
-  setPromptInput: (val: string) => void;
-  isProcessing: boolean;
-  processingPhase: number;
-  hasAnalyzed: boolean;
-  onRunProcessing: () => void;
-  onNavigateToEcosystem: () => void;
+  promptInput?: string;
+  setPromptInput?: (val: string) => void;
+  isProcessing?: boolean;
+  processingPhase?: number;
+  hasAnalyzed?: boolean;
+  onRunProcessing?: () => void;
+  onNavigateToEcosystem?: () => void;
+}
+
+interface ProcessTabItem {
+  id: string;
+  code: string;
+  label: string;
+  icon: string;
+  desc: string;
+  color?: string;
+  badge?: string;
 }
 
 export const ProcessingTab: React.FC<ProcessingTabProps> = ({
-  promptInput,
-  setPromptInput,
-  isProcessing,
-  processingPhase,
-  hasAnalyzed,
-  onRunProcessing,
   onNavigateToEcosystem,
 }) => {
+  const [activeTabId, setActiveTabId] = useState<string>('all');
+  const [localPrompt, setLocalPrompt] = useState<string>('');
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+
+  // 14 Tabs: 1 รวม + 12 หมวดอุตสาหกรรม + 1 ดอทปริศนา
+  const TABS_14: ProcessTabItem[] = [
+    {
+      id: 'all',
+      code: 'รวม',
+      label: 'รวม',
+      icon: 'fa-solid fa-shapes',
+      desc: 'ศูนย์กลางประมวลผลรวมทุกกลุ่มอุตสาหกรรม และภาพรวมระบบนิเวศ Make a dot',
+      color: '#ef4444',
+    },
+    ...INDUSTRIES_LIST.map((ind) => ({
+      id: ind.id,
+      code: ind.code,
+      label: ind.name,
+      icon: ind.icon,
+      desc: ind.description,
+    })),
+    {
+      id: 'mystery',
+      code: '??',
+      label: 'ดอทปริศนา',
+      icon: 'fa-solid fa-wand-magic-sparkles',
+      desc: 'โจทย์ข้ามสายงาน นวัตกรรมนอกกรอบ ธุรกิจไฮบริด หรือโปรเจกต์ลับที่ยังจัดหมวดหมู่ไม่ได้',
+      color: '#a855f7',
+      badge: 'Secret',
+    },
+  ];
+
+  const activeTab = TABS_14.find((t) => t.id === activeTabId) || TABS_14[0];
+  const activeSubIndustries = ALL_SUB_INDUSTRIES[activeTabId] || [];
+
+  const handleProcessSubmit = () => {
+    if (!localPrompt.trim()) return;
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+
+    setTimeout(() => {
+      setIsAnalyzing(false);
+      setAnalysisResult(
+        `ประมวลผลสำเร็จสำหรับ [${activeTab.label}]: ระบบวิเคราะห์โครงสร้างพบ 4 มิติสำคัญ สามารถแปลงเป็นเควสต์และกำหนดงบประมาณ Escrow ได้ทันที`
+      );
+    }, 1200);
+  };
+
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollable-content pb-24 font-prompt">
-      {/* Intro Header Card */}
-      <div className="bg-white dark:bg-[#181b20] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-2xs space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[9px] font-bold text-brand-red uppercase tracking-widest flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-brand-red animate-pulse"></span>
-            AI Project Deconstruction Engine
-          </span>
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono">
-            Pipeline v2.4
-          </span>
-        </div>
-        <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white leading-tight">
-          เครื่องมือประมวลผลโจทย์และสร้างโปรเจกต์
-        </h2>
-        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-          พิมพ์ความต้องการหรือปัญหาของคุณ ระบบจะถอดโจทย์ออกเป็นชิ้นส่วนงาน ประเมินงบประมาณ จับคู่บทบาท Tier 1 - Tier 5 และร่างโครงสร้างสัญญา Escrow อัตโนมัติ
-        </p>
+    <div className="flex-1 flex w-full h-full font-prompt bg-white dark:bg-[#12141a] overflow-hidden">
+      {/* Left Sidebar (14 Tabs) - Compact 2/3 width */}
+      <div className="w-[56px] sm:w-[62px] shrink-0 bg-[#f8f9fa] dark:bg-[#16181f] overflow-y-auto pb-24 border-r border-gray-100 dark:border-gray-800/80 scrollbar-none flex flex-col">
+        {TABS_14.map((tab) => {
+          const isActive = activeTabId === tab.id;
+          const isMystery = tab.id === 'mystery';
+          const isAll = tab.id === 'all';
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTabId(tab.id);
+                setAnalysisResult(null);
+              }}
+              className={`w-full flex flex-col items-center justify-center py-2 px-0.5 border-l-[2.5px] transition-all text-center relative ${
+                isActive
+                  ? isMystery
+                    ? 'border-purple-500 bg-white dark:bg-[#12141a] text-purple-600 dark:text-purple-400 font-bold shadow-2xs'
+                    : isAll
+                    ? 'border-brand-red bg-white dark:bg-[#12141a] text-brand-red font-bold shadow-2xs'
+                    : 'border-brand-red bg-white dark:bg-[#12141a] text-brand-red font-bold shadow-2xs'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100/70 dark:hover:bg-[#1e2129]'
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-md flex items-center justify-center mb-0.5 text-[10px] transition-colors ${
+                  isActive
+                    ? isMystery
+                      ? 'bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-300'
+                      : 'bg-red-50 text-brand-red dark:bg-red-950/50'
+                    : isMystery
+                    ? 'bg-purple-100/70 dark:bg-purple-950/40 text-purple-500 dark:text-purple-400'
+                    : 'bg-gray-200/60 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <i className={tab.icon}></i>
+              </span>
+              <span
+                className={`text-[8px] font-mono leading-none mb-0.5 ${
+                  isMystery ? 'text-purple-500 font-bold' : isAll ? 'text-brand-red font-bold' : 'text-gray-400 dark:text-gray-500'
+                }`}
+              >
+                {tab.code}
+              </span>
+              <span
+                className={`text-[8px] sm:text-[8.5px] leading-[1.15] px-0.5 line-clamp-2 ${
+                  isActive
+                    ? isMystery
+                      ? 'text-purple-600 dark:text-purple-400 font-bold'
+                      : 'text-brand-red font-bold'
+                    : ''
+                }`}
+              >
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Input Form Card */}
-      <div className="bg-white dark:bg-[#181b20] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
-            <i className="fa-solid fa-terminal text-blue-600 dark:text-blue-400 text-xs"></i>
-            ระบุโจทย์ปัญหาหรือไอเดียโปรเจกต์
-          </span>
-          <span className="text-[10px] text-gray-400 font-mono">ภาษาไทย / English</span>
-        </div>
-
-        <div className="relative">
-          <textarea
-            value={promptInput}
-            onChange={(e) => setPromptInput(e.target.value)}
-            placeholder="ตัวอย่าง: ต้องการสร้างอาคารพาณิชย์ 3 ชั้นแต่งบจำกัด ต้องการผู้รับเหมาและคนค้ำประกันสัญญาป้องกันทิ้งงาน..."
-            className="w-full text-xs p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-[#121518] text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red transition-all min-h-[90px] resize-none"
-          />
-        </div>
-
-        {/* Quick Suggestion Chips */}
-        <div className="space-y-1.5">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">โจทย์ตัวอย่างยอดนิยม:</span>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              'สร้างอาคารพาณิชย์ 3 ชั้น งบ 2.5 ล้าน',
-              'ทำระบบ Cold Chain ส่งผลไม้สด',
-              'เปิดร้านอาหารสาขา 2 ต้องการระบบ BOQ',
-              'ติดตั้งโซลาร์เซลล์ฟาร์มเกษตรอัจฉริยะ',
-            ].map((preset, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setPromptInput(preset)}
-                className="text-[10px] px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-[#20252d] dark:hover:bg-[#282f3a] text-gray-600 dark:text-gray-300 border border-gray-200/80 dark:border-gray-700/60 transition-colors text-left"
-              >
-                + {preset}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <button
-          onClick={onRunProcessing}
-          disabled={isProcessing}
-          className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm ${
-            isProcessing
-              ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-              : 'bg-brand-red hover:bg-red-700 text-white shadow-brand-red/20 active:scale-[0.99]'
-          }`}
-        >
-          {isProcessing ? (
-            <>
-              <i className="fa-solid fa-spinner fa-spin text-xs"></i>
-              <span>กำลังประมวลผลขั้นตอนที่ {processingPhase}/4...</span>
-            </>
-          ) : (
-            <>
-              <i className="fa-solid fa-microchip text-xs"></i>
-              <span>เริ่มประมวลผลโครงสร้าง (Run Processing)</span>
-            </>
-          )}
-        </button>
-
-        {/* Live Progress Indicator */}
-        {isProcessing && (
-          <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#1a1e24] border border-gray-100 dark:border-gray-800 space-y-2 text-[10px] animate-in fade-in">
-            <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-              <span className="font-bold flex items-center gap-1.5">
-                <i className="fa-solid fa-gear fa-spin text-blue-600"></i>
-                {processingPhase === 1 && 'ขั้นที่ 1: ถอดโจทย์ความต้องการ & แยกประเภทย่อย...'}
-                {processingPhase === 2 && 'ขั้นที่ 2: วิเคราะห์ทรัพยากรและช่องว่าง (Gap Analysis)...'}
-                {processingPhase === 3 && 'ขั้นที่ 3: จับคู่บทบาท Tier 1 - Tier 5 ที่ต้องใช้งาน...'}
-                {processingPhase === 4 && 'ขั้นที่ 4: สังเคราะห์งวดงาน Milestone และสัญญา Escrow...'}
-              </span>
-              <span className="font-mono text-gray-400 font-bold">{processingPhase * 25}%</span>
+      {/* Right Content Area */}
+      <div className="flex-1 min-w-0 overflow-y-auto pb-24 bg-white dark:bg-[#12141a] p-3 sm:p-4 space-y-4">
+        {/* TAB 1: รวม (ALL OVERVIEW) */}
+        {activeTabId === 'all' && (
+          <div className="space-y-4">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-red-500/10 via-orange-500/10 to-transparent p-4 rounded-2xl border border-red-500/20">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-6 h-6 rounded-lg bg-red-50 dark:bg-red-950/60 text-brand-red flex items-center justify-center text-xs">
+                  <i className="fa-solid fa-shapes"></i>
+                </span>
+                <span className="text-[10px] font-bold text-brand-red uppercase tracking-wider">
+                  ศูนย์รวมการประมวลผล (Unified Processing Hub)
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                ประมวลผลรวมทุกกลุ่มอุตสาหกรรม
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                ภาพรวมโจทย์ ปัญหา และระบบนิเวศน์ทั้ง 12 กลุ่มอุตสาหกรรม พร้อมพื้นที่ทดลองสำหรับดอทปริศนา
+              </p>
             </div>
-            <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 transition-all duration-500 rounded-full"
-                style={{ width: `${processingPhase * 25}%` }}
-              ></div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="p-3 bg-gray-50 dark:bg-[#181a1f] rounded-xl border border-gray-100 dark:border-gray-800 text-center">
+                <span className="text-[10px] text-gray-400 block">อุตสาหกรรม</span>
+                <span className="text-lg font-black text-gray-900 dark:text-white font-mono">12+1</span>
+                <span className="text-[9px] text-gray-400 block mt-0.5">รวมดอทปริศนา</span>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-[#181a1f] rounded-xl border border-gray-100 dark:border-gray-800 text-center">
+                <span className="text-[10px] text-gray-400 block">เควสต์ในระบบ</span>
+                <span className="text-lg font-black text-blue-600 dark:text-sky-400 font-mono">240+</span>
+                <span className="text-[9px] text-gray-400 block mt-0.5">Active Tasks</span>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-[#181a1f] rounded-xl border border-gray-100 dark:border-gray-800 text-center">
+                <span className="text-[10px] text-gray-400 block">สถานะระบบ</span>
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block mt-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span>
+                  Online
+                </span>
+                <span className="text-[9px] text-gray-400 block mt-0.5">AI Engine</span>
+              </div>
+            </div>
+
+            {/* Industry Directory Navigation Cards */}
+            <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <i className="fa-solid fa-list-check text-brand-red text-xs"></i>
+                  เลือกเจาะลึกรายกลุ่มอุตสาหกรรม
+                </h3>
+                <span className="text-[10px] text-gray-400">คลิกเพื่อสลับแท็บ</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {INDUSTRIES_LIST.map((ind) => (
+                  <button
+                    key={ind.id}
+                    onClick={() => setActiveTabId(ind.id)}
+                    className="p-2.5 rounded-xl border border-gray-100 dark:border-gray-800/80 hover:border-brand-red/40 dark:hover:border-red-500/40 bg-gray-50/50 dark:bg-[#13151b] hover:bg-red-50/20 dark:hover:bg-red-950/20 text-left transition-all group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-gray-200/60 dark:bg-gray-800 group-hover:bg-red-50 group-hover:text-brand-red dark:group-hover:bg-red-950/60 text-gray-600 dark:text-gray-300 flex items-center justify-center text-[10px] transition-colors">
+                        <i className={ind.icon}></i>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-mono text-gray-400 font-bold">{ind.code}</span>
+                          <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200 truncate block">
+                            {ind.name}
+                          </span>
+                        </div>
+                        <span className="text-[9px] text-gray-400 block truncate">
+                          {ind.activeBounties} เควสต์
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+
+                {/* Mystery Dot Tile */}
+                <button
+                  onClick={() => setActiveTabId('mystery')}
+                  className="col-span-2 p-2.5 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-transparent hover:border-purple-500 text-left transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-300 flex items-center justify-center text-[10px]">
+                        <i className="fa-solid fa-wand-magic-sparkles"></i>
+                      </span>
+                      <div>
+                        <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 block">
+                          ดอทปริศนา (Mystery Dot)
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          นวัตกรรมและโจทย์ไฮบริดข้ามสายงาน
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
+                      Secret
+                    </span>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         )}
-      </div>
 
-      {/* Synthesized Output Result (when analyzed) */}
-      {hasAnalyzed && (
-        <div className="bg-white dark:bg-[#181b20] rounded-2xl p-4 border border-blue-200 dark:border-blue-500/40 shadow-md space-y-3 animate-in fade-in duration-300">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
-            <div>
-              <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest block">
-                ผลการสังเคราะห์โครงสร้างสำเร็จ
-              </span>
-              <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white mt-0.5">
-                โครงการก่อสร้างอาคารพาณิชย์ 3 ชั้น (Smart Commercial Hub)
-              </h3>
-            </div>
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-bold border border-emerald-200/60">
-              Match 98.4%
-            </span>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
-            <div className="p-2 rounded-xl bg-gray-50 dark:bg-[#1f242c] border border-gray-100 dark:border-gray-800">
-              <span className="text-gray-400 block text-[8px]">งบประมาณประเมิน</span>
-              <span className="font-bold text-gray-900 dark:text-white text-xs">2,450,000 ฿</span>
-            </div>
-            <div className="p-2 rounded-xl bg-gray-50 dark:bg-[#1f242c] border border-gray-100 dark:border-gray-800">
-              <span className="text-gray-400 block text-[8px]">การแบ่งงวดงาน</span>
-              <span className="font-bold text-blue-600 dark:text-blue-400 text-xs">4 งวด Milestone</span>
-            </div>
-            <div className="p-2 rounded-xl bg-gray-50 dark:bg-[#1f242c] border border-gray-100 dark:border-gray-800">
-              <span className="text-gray-400 block text-[8px]">ระบบคุ้มครอง</span>
-              <span className="font-bold text-purple-600 dark:text-purple-400 text-xs">100% Escrow</span>
-            </div>
-          </div>
-
-          {/* 5-Tier Allocation Matrix */}
-          <div className="space-y-1.5">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">
-              การจัดสรรบทบาทตามมาตรฐาน 5 Tiers:
-            </span>
-            <div className="space-y-1.5 text-[10px]">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c2128] border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Tier 1: ผู้ริเริ่ม (Idea Creator)</span>
-                  <span className="text-[9px] text-slate-500 dark:text-slate-400">คุณ (เจ้าของโครงการ) กำหนด TOR & งบประมาณ</span>
+        {/* TABS 2-13: 12 หมวดอุตสาหกรรม (INDUSTRY DETAILS) */}
+        {activeTabId !== 'all' && activeTabId !== 'mystery' && (
+          <div className="space-y-4">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-orange-500/10 via-brand-red/10 to-transparent p-4 rounded-2xl border border-orange-500/20">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-brand-red flex items-center justify-center text-sm shrink-0">
+                    <i className={activeTab.icon}></i>
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                        {activeTab.code}
+                      </span>
+                      <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white truncate">
+                        {activeTab.label}
+                      </h2>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-[9px] font-mono text-slate-400">READY</span>
-              </div>
-
-              <div className="p-2 rounded-xl bg-blue-50/60 dark:bg-[#182330] border border-blue-100 dark:border-blue-900/50 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-blue-800 dark:text-blue-300 block text-[11px]">Tier 2: ผู้รับงานสนาม & Back Office</span>
-                  <span className="text-[9px] text-blue-600 dark:text-blue-400">ผู้รับเหมาหลัก (01) + ทนายความสัญญา (12) + บัญชี BOQ (08)</span>
-                </div>
-                <span className="text-[9px] font-bold text-blue-600">3 บทบาท</span>
-              </div>
-
-              <div className="p-2 rounded-xl bg-purple-50/60 dark:bg-[#221c2c] border border-purple-100 dark:border-purple-900/50 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-purple-800 dark:text-purple-300 block text-[11px]">Tier 3: ผู้ค้ำประกัน & QC ตรวจรับ</span>
-                  <span className="text-[9px] text-purple-600 dark:text-purple-400">วาง Performance Bond 15% + ผู้ตรวจรับอิสระส่งงวดงาน</span>
-                </div>
-                <span className="text-[9px] font-bold text-purple-600">REQUIRED</span>
-              </div>
-
-              <div className="p-2 rounded-xl bg-amber-50/60 dark:bg-[#282218] border border-amber-100 dark:border-amber-900/50 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-amber-800 dark:text-amber-300 block text-[11px]">Tier 4: ผู้อำนวยการวงการ (Endorsement)</span>
-                  <span className="text-[9px] text-amber-700 dark:text-amber-400">ตรวจรับรองความปลอดภัยตามแบบ วสท.</span>
-                </div>
-                <span className="text-[9px] font-bold text-amber-700">VERIFIED</span>
-              </div>
-
-              <div className="p-2 rounded-xl bg-red-50/60 dark:bg-[#2a1a1e] border border-red-100 dark:border-red-900/50 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-brand-red dark:text-red-400 block text-[11px]">Tier 5: ตู้เซฟล็อกเงิน Escrow Vault</span>
-                  <span className="text-[9px] text-red-600 dark:text-red-300">ล็อกเงินงวด 2.45M ฿ ทยอยปล่อยตามผลตรวจรับจริง</span>
-                </div>
-                <span className="text-[9px] font-bold text-brand-red">PROTECTED</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Row */}
-          <div className="pt-2 flex gap-2">
-            <Link
-              href="/project/new"
-              className="flex-1 py-2 px-3 rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs"
-            >
-              <i className="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-              <span>ส่งขึ้นกระดานบอร์ด (Publish to Board)</span>
-            </Link>
-            <button
-              onClick={onNavigateToEcosystem}
-              className="py-2 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-[#22272f] dark:hover:bg-[#2c333e] text-gray-700 dark:text-gray-200 font-bold text-xs flex items-center justify-center gap-1 transition-all"
-            >
-              <span>ดูผังนิเวศ</span>
-              <i className="fa-solid fa-chevron-right text-[9px]"></i>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Live Pipeline Projects List */}
-      <div className="space-y-2 pt-2">
-        <div className="flex items-center justify-between px-0.5">
-          <span className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
-            <i className="fa-solid fa-clock-rotate-left text-gray-400 text-xs"></i>
-            โครงการที่กำลังประมวลผลขณะนี้ (Active Pipelines)
-          </span>
-          <span className="text-[10px] text-gray-400">3 โครงการ</span>
-        </div>
-
-        <div className="space-y-2">
-          {[
-            {
-              title: 'ต่อเติมโกดังสินค้าเกษตรอัจฉริยะ (Smart Agro Cold Chain)',
-              industry: '01 ก่อสร้าง & 06 เกษตร',
-              status: 'กำลังจับคู่ Tier 3 Guarantor',
-              progress: 80,
-              budget: '1.8M ฿',
-            },
-            {
-              title: 'แอปพลิเคชันเทเลเมดิซีนส่งยาถึงบ้านสำหรับผู้สูงอายุ',
-              industry: '02 การแพทย์ & 03 ไอที',
-              status: 'ร่างสัญญาทางกฎหมาย Tier 4 กฎหมาย',
-              progress: 65,
-              budget: '850K ฿',
-            },
-            {
-              title: 'ระบบบำบัดน้ำเสียหมุนเวียนโรงงานแปรรูปอาหาร',
-              industry: '10 โรงงาน & 05 อาหาร',
-              status: 'อนุมัติงวด Escrow สำเร็จ พร้อมเริ่มงาน',
-              progress: 100,
-              budget: '3.2M ฿',
-            },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              className="bg-white dark:bg-[#181b20] p-3 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-2xs space-y-1.5"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">
-                  {item.industry}
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 shrink-0">
+                  สายงานที่ {activeTab.code}
                 </span>
-                <span className="text-[9px] font-mono text-gray-400">{item.budget}</span>
               </div>
-              <h4 className="text-xs font-bold text-gray-900 dark:text-white leading-tight">
-                {item.title}
-              </h4>
-              <div className="flex items-center justify-between text-[9px] text-gray-500 pt-1">
-                <span>{item.status}</span>
-                <span className="font-mono font-bold">{item.progress}%</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+                {activeTab.desc}
+              </p>
+            </div>
+
+            {/* Sub-categories in this Industry */}
+            {activeSubIndustries.length > 0 && (
+              <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 shadow-xs space-y-2.5">
+                <span className="text-[11px] font-bold text-gray-800 dark:text-gray-200 block">
+                  หมวดหมู่หลักในสายงานนี้ ({activeSubIndustries.length} หมวด):
+                </span>
+                <div className="space-y-2">
+                  {activeSubIndustries.map((sub) => (
+                    <div
+                      key={sub.id}
+                      className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#13151b] border border-gray-100 dark:border-gray-800"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-900 dark:text-gray-100">
+                          {sub.code} {sub.name}
+                        </span>
+                        <span className="text-[9px] font-mono text-gray-400">
+                          {sub.segments?.length || 0} รูปแบบ
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                        {sub.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${
-                    item.progress === 100 ? 'bg-emerald-500' : 'bg-blue-600'
-                  }`}
-                  style={{ width: `${item.progress}%` }}
-                ></div>
+            )}
+
+            {/* Processing Input Card */}
+            <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 shadow-xs space-y-3">
+              <span className="text-xs font-bold text-gray-800 dark:text-gray-200 block">
+                ระบุโจทย์ปัญหาหรือไอเดียเพื่อประมวลผล:
+              </span>
+              <textarea
+                value={localPrompt}
+                onChange={(e) => setLocalPrompt(e.target.value)}
+                placeholder={`พิมพ์โจทย์ที่เกี่ยวข้องกับ ${activeTab.label} เช่น ต้องการทีมงาน, ปัญหามาตรฐาน, หรือการต่อยอดธุรกิจ...`}
+                rows={3}
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#12141a] p-3 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-red/40 resize-none"
+              />
+
+              <button
+                onClick={handleProcessSubmit}
+                disabled={isAnalyzing}
+                className="w-full py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <i className="fa-solid fa-spinner animate-spin text-xs"></i>
+                    <span>กำลังประมวลผลวิเคราะห์โจทย์...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-bolt text-xs text-amber-400"></i>
+                    <span>ประมวลผลโจทย์ในสายงานนี้</span>
+                  </>
+                )}
+              </button>
+
+              {analysisResult && (
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/40 text-xs text-emerald-800 dark:text-emerald-300">
+                  <i className="fa-solid fa-check-circle mr-1.5 text-emerald-600"></i>
+                  {analysisResult}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 14: ดอทปริศนา (MYSTERY DOT) */}
+        {activeTabId === 'mystery' && (
+          <div className="space-y-4">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-transparent p-4 rounded-2xl border border-purple-500/30">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-300 flex items-center justify-center text-sm shadow-xs">
+                  <i className="fa-solid fa-wand-magic-sparkles"></i>
+                </span>
+                <div>
+                  <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">
+                    พื้นที่ทดลองพิเศษ (Frontier Sandbox)
+                  </span>
+                  <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                    ดอทปริศนา (Mystery Dot)
+                  </h2>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">
+                พื้นที่สำหรับโจทย์ปัญหาหลุดกรอบ โครงการข้ามสายงาน (Cross-disciplinary) ธุรกิจไฮบริด หรือเควสต์ลับที่ยังไม่มีชื่อเรียกใน 12 อุตสาหกรรมดั้งเดิม
+              </p>
+            </div>
+
+            {/* Mystery Features */}
+            <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-purple-100 dark:border-purple-900/40 p-4 shadow-xs space-y-3">
+              <span className="text-xs font-bold text-purple-700 dark:text-purple-300 block">
+                ลักษณะของดอทปริศนา:
+              </span>
+              <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                <div className="flex items-start gap-2 p-2 rounded-xl bg-purple-50/50 dark:bg-[#161421]">
+                  <i className="fa-solid fa-atom text-purple-500 mt-0.5 text-xs"></i>
+                  <span><strong>การผสมข้ามสายพันธุ์:</strong> เช่น เกษตรกรรม + Web3 + การแพทย์ หรือ ศิลปะ + วิศวกรรมเสียงลึก</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 rounded-xl bg-purple-50/50 dark:bg-[#161421]">
+                  <i className="fa-solid fa-mask text-purple-500 mt-0.5 text-xs"></i>
+                  <span><strong>Stealth & Frontier Quests:</strong> โปรเจกต์วิจัยลับที่ยังไม่อยากเปิดเผยหมวดหมู่อุตสาหกรรม</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 rounded-xl bg-purple-50/50 dark:bg-[#161421]">
+                  <i className="fa-solid fa-compass-drafting text-purple-500 mt-0.5 text-xs"></i>
+                  <span><strong>โมเดลธุรกิจไร้พรมแดน:</strong> ปัญหาที่ต้องการผู้แก้แบบ Unconventional Mindset</span>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Mystery Input Card */}
+            <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-purple-100 dark:border-purple-900/40 p-4 shadow-xs space-y-3">
+              <span className="text-xs font-bold text-gray-800 dark:text-gray-200 block">
+                พิมพ์โจทย์ปริศนาเพื่อเริ่ม Deconstruction:
+              </span>
+              <textarea
+                value={localPrompt}
+                onChange={(e) => setLocalPrompt(e.target.value)}
+                placeholder="อธิบายโจทย์ที่ไม่เข้าพวก หรือไอเดียสุดล้ำที่ยังไม่มีหมวดหมู่ตายตัว..."
+                rows={3}
+                className="w-full rounded-xl border border-purple-200 dark:border-purple-900/50 bg-white dark:bg-[#12141a] p-3 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/40 resize-none"
+              />
+
+              <button
+                onClick={handleProcessSubmit}
+                disabled={isAnalyzing}
+                className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <i className="fa-solid fa-spinner animate-spin text-xs"></i>
+                    <span>กำลังประมวลผลดอทปริศนา...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                    <span>ปลดล็อก & ประมวลผลดอทปริศนา</span>
+                  </>
+                )}
+              </button>
+
+              {analysisResult && (
+                <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 text-xs text-purple-800 dark:text-purple-300">
+                  <i className="fa-solid fa-sparkles mr-1.5 text-purple-500"></i>
+                  {analysisResult}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
