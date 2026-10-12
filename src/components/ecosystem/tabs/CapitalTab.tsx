@@ -57,22 +57,22 @@ export const CapitalTab: React.FC<CapitalTabProps> = (props) => {
 
   return (
     <div className="flex-1 flex w-full h-full font-prompt bg-white dark:bg-[#12141a] overflow-hidden">
-      {/* Left Sidebar (12 Pipeline Steps) */}
-      <div className="w-[84px] sm:w-[94px] shrink-0 bg-[#f8f9fa] dark:bg-[#16181f] overflow-y-auto pb-24 border-r border-gray-100 dark:border-gray-800/80 scrollbar-none flex flex-col">
+      {/* Left Sidebar (12 Pipeline Steps) - Compact 2/3 width */}
+      <div className="w-[56px] sm:w-[62px] shrink-0 bg-[#f8f9fa] dark:bg-[#16181f] overflow-y-auto pb-24 border-r border-gray-100 dark:border-gray-800/80 scrollbar-none flex flex-col">
         {PIPELINE_TABS.map((tab) => {
           const isActive = activeStep === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveStep(tab.id)}
-              className={`w-full flex flex-col items-center justify-center py-2.5 px-1 border-l-[3px] transition-all text-center relative ${
+              className={`w-full flex flex-col items-center justify-center py-2 px-0.5 border-l-[2.5px] transition-all text-center relative ${
                 isActive
                   ? 'border-brand-red bg-white dark:bg-[#12141a] text-brand-red font-bold shadow-2xs'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100/70 dark:hover:bg-[#1e2129]'
               }`}
             >
               <span
-                className={`w-6 h-6 rounded-lg flex items-center justify-center mb-1 text-xs transition-colors ${
+                className={`w-5 h-5 rounded-md flex items-center justify-center mb-0.5 text-[10px] transition-colors ${
                   isActive
                     ? 'bg-red-50 text-brand-red dark:bg-red-950/50'
                     : 'bg-gray-200/60 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
@@ -80,11 +80,11 @@ export const CapitalTab: React.FC<CapitalTabProps> = (props) => {
               >
                 <i className={tab.icon}></i>
               </span>
-              <span className="text-[9px] font-mono leading-none text-gray-400 dark:text-gray-500 mb-0.5">
+              <span className="text-[8px] font-mono leading-none text-gray-400 dark:text-gray-500 mb-0.5">
                 {tab.code}
               </span>
               <span
-                className={`text-[9px] leading-[1.2] px-0.5 line-clamp-2 ${
+                className={`text-[8px] sm:text-[8.5px] leading-[1.15] px-0.5 line-clamp-2 ${
                   isActive ? 'text-brand-red font-bold' : ''
                 }`}
               >
