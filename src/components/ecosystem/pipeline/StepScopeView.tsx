@@ -36,19 +36,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
 
   return (
     <div className="p-3 sm:p-4 space-y-4 font-prompt">
-      {/* Title & Banner */}
-      <div className="bg-gradient-to-r from-orange-500/10 via-brand-red/10 to-transparent p-4 rounded-2xl border border-orange-500/20">
-        <span className="text-[10px] font-bold text-brand-red uppercase tracking-wider block mb-1">
-          ขั้นตอนที่ 1 จาก 12
-        </span>
-        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">
-          เลือกอุตสาหกรรม & สเปกโครงการ (Project Scope)
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          กำหนดสายงาน หมวดหลัก และรูปแบบเฉพาะของโครงการ เพื่อดึงเกณฑ์มาตรฐานสินทรัพย์ที่ต้องแปลงเป็นทุน
-        </p>
-      </div>
-
       {/* Selectors Card */}
       <div className={cardCls}>
         <div className="space-y-4">
