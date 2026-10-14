@@ -32,9 +32,9 @@ function EcosystemContent() {
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
   /* Tab 2 State: Cap Table Simulation */
-  const [selectedIndustryId, setSelectedIndustryId] = useState('ind_01');
-  const [selectedSubIndustryId, setSelectedSubIndustryId] = useState('sub_01_res');
-  const [selectedSegmentId, setSelectedSegmentId] = useState('seg_res_1');
+  const [selectedIndustryId, setSelectedIndustryId] = useState('');
+  const [selectedSubIndustryId, setSelectedSubIndustryId] = useState('');
+  const [selectedSegmentId, setSelectedSegmentId] = useState('');
   const [capTableData, setCapTableData] = useState<CapTableItem[]>(INITIAL_CAP_TABLE);
 
   /* Tab 4 State: Synergy Matrix */
@@ -65,16 +65,10 @@ function EcosystemContent() {
 
   const handleSelectIndustryForCapTable = (indId: string) => {
     setSelectedIndustryId(indId);
-    const subList = ALL_SUB_INDUSTRIES[indId] || [];
-    const firstSub = subList[0] || null;
-    const firstSeg = firstSub?.segments && firstSub.segments.length > 0 ? firstSub.segments[0] : null;
-    setSelectedSubIndustryId(firstSub ? firstSub.id : '');
-    setSelectedSegmentId(firstSeg ? firstSeg.id : '');
+    setSelectedSubIndustryId('');
+    setSelectedSegmentId('');
 
-    const preset = firstSeg 
-      ? firstSeg.preset 
-      : (firstSub ? firstSub.preset : (INDUSTRY_CAP_PRESETS[indId] || INDUSTRY_CAP_PRESETS.ind_01));
-
+    const preset = INDUSTRY_CAP_PRESETS[indId] || INDUSTRY_CAP_PRESETS.ind_01;
     setCapTableData([
       { id: 'cash', name: 'เงินสด (Cash)', value: preset.cash.val, color: '#56b6f7' },
       { id: 'sweat', name: 'หยาดเหงื่อแรงงาน (Sweat)', value: preset.sweat.val, color: '#9d9ff7' },
@@ -86,12 +80,11 @@ function EcosystemContent() {
 
   const handleSelectSubIndustry = (subId: string) => {
     setSelectedSubIndustryId(subId);
+    setSelectedSegmentId('');
     const subList = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
     const sub = subList.find(s => s.id === subId);
     if (sub) {
-      const firstSeg = sub.segments && sub.segments.length > 0 ? sub.segments[0] : null;
-      setSelectedSegmentId(firstSeg ? firstSeg.id : '');
-      const preset = firstSeg ? firstSeg.preset : sub.preset;
+      const preset = sub.preset;
       setCapTableData([
         { id: 'cash', name: 'เงินสด (Cash)', value: preset.cash.val, color: '#56b6f7' },
         { id: 'sweat', name: 'หยาดเหงื่อแรงงาน (Sweat)', value: preset.sweat.val, color: '#9d9ff7' },

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { INDUSTRIES_LIST } from '../constants';
 import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
 import { SubIndustryItem } from '../types';
@@ -39,16 +39,52 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
   onSelectSegment,
   onNextStep,
 }) => {
-  const currentIndustry = INDUSTRIES_LIST.find((i) => i.id === selectedIndustryId) || INDUSTRIES_LIST[0];
-  const currentSubIndustries: SubIndustryItem[] = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
-  const activeSubIndustry = currentSubIndustries.find((s) => s.id === selectedSubIndustryId) || currentSubIndustries[0];
-  const activeSegment = activeSubIndustry?.segments?.find((s) => s.id === selectedSegmentId) || activeSubIndustry?.segments?.[0];
+  const [isEditingL1, setIsEditingL1] = useState(false);
+  const [isEditingL2, setIsEditingL2] = useState(false);
+  const [isEditingL3, setIsEditingL3] = useState(false);
+
+  const currentIndustry = INDUSTRIES_LIST.find((i) => i.id === selectedIndustryId);
+  const currentSubIndustries: SubIndustryItem[] = selectedIndustryId ? ALL_SUB_INDUSTRIES[selectedIndustryId] || [] : [];
+  const activeSubIndustry = currentSubIndustries.find((s) => s.id === selectedSubIndustryId);
+  const segmentsList = activeSubIndustry?.segments || [];
+  const activeSegment = segmentsList.find((s) => s.id === selectedSegmentId);
+
+  const hasSelectedL1 = Boolean(selectedIndustryId && currentIndustry);
+  const showL1Grid = !hasSelectedL1 || isEditingL1;
+
+  const hasSelectedL2 = Boolean(selectedSubIndustryId && activeSubIndustry);
+  const showL2Section = hasSelectedL1 && !isEditingL1;
+  const showL2Grid = showL2Section && (!hasSelectedL2 || isEditingL2);
+
+  const hasSelectedL3 = Boolean(selectedSegmentId && activeSegment);
+  const showL3Section = showL2Section && hasSelectedL2 && !isEditingL2 && segmentsList.length > 0;
+  const showL3Grid = showL3Section && (!hasSelectedL3 || isEditingL3);
+
+  const isScopeComplete = hasSelectedL1 && !isEditingL1 && hasSelectedL2 && !isEditingL2 && (segmentsList.length === 0 || (hasSelectedL3 && !isEditingL3));
 
   const chipCls = 'w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center shrink-0';
 
+  const handlePickIndustry = (indId: string) => {
+    onSelectIndustry(indId);
+    setIsEditingL1(false);
+    setIsEditingL2(false);
+    setIsEditingL3(false);
+  };
+
+  const handlePickSubIndustry = (subId: string) => {
+    onSelectSubIndustry(subId);
+    setIsEditingL2(false);
+    setIsEditingL3(false);
+  };
+
+  const handlePickSegment = (segId: string) => {
+    onSelectSegment(segId);
+    setIsEditingL3(false);
+  };
+
   return (
-    <div className="p-3 sm:p-4 space-y-5 font-prompt">
-      {/* LAYER 1: 12 สายงานอุตสาหกรรม (Lotus's / GrabMart Style Grid) */}
+    <div className="p-3 sm:p-4 space-y-4 font-prompt">
+      {/* ================= LAYER 1: 12 สายงานอุตสาหกรรม ================= */}
       <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -57,64 +93,89 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               สายงานอุตสาหกรรม (Industry Sector)
             </h3>
           </div>
-          <span className="text-[10px] text-gray-400 font-medium">
-            เลือก 1 ใน 12 สายงาน
-          </span>
+          {showL1Grid && (
+            <span className="text-[10px] text-gray-400 font-medium">
+              เลือก 1 ใน 12 สายงาน
+            </span>
+          )}
         </div>
 
-        {/* 12 Industries Grid (3 Columns) */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-          {INDUSTRIES_LIST.map((ind) => {
-            const isSelected = selectedIndustryId === ind.id;
-            const theme = INDUSTRY_THEMES[ind.id] || { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-700' };
+        {/* When L1 is NOT confirmed / editing -> Show 12 cards grid */}
+        {showL1Grid ? (
+          <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+            {INDUSTRIES_LIST.map((ind) => {
+              const isSelected = selectedIndustryId === ind.id;
+              const theme = INDUSTRY_THEMES[ind.id] || { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-700' };
 
-            return (
-              <button
-                key={ind.id}
-                onClick={() => onSelectIndustry(ind.id)}
-                className={`group relative flex flex-col justify-between p-2.5 rounded-2xl border transition-all text-left min-h-[92px] ${
-                  isSelected
-                    ? 'border-brand-red bg-red-50/60 dark:bg-red-950/20 shadow-xs ring-1 ring-brand-red'
-                    : 'border-gray-100 dark:border-gray-800/80 bg-gray-50/70 dark:bg-[#15171d] hover:bg-gray-100/90 dark:hover:bg-[#1e2129]'
-                }`}
-              >
-                {/* Top: Code & Title */}
-                <div className="min-w-0 pr-2">
-                  <span className="text-[9px] font-mono font-bold text-gray-400 block leading-none mb-1">
-                    {ind.code}
-                  </span>
-                  <span
-                    className={`text-[11px] font-bold leading-tight line-clamp-2 ${
-                      isSelected ? 'text-brand-red' : 'text-gray-800 dark:text-gray-200'
-                    }`}
-                  >
-                    {ind.name}
-                  </span>
-                </div>
+              return (
+                <button
+                  key={ind.id}
+                  onClick={() => handlePickIndustry(ind.id)}
+                  className={`group relative flex flex-col justify-between p-2.5 rounded-2xl border transition-all text-left min-h-[92px] ${
+                    isSelected
+                      ? 'border-brand-red bg-red-50/60 dark:bg-red-950/20 shadow-xs ring-1 ring-brand-red'
+                      : 'border-gray-100 dark:border-gray-800/80 bg-gray-50/70 dark:bg-[#15171d] hover:bg-gray-100/90 dark:hover:bg-[#1e2129]'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-[9px] font-mono font-bold text-gray-400 block leading-none mb-1">
+                      {ind.code}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold leading-tight line-clamp-2 ${
+                        isSelected ? 'text-brand-red' : 'text-gray-800 dark:text-gray-200'
+                      }`}
+                    >
+                      {ind.name}
+                    </span>
+                  </div>
 
-                {/* Active Checkmark Pill */}
-                {isSelected && (
-                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-brand-red text-white flex items-center justify-center text-[9px] shadow-xs">
-                    <i className="fa-solid fa-check"></i>
-                  </span>
-                )}
+                  {isSelected && (
+                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-brand-red text-white flex items-center justify-center text-[9px] shadow-xs">
+                      <i className="fa-solid fa-check"></i>
+                    </span>
+                  )}
 
-                {/* Bottom: Thematic Icon */}
-                <div className="flex justify-end mt-2">
-                  <span
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-transform group-hover:scale-105 ${theme.bg} ${theme.text}`}
-                  >
-                    <i className={ind.icon}></i>
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                  <div className="flex justify-end mt-2">
+                    <span
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-transform group-hover:scale-105 ${theme.bg} ${theme.text}`}
+                    >
+                      <i className={ind.icon}></i>
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          /* When L1 selected -> other options disappear, show collapsed pill with checkmark & edit */
+          <button
+            onClick={() => setIsEditingL1(true)}
+            className="w-full p-3 rounded-2xl bg-gray-900 text-white dark:bg-[#1f232b] flex items-center justify-between shadow-xs transition-all hover:bg-gray-800 group"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center text-[10px] shrink-0">
+                <i className="fa-solid fa-check"></i>
+              </span>
+              <div className="text-left min-w-0">
+                <span className="text-[9px] text-gray-400 font-mono block leading-none">
+                  {currentIndustry?.code}
+                </span>
+                <span className="text-xs font-bold text-white truncate block">
+                  {currentIndustry?.name}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 text-gray-400 group-hover:text-white text-xs shrink-0 pl-2">
+              <span className="text-[10px]">เปลี่ยน</span>
+              <i className="fa-solid fa-pen text-[10px]"></i>
+            </div>
+          </button>
+        )}
       </div>
 
-      {/* LAYER 2: หมวดหลักในสายงาน (2-Column Button Grid - Attachment 3 & 4 Style) */}
-      {currentSubIndustries.length > 0 && (
+      {/* ================= LAYER 2: หมวดหลักในสายงาน ================= */}
+      {showL2Section && currentSubIndustries.length > 0 && (
         <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -123,44 +184,58 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 หมวดหลักในสายงาน (Main Sub-Category)
               </h3>
             </div>
-            <span className="text-[10px] text-gray-400 font-medium">
-              {currentSubIndustries.length} หมวดหลัก
-            </span>
+            {showL2Grid && (
+              <span className="text-[10px] text-gray-400 font-medium">
+                {currentSubIndustries.length} หมวดหลัก
+              </span>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {currentSubIndustries.map((sub) => {
-              const isSelected = (selectedSubIndustryId || currentSubIndustries[0]?.id) === sub.id;
-
-              return (
+          {/* When L2 is NOT confirmed / editing -> Show 2-col capsule buttons */}
+          {showL2Grid ? (
+            <div className="grid grid-cols-2 gap-2">
+              {currentSubIndustries.map((sub) => (
                 <button
                   key={sub.id}
-                  onClick={() => onSelectSubIndustry(sub.id)}
-                  className={`p-3 rounded-2xl text-xs transition-all flex items-center justify-between text-left min-h-[52px] ${
-                    isSelected
-                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-bold shadow-xs'
-                      : 'bg-gray-100/80 dark:bg-[#15171d] text-gray-700 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-[#20232a]'
-                  }`}
+                  onClick={() => handlePickSubIndustry(sub.id)}
+                  className="p-3 rounded-2xl text-xs transition-all flex items-center justify-between text-left min-h-[52px] bg-gray-100/90 hover:bg-gray-200/80 dark:bg-[#15171d] dark:hover:bg-[#20232a] text-gray-800 dark:text-gray-200"
                 >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {isSelected && (
-                      <span className="w-4 h-4 rounded-full bg-brand-red text-white flex items-center justify-center text-[9px] shrink-0">
-                        <i className="fa-solid fa-check"></i>
-                      </span>
-                    )}
-                    <span className="leading-snug truncate">
-                      {sub.code} {sub.name}
-                    </span>
-                  </div>
+                  <span className="leading-snug truncate">
+                    {sub.code} {sub.name}
+                  </span>
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            /* When L2 selected -> other options disappear, show collapsed pill */
+            <button
+              onClick={() => setIsEditingL2(true)}
+              className="w-full p-3 rounded-2xl bg-gray-900 text-white dark:bg-[#1f232b] flex items-center justify-between shadow-xs transition-all hover:bg-gray-800 group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center text-[10px] shrink-0">
+                  <i className="fa-solid fa-check"></i>
+                </span>
+                <div className="text-left min-w-0">
+                  <span className="text-[9px] text-gray-400 font-mono block leading-none">
+                    {activeSubIndustry?.code}
+                  </span>
+                  <span className="text-xs font-bold text-white truncate block">
+                    {activeSubIndustry?.name}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-400 group-hover:text-white text-xs shrink-0 pl-2">
+                <span className="text-[10px]">เปลี่ยน</span>
+                <i className="fa-solid fa-pen text-[10px]"></i>
+              </div>
+            </button>
+          )}
         </div>
       )}
 
-      {/* LAYER 3: เจาะจงรูปแบบโครงการ (2-Column Button Grid - Attachment 3 & 4 Style) */}
-      {activeSubIndustry?.segments && activeSubIndustry.segments.length > 0 && (
+      {/* ================= LAYER 3: เจาะจงรูปแบบโครงการ ================= */}
+      {showL3Section && (
         <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -169,88 +244,98 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 เจาะจงรูปแบบโครงการ (Project Segment)
               </h3>
             </div>
-            <span className="text-[10px] text-gray-400 font-medium">
-              {activeSubIndustry.segments.length} รูปแบบ
-            </span>
+            {showL3Grid && (
+              <span className="text-[10px] text-gray-400 font-medium">
+                {segmentsList.length} รูปแบบ
+              </span>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {activeSubIndustry.segments.map((seg) => {
-              const isSelected = (selectedSegmentId || activeSubIndustry.segments?.[0]?.id) === seg.id;
-
-              return (
+          {/* When L3 is NOT confirmed / editing -> Show 2-col capsule buttons */}
+          {showL3Grid ? (
+            <div className="grid grid-cols-2 gap-2">
+              {segmentsList.map((seg) => (
                 <button
                   key={seg.id}
-                  onClick={() => onSelectSegment(seg.id)}
-                  className={`p-3 rounded-2xl text-xs transition-all flex items-center justify-between text-left min-h-[52px] ${
-                    isSelected
-                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-bold shadow-xs'
-                      : 'bg-gray-100/80 dark:bg-[#15171d] text-gray-700 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-[#20232a]'
-                  }`}
+                  onClick={() => handlePickSegment(seg.id)}
+                  className="p-3 rounded-2xl text-xs transition-all flex items-center justify-between text-left min-h-[52px] bg-gray-100/90 hover:bg-gray-200/80 dark:bg-[#15171d] dark:hover:bg-[#20232a] text-gray-800 dark:text-gray-200"
                 >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {isSelected && (
-                      <span className="w-4 h-4 rounded-full bg-brand-red text-white flex items-center justify-center text-[9px] shrink-0">
-                        <i className="fa-solid fa-check"></i>
-                      </span>
-                    )}
-                    <span className="leading-snug truncate">
-                      {seg.name}
-                    </span>
-                  </div>
+                  <span className="leading-snug truncate">
+                    {seg.name}
+                  </span>
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            /* When L3 selected -> other options disappear, show collapsed pill */
+            <button
+              onClick={() => setIsEditingL3(true)}
+              className="w-full p-3 rounded-2xl bg-gray-900 text-white dark:bg-[#1f232b] flex items-center justify-between shadow-xs transition-all hover:bg-gray-800 group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center text-[10px] shrink-0">
+                  <i className="fa-solid fa-check"></i>
+                </span>
+                <span className="text-xs font-bold text-white truncate block">
+                  {activeSegment?.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-400 group-hover:text-white text-xs shrink-0 pl-2">
+                <span className="text-[10px]">เปลี่ยน</span>
+                <i className="fa-solid fa-pen text-[10px]"></i>
+              </div>
+            </button>
+          )}
         </div>
       )}
 
-      {/* Selected Scope Summary Preview & Next Button */}
-      <div className="bg-[#fcfcfd] dark:bg-[#16181f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-brand-red flex items-center justify-center text-xs shrink-0">
-              <i className={currentIndustry.icon}></i>
-            </span>
-            <div className="min-w-0">
-              <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                {currentIndustry.code} {currentIndustry.name}
-              </h4>
-              <p className="text-[10px] text-gray-400 truncate">
-                {activeSubIndustry?.name}
-              </p>
+      {/* ================= SUMMARY CARD & NEXT STEP BUTTON ================= */}
+      {isScopeComplete && currentIndustry && (
+        <div className="bg-[#fcfcfd] dark:bg-[#16181f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 space-y-3 animate-fadeIn">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-brand-red flex items-center justify-center text-xs shrink-0">
+                <i className={currentIndustry.icon}></i>
+              </span>
+              <div className="min-w-0">
+                <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                  {currentIndustry.code} {currentIndustry.name}
+                </h4>
+                <p className="text-[10px] text-gray-400 truncate">
+                  {activeSubIndustry?.name}
+                </p>
+              </div>
             </div>
-          </div>
-          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 shrink-0">
-            {currentIndustry.activeBounties} Quests
-          </span>
-        </div>
-
-        {activeSegment && (
-          <div className="p-3 bg-white dark:bg-[#1a1c24] rounded-xl border border-gray-100 dark:border-gray-800">
-            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 block mb-0.5">
-              รูปแบบที่เลือก:
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 shrink-0">
+              {currentIndustry.activeBounties} Quests
             </span>
-            <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">
-              {activeSegment.name}
-            </p>
-            {activeSubIndustry?.description && (
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                {activeSubIndustry.description}
-              </p>
-            )}
           </div>
-        )}
 
-        {/* Next Step Button */}
-        <button
-          onClick={onNextStep}
-          className="w-full mt-2 py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
-        >
-          <span>ถัดไป: คำนวณมูลค่าระดมทุน (Total Valuation)</span>
-          <i className="fa-solid fa-arrow-right text-[11px]"></i>
-        </button>
-      </div>
+          {activeSegment && (
+            <div className="p-3 bg-white dark:bg-[#1a1c24] rounded-xl border border-gray-100 dark:border-gray-800">
+              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 block mb-0.5">
+                รูปแบบที่เลือก:
+              </span>
+              <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">
+                {activeSegment.name}
+              </p>
+              {activeSubIndustry?.description && (
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                  {activeSubIndustry.description}
+                </p>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={onNextStep}
+            className="w-full mt-2 py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
+          >
+            <span>ถัดไป: คำนวณมูลค่าระดมทุน (Total Valuation)</span>
+            <i className="fa-solid fa-arrow-right text-[11px]"></i>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
