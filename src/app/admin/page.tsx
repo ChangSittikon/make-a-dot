@@ -114,6 +114,25 @@ export default async function SettingsPage() {
                 </div>
                 <i className="fa-solid fa-tags absolute -right-2 -bottom-2 text-5xl text-blue-50 dark:text-blue-900/10 group-hover:scale-110 transition-transform"></i>
               </Link>
+
+              <Link
+                href="/admin/dots"
+                className="block bg-gradient-to-br from-white via-white to-red-50/60 dark:from-[#1e2329] dark:via-[#1e2329] dark:to-[#2a1d20] rounded-2xl p-4 shadow-sm border border-red-200/80 dark:border-red-950/80 hover:shadow-md transition-all relative overflow-hidden group sm:col-span-2"
+              >
+                <div className="flex items-center gap-3 mb-1 relative z-10">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/50 flex items-center justify-center text-brand-red">
+                    <i className="fa-solid fa-circle-dot text-lg animate-pulse"></i>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white">คลังน้องดอท (Nong Dot Gallery)</h4>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-brand-red text-white">12 รูปแบบ</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">โมเดลแอนิเมชันน้องดอท 12 อารมณ์และบริบท สำหรับเรียกใช้งานในระบบ</p>
+                  </div>
+                </div>
+                <i className="fa-solid fa-circle-dot absolute -right-2 -bottom-2 text-5xl text-red-500/10 dark:text-red-500/10 group-hover:scale-110 transition-transform"></i>
+              </Link>
             </div>
           </section>
 
