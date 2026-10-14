@@ -8,8 +8,6 @@ export default function NongDotAdminGalleryPage() {
   const [selectedSize, setSelectedSize] = useState<number>(20);
   const [activeCategory, setActiveCategory] = useState<'all' | 'live' | 'interaction' | 'finance' | 'status'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [playgroundMood, setPlaygroundMood] = useState<NongDotMood>('greeting');
-  const [playgroundText, setPlaygroundText] = useState('ให้เรารู้จักคุณหน่อย โปรดเลือกวงการที่คุณจะทำ');
 
   const countAll = NONG_DOT_CATALOG.length;
   const countLive = NONG_DOT_CATALOG.filter((i) => i.isLive).length;
@@ -59,39 +57,6 @@ export default function NongDotAdminGalleryPage() {
             <i className="fa-solid fa-gauge"></i>
             <span>กลับสู่ Dashboard</span>
           </Link>
-        </div>
-
-        {/* Live Playground Sandbox */}
-        <div className="bg-gradient-to-r from-red-500/10 via-amber-500/10 to-transparent dark:from-red-950/30 dark:via-amber-950/20 rounded-3xl border border-red-100 dark:border-red-950/60 p-4 sm:p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand-red animate-pulse"></span>
-              <h2 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
-                Live Playground: ทดสอบการทำงานร่วมกับข้อความจริง
-              </h2>
-            </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white dark:bg-[#1a1d24] border border-red-200 dark:border-red-900 font-bold text-brand-red">
-              mood=&quot;{playgroundMood}&quot;
-            </span>
-          </div>
-
-          <div className="bg-white dark:bg-[#181a20] rounded-2xl p-4 border border-gray-150 dark:border-gray-800 shadow-xs flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-gray-50 dark:bg-[#121418] border border-gray-100 dark:border-gray-800/80 flex items-center justify-center shrink-0">
-              <NongDot mood={playgroundMood} size={selectedSize} />
-            </div>
-            <div className="flex-1 w-full space-y-2">
-              <input
-                type="text"
-                value={playgroundText}
-                onChange={(e) => setPlaygroundText(e.target.value)}
-                placeholder="พิมพ์ข้อความทดสอบ..."
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#121418] border border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:border-brand-red"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                ตัวอย่างคำพูดที่น้องดอทสื่อสารตามอารมณ์ที่เลือก
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Global Toolbar: Size Switcher & Category Filter */}
@@ -174,20 +139,15 @@ export default function NongDotAdminGalleryPage() {
           </div>
         </div>
 
-        {/* 12-Card Nong Dot Gallery Grid */}
+        {/* Nong Dot Gallery Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCatalog.map((item, index) => {
             const isCopied = copiedId === item.id;
-            const isPlaying = playgroundMood === item.id;
 
             return (
               <div
                 key={item.id}
-                className={`bg-white dark:bg-[#181a20] rounded-3xl border transition-all p-4 flex flex-col justify-between space-y-4 hover:shadow-md relative overflow-hidden group ${
-                  isPlaying
-                    ? 'border-brand-red ring-2 ring-brand-red/20'
-                    : 'border-gray-150 dark:border-gray-800'
-                }`}
+                className="bg-white dark:bg-[#181a20] rounded-3xl border border-gray-150 dark:border-gray-800 transition-all p-4 flex flex-col justify-between space-y-4 hover:shadow-md relative overflow-hidden group"
               >
                 {/* Top Number & Tag */}
                 <div className="flex items-center justify-between">
@@ -212,15 +172,8 @@ export default function NongDotAdminGalleryPage() {
                 </div>
 
                 {/* Animated Stage Display */}
-                <div
-                  onClick={() => setPlaygroundMood(item.id)}
-                  className="w-full h-28 rounded-2xl bg-gray-50/80 dark:bg-[#121418] border border-gray-100 dark:border-gray-800/80 flex items-center justify-center cursor-pointer hover:bg-gray-100/60 transition-colors relative"
-                >
+                <div className="w-full h-28 rounded-2xl bg-gray-50/80 dark:bg-[#121418] border border-gray-100 dark:border-gray-800/80 flex items-center justify-center relative">
                   <NongDot mood={item.id} size={selectedSize} />
-                  <span className="absolute bottom-1.5 right-2 text-[9px] text-gray-400 group-hover:text-brand-red flex items-center gap-1 transition-colors">
-                    <i className="fa-solid fa-play text-[8px]"></i>
-                    <span>ลองใน Playground</span>
-                  </span>
                 </div>
 
                 {/* Info & Details */}
