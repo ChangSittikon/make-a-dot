@@ -74,10 +74,10 @@ const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, 
   }, [line1, line2]);
 
   return (
-    <div className="space-y-1 mb-2 pt-1">
-      {/* Signature Breathing Red Dot */}
-      <div className="h-6 flex items-center">
-        <BreathingDot size={14} />
+    <div className="space-y-1 mb-3 pt-2">
+      {/* Signature Breathing Red Dot (Proper clearance so it never overlaps text) */}
+      <div className="h-9 flex items-end pb-1 mb-2">
+        <BreathingDot size={14} jumpHeight={16} />
       </div>
 
       <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">

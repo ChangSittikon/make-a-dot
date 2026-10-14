@@ -6,9 +6,10 @@ interface BreathingDotProps {
   color?: 'red' | 'black' | 'gray';
   className?: string;
   delay?: number;
+  jumpHeight?: number;
 }
 
-export function BreathingDot({ size = 12, color = 'red', delay = 0, className = "" }: BreathingDotProps) {
+export function BreathingDot({ size = 12, color = 'red', delay = 0, className = "", jumpHeight = 35 }: BreathingDotProps) {
   
   const colorMap = {
     red: {
@@ -34,7 +35,7 @@ export function BreathingDot({ size = 12, color = 'red', delay = 0, className = 
   return (
     <div 
       className={`relative inline-flex flex-col items-center justify-end ${className}`} 
-      style={{ width: size * 1.5, height: size + 40 }}
+      style={{ width: size * 1.5, height: size + jumpHeight + 5 }}
     >
       {/* The Jumping Dot */}
       <motion.div
@@ -45,7 +46,7 @@ export function BreathingDot({ size = 12, color = 'red', delay = 0, className = 
           boxShadow: `inset 0 -2px 4px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.25), 0 4px 10px ${selectedColor.shadow}`
         }}
         animate={{
-          y: [0, -35, 0, 0, 0],
+          y: [0, -jumpHeight, 0, 0, 0],
           scaleX: [1, 0.95, 0.95, 1.15, 1],
           scaleY: [1, 1.05, 1.05, 0.85, 1],
         }}
