@@ -4,7 +4,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 export type NongDotMood =
-  | 'greeting'    // 1. ทักทาย / เริ่มต้น (โยวหัวซ้าย-ขวา แล้วโดด)
+  | 'classic'     // 0. ดั้งเดิมหน้าหลัก (กระโดดสูง เด้งดึ๋ง มาตรฐาน MAKE A DOT)
+  | 'greeting'    // 1. ทักทาย / เริ่มต้น (โยกหัวซ้าย-ขวา แล้วโดด)
   | 'thinking'    // 2. คิดวิเคราะห์ / คำนวณ (ลอยหมุนเรืองแสง)
   | 'success'     // 3. ฉลองความสำเร็จ (กระโดด 2 จังหวะ + ประกายดาว)
   | 'alert'       // 4. แจ้งเตือนด่วน (ชีพจรกะพริบเร็ว + คลื่นเรดาร์)
@@ -20,25 +21,43 @@ export type NongDotMood =
 export interface NongDotProps {
   mood?: NongDotMood;
   size?: number;
-  color?: 'red' | 'black' | 'gold' | 'blue';
+  color?: 'red' | 'black' | 'gray' | 'gold' | 'blue';
   className?: string;
+  delay?: number;
+  jumpHeight?: number;
 }
 
-export const NONG_DOT_CATALOG: {
+export interface NongDotCatalogItem {
   id: NongDotMood;
   name: string;
   nameEn: string;
   category: 'interaction' | 'finance' | 'status';
   description: string;
   recommendedPlaces: string;
-}[] = [
+  isLive?: boolean;
+  liveLocation?: string;
+}
+
+export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
+  {
+    id: 'classic',
+    name: 'น้องดอทออริจินัลหน้าหลัก (Classic Jump)',
+    nameEn: 'Original Classic Jump',
+    category: 'interaction',
+    description: 'กระโดดสูงลอยตัว ค้างกลางอากาศอย่างนุ่มนวล และลงพื้นเด้งดึ๋ง เป็นเอกลักษณ์ดั้งเดิมของ MAKE A DOT',
+    recommendedPlaces: 'หน้าแรก FlowApp, ตอนโหลดระบบ, ลอยเกาะหัวข้อคำถาม, และ 3 ดอทผู้ก่อตั้ง (ดำ-แดง-เทา)',
+    isLive: true,
+    liveLocation: 'FlowApp.tsx (หน้าแรก & หน้าผลลัพธ์)',
+  },
   {
     id: 'greeting',
-    name: 'น้องดอททักทาย (Greeting)',
+    name: 'น้องดอททักทาย (Playful Greeting)',
     nameEn: 'Playful Greeting',
     category: 'interaction',
-    description: 'จังหวะตกพื้นจะโยกยืดหัวซ้าย-ขวาดุ๊กดิ๊ก แล้วย่อตัวกระโดดเด้งดึ๋งอย่างร่าเริง',
-    recommendedPlaces: 'หน้าต้อนรับ, Onboarding, Step 1 ทำทุน, ถามคำถามแรก',
+    description: 'จังหวะตกพื้นจะโยกยืดหัวซ้าย-ขวาดุ๊กดิ๊ก แล้วย่อตัวกระโดดเด้งดึ๋งอย่างร่าเริง มีชีวิตชีวา',
+    recommendedPlaces: 'หน้าคัดกรองสายงาน 3 เลเยอร์, Onboarding, Step 1 ทำทุน, ถามคำถามแรก',
+    isLive: true,
+    liveLocation: 'StepScopeView.tsx (หน้าคัดกรองสายงาน)',
   },
   {
     id: 'thinking',
@@ -135,10 +154,14 @@ export const NongDot: React.FC<NongDotProps> = ({
   size = 16,
   color = 'red',
   className = '',
+  delay = 0,
+  jumpHeight = 35,
 }) => {
   const bgClass =
     color === 'black'
       ? 'bg-gray-900'
+      : color === 'gray'
+      ? 'bg-gray-400'
       : color === 'gold'
       ? 'bg-amber-500'
       : color === 'blue'
@@ -146,7 +169,67 @@ export const NongDot: React.FC<NongDotProps> = ({
       : 'bg-brand-red';
 
   const shadowColor =
-    color === 'gold' ? 'rgba(245,158,11,0.35)' : color === 'blue' ? 'rgba(14,165,233,0.35)' : 'rgba(255,26,26,0.35)';
+    color === 'black'
+      ? 'rgba(0,0,0,0.3)'
+      : color === 'gray'
+      ? 'rgba(156,163,175,0.35)'
+      : color === 'gold'
+      ? 'rgba(245,158,11,0.35)'
+      : color === 'blue'
+      ? 'rgba(14,165,233,0.35)'
+      : 'rgba(255,26,26,0.35)';
+
+  /* ---------------- 0. CLASSIC (Original Jump from FlowApp) ---------------- */
+  if (mood === 'classic') {
+    const jump = jumpHeight || 35;
+    return (
+      <div
+        className={`relative inline-flex flex-col items-center justify-end ${className}`}
+        style={{ width: size * 1.5, height: size + jump + 5 }}
+      >
+        <motion.div
+          className={`${bgClass} rounded-full origin-bottom relative z-10`}
+          style={{
+            width: size,
+            height: size,
+            boxShadow: `inset 0 -2px 4px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.25), 0 4px 10px ${shadowColor}`,
+          }}
+          animate={{
+            y: [0, -jump, 0, 0, 0],
+            scaleX: [1, 0.95, 0.95, 1.15, 1],
+            scaleY: [1, 1.05, 1.05, 0.85, 1],
+          }}
+          transition={{
+            duration: 2.4,
+            repeat: Infinity,
+            delay: delay,
+            times: [0, 0.45, 0.85, 0.95, 1],
+            ease: 'easeInOut',
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 rounded-full"
+          style={{
+            width: size * 2.2,
+            height: size * 1.0,
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)',
+            marginBottom: -size * 0.35,
+          }}
+          animate={{
+            scaleX: [1, 0.3, 1, 1.2, 1],
+            opacity: [0.5, 0.1, 0.5, 0.8, 0.5],
+          }}
+          transition={{
+            duration: 2.4,
+            repeat: Infinity,
+            delay: delay,
+            times: [0, 0.45, 0.85, 0.95, 1],
+            ease: 'easeInOut',
+          }}
+        />
+      </div>
+    );
+  }
 
   /* ---------------- 1. GREETING (Cute Wobble & Leap) ---------------- */
   if (mood === 'greeting') {

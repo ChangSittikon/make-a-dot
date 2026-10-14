@@ -6,18 +6,21 @@ import { NongDot, NONG_DOT_CATALOG, NongDotMood } from '@/components/flow/NongDo
 
 export default function NongDotAdminGalleryPage() {
   const [selectedSize, setSelectedSize] = useState<number>(20);
-  const [activeCategory, setActiveCategory] = useState<'all' | 'interaction' | 'finance' | 'status'>('all');
+  const [activeCategory, setActiveCategory] = useState<'all' | 'live' | 'interaction' | 'finance' | 'status'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [playgroundMood, setPlaygroundMood] = useState<NongDotMood>('greeting');
   const [playgroundText, setPlaygroundText] = useState('ให้เรารู้จักคุณหน่อย โปรดเลือกวงการที่คุณจะทำ');
 
   const countAll = NONG_DOT_CATALOG.length;
+  const countLive = NONG_DOT_CATALOG.filter((i) => i.isLive).length;
   const countInteraction = NONG_DOT_CATALOG.filter((i) => i.category === 'interaction').length;
   const countFinance = NONG_DOT_CATALOG.filter((i) => i.category === 'finance').length;
   const countStatus = NONG_DOT_CATALOG.filter((i) => i.category === 'status').length;
 
   const filteredCatalog = activeCategory === 'all'
     ? NONG_DOT_CATALOG
+    : activeCategory === 'live'
+    ? NONG_DOT_CATALOG.filter((item) => item.isLive)
     : NONG_DOT_CATALOG.filter((item) => item.category === activeCategory);
 
   const handleCopyCode = (mood: NongDotMood) => {
@@ -107,6 +110,17 @@ export default function NongDotAdminGalleryPage() {
               }`}
             >
               ทั้งหมด ({countAll})
+            </button>
+            <button
+              onClick={() => setActiveCategory('live')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                activeCategory === 'live'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>ใช้งานจริงในระบบ ({countLive})</span>
             </button>
             <button
               onClick={() => setActiveCategory('interaction')}
@@ -213,10 +227,21 @@ export default function NongDotAdminGalleryPage() {
                 </div>
 
                 {/* Info & Details */}
-                <div className="space-y-1.5 min-w-0">
+                <div className="space-y-2 min-w-0">
                   <h3 className="text-sm font-extrabold text-gray-900 dark:text-white leading-tight">
                     {item.name}
                   </h3>
+
+                  {item.isLive && (
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span>ใช้งานจริง:</span>
+                      <span className="font-mono text-[9.5px] text-emerald-800 dark:text-emerald-300 truncate">
+                        {item.liveLocation}
+                      </span>
+                    </div>
+                  )}
+
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
                     {item.description}
                   </p>

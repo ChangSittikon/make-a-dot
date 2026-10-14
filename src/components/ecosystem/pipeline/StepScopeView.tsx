@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { INDUSTRIES_LIST } from '../constants';
 import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
 import { SubIndustryItem } from '../types';
-import { BreathingDot } from '@/components/flow/BreathingDot';
+import { NongDot } from '@/components/flow/NongDot';
 
 interface StepScopeViewProps {
   selectedIndustryId: string;
@@ -90,7 +90,7 @@ const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, 
           }}
           className="inline-flex items-center justify-center"
         >
-          <BreathingDot size={15} jumpHeight={35} cuteWobble={true} />
+          <NongDot mood="greeting" size={15} />
         </motion.div>
       </div>
 
