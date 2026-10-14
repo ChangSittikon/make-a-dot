@@ -117,42 +117,23 @@ const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, 
 
 /* Milestone Card during intermediate step completion */
 const StepMilestone: React.FC<{
-  stepNumber: number;
-  stepLabel: string;
   title: string;
-  imgSrc?: string;
-  icon?: string;
   onEdit: () => void;
-}> = ({ stepNumber, stepLabel, title, imgSrc, icon, onEdit }) => (
-  <div className="bg-white dark:bg-[#181a20] rounded-2xl border border-gray-200/80 dark:border-gray-800 p-2.5 sm:p-3 shadow-2xs flex items-center justify-between gap-2.5 transition-all">
-    <div className="flex items-center gap-2.5 min-w-0">
+}> = ({ title, onEdit }) => (
+  <div className="bg-white dark:bg-[#181a20] rounded-2xl border border-gray-200/80 dark:border-gray-800 p-2.5 sm:p-3 shadow-2xs flex items-center justify-between gap-3 transition-all">
+    <div className="flex items-center gap-2.5 min-w-0 flex-1">
       <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-2xs">
         <i className="fa-solid fa-check"></i>
       </span>
-      {imgSrc ? (
-        <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex items-center justify-center shrink-0 overflow-hidden p-0.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imgSrc} alt="" className="w-full h-full object-contain" />
-        </div>
-      ) : icon ? (
-        <span className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-950/40 text-brand-red flex items-center justify-center text-xs shrink-0">
-          <i className={icon}></i>
-        </span>
-      ) : null}
-      <div className="min-w-0 text-left">
-        <span className="text-[9px] font-mono font-semibold text-gray-400 block leading-none mb-0.5">
-          ขั้นตอน {stepNumber}: {stepLabel}
-        </span>
-        <span className="text-xs font-bold text-gray-900 dark:text-white truncate block">
-          {title}
-        </span>
-      </div>
+      <span className="text-xs sm:text-[13px] font-bold text-gray-900 dark:text-white leading-normal break-words">
+        {title}
+      </span>
     </div>
     <button
       onClick={onEdit}
-      className="px-2.5 py-1 rounded-xl text-[10px] font-bold text-gray-500 hover:text-brand-red bg-gray-100/80 hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-950/40 shrink-0 transition-all flex items-center gap-1"
+      title="แก้ไข"
+      className="w-7 h-7 rounded-xl text-gray-400 hover:text-brand-red bg-gray-50 hover:bg-red-50 dark:bg-gray-800/80 dark:hover:bg-red-950/40 shrink-0 transition-all flex items-center justify-center border border-gray-150 dark:border-gray-700/60 shadow-2xs"
     >
-      <span>เปลี่ยน</span>
       <i className="fa-solid fa-pen text-[9px]"></i>
     </button>
   </div>
@@ -379,10 +360,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
             ) : (
               currentIndustry && (
                 <StepMilestone
-                  stepNumber={1}
-                  stepLabel="สายงานอุตสาหกรรม"
                   title={currentIndustry.name}
-                  imgSrc={brokenImgs[currentIndustry.id] ? undefined : industryImg(currentIndustry.id)}
                   onEdit={() => setIsEditingL1(true)}
                 />
               )
@@ -404,9 +382,9 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                       <button
                         key={sub.id}
                         onClick={() => pickSub(sub.id)}
-                        className="group p-3 rounded-2xl bg-white dark:bg-[#181a20] border border-gray-150 dark:border-gray-800 hover:border-brand-red hover:shadow-xs min-h-[54px] text-left transition-all active:scale-[0.98] flex items-center justify-between gap-2"
+                        className="group p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-[#181a20] border border-gray-150 dark:border-gray-800 hover:border-brand-red hover:shadow-xs min-h-[54px] text-left transition-all active:scale-[0.98] flex items-center justify-between gap-2"
                       >
-                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-red leading-snug truncate">
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-red leading-snug break-words flex-1">
                           {sub.name}
                         </span>
                         <i className="fa-solid fa-arrow-right text-[8px] text-gray-300 group-hover:text-brand-red group-hover:translate-x-0.5 transition-all shrink-0"></i>
@@ -417,10 +395,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               ) : (
                 activeSubIndustry && (
                   <StepMilestone
-                    stepNumber={2}
-                    stepLabel="หมวดหลัก"
                     title={activeSubIndustry.name}
-                    icon="fa-solid fa-folder-tree"
                     onEdit={() => setIsEditingL2(true)}
                   />
                 )
@@ -443,9 +418,9 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                       <button
                         key={seg.id}
                         onClick={() => pickSeg(seg.id)}
-                        className="group p-3 rounded-2xl bg-white dark:bg-[#181a20] border border-gray-150 dark:border-gray-800 hover:border-brand-red hover:shadow-xs min-h-[54px] text-left transition-all active:scale-[0.98] flex items-center justify-between gap-2"
+                        className="group p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-[#181a20] border border-gray-150 dark:border-gray-800 hover:border-brand-red hover:shadow-xs min-h-[54px] text-left transition-all active:scale-[0.98] flex items-center justify-between gap-2"
                       >
-                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-red leading-snug truncate">
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-brand-red leading-snug break-words flex-1">
                           {seg.name}
                         </span>
                         <i className="fa-solid fa-circle-dot text-[8px] text-gray-300 group-hover:text-brand-red transition-colors shrink-0"></i>
@@ -456,10 +431,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               ) : (
                 activeSegment && (
                   <StepMilestone
-                    stepNumber={3}
-                    stepLabel="รูปแบบเฉพาะ"
                     title={activeSegment.name}
-                    icon="fa-solid fa-bullseye"
                     onEdit={() => setIsEditingL3(true)}
                   />
                 )
