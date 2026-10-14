@@ -16,7 +16,7 @@ import { SynergyMatrixTab } from '@/components/ecosystem/tabs/SynergyMatrixTab';
 /* Tab Header Bar Items */
 const MAIN_TABS = [
   { id: 'PROCESS', label: 'ประมวลผล', icon: 'fa-solid fa-microchip', badge: 'AI' },
-  { id: 'CAPITAL', label: 'แปลงทรัพยากรให้เป็นทุน', icon: 'fa-solid fa-coins', badge: 'Cap Table' },
+  { id: 'CAPITAL', label: 'ทำทุน', icon: 'fa-solid fa-coins', badge: 'Cap Table' },
   { id: 'SOLVER', label: 'เครื่องมือแก้ปัญหา', icon: 'fa-solid fa-toolbox', badge: '5 Tools' },
   { id: 'ECOSYSTEM', label: 'ผังระบบนิเวศ', icon: 'fa-solid fa-network-wired', badge: 'Matrix' },
 ];
