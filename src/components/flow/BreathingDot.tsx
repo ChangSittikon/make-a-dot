@@ -7,9 +7,17 @@ interface BreathingDotProps {
   className?: string;
   delay?: number;
   jumpHeight?: number;
+  cuteWobble?: boolean;
 }
 
-export function BreathingDot({ size = 12, color = 'red', delay = 0, className = "", jumpHeight = 35 }: BreathingDotProps) {
+export function BreathingDot({ 
+  size = 12, 
+  color = 'red', 
+  delay = 0, 
+  className = "", 
+  jumpHeight = 35,
+  cuteWobble = false 
+}: BreathingDotProps) {
   
   const colorMap = {
     red: {
@@ -28,9 +36,33 @@ export function BreathingDot({ size = 12, color = 'red', delay = 0, className = 
 
   const selectedColor = colorMap[color];
 
-  // Smart & Stable Jump Physics (Slower, elegant)
-  const jumpTimes = [0, 0.45, 0.85, 0.95, 1];
-  const jumpDur = 2.4; // Slower, more majestic
+  // Standard jump or Cute wobble jump
+  const jumpTimes = cuteWobble 
+    ? [0, 0.12, 0.24, 0.36, 0.46, 0.68, 0.86, 0.94, 1]
+    : [0, 0.45, 0.85, 0.95, 1];
+
+  const jumpDur = cuteWobble ? 2.6 : 2.4;
+
+  const dotAnimate = cuteWobble ? {
+    y: [0, 0, 0, 0, -jumpHeight * 0.5, -jumpHeight, -jumpHeight * 0.15, 0, 0],
+    rotate: [0, -14, 14, 0, 0, 0, 0, 0, 0],
+    x: [0, -2, 2, 0, 0, 0, 0, 0, 0],
+    scaleX: [1.2, 1.05, 1.05, 1.28, 0.86, 0.96, 0.9, 1.25, 1.2],
+    scaleY: [0.8, 0.96, 0.96, 0.74, 1.18, 1.04, 1.12, 0.78, 0.8],
+  } : {
+    y: [0, -jumpHeight, 0, 0, 0],
+    scaleX: [1, 0.95, 0.95, 1.15, 1],
+    scaleY: [1, 1.05, 1.05, 0.85, 1],
+  };
+
+  const shadowAnimate = cuteWobble ? {
+    scaleX: [1.2, 1.05, 1.05, 1.3, 0.6, 0.35, 0.7, 1.3, 1.2],
+    opacity: [0.65, 0.6, 0.6, 0.8, 0.3, 0.15, 0.4, 0.8, 0.65],
+    x: [0, -2, 2, 0, 0, 0, 0, 0, 0],
+  } : {
+    scaleX: [1, 0.3, 1, 1.2, 1],
+    opacity: [0.5, 0.1, 0.5, 0.8, 0.5],
+  };
 
   return (
     <div 
@@ -45,22 +77,13 @@ export function BreathingDot({ size = 12, color = 'red', delay = 0, className = 
           height: size,
           boxShadow: `inset 0 -2px 4px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.25), 0 4px 10px ${selectedColor.shadow}`
         }}
-        animate={{
-          y: [0, -jumpHeight, 0, 0, 0],
-          scaleX: [1, 0.95, 0.95, 1.15, 1],
-          scaleY: [1, 1.05, 1.05, 0.85, 1],
-        }}
+        animate={dotAnimate}
         transition={{
           duration: jumpDur,
           repeat: Infinity,
           delay: delay,
           times: jumpTimes,
-          ease: [
-            "circOut",   // Fast launch, smooth heavy hang time at peak
-            "circIn",    // Smooth start, fast fall
-            "easeOut",   // Impact squash
-            "easeInOut"  // Recover
-          ]
+          ease: "easeInOut"
         }}
       />
       
@@ -73,21 +96,13 @@ export function BreathingDot({ size = 12, color = 'red', delay = 0, className = 
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)',
           marginBottom: -size * 0.35
         }}
-        animate={{
-          scaleX: [1, 0.3, 1, 1.2, 1],
-          opacity: [0.5, 0.1, 0.5, 0.8, 0.5],
-        }}
+        animate={shadowAnimate}
         transition={{
           duration: jumpDur,
           repeat: Infinity,
           delay: delay,
           times: jumpTimes,
-          ease: [
-            "circOut",
-            "circIn",
-            "easeOut",
-            "easeInOut"
-          ]
+          ease: "easeInOut"
         }}
       />
     </div>

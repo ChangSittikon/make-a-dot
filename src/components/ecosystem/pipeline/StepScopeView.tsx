@@ -76,15 +76,7 @@ const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, 
 
   return (
     <div className="space-y-1 mb-3 pt-2 relative">
-      {/* Ambient Floating Universe Dots (like in FlowApp / Home) */}
-      <div className="absolute -top-1 -left-2 right-0 h-24 pointer-events-none overflow-hidden z-0">
-        <span className="absolute top-2 left-16 w-1.5 h-1.5 rounded-full bg-red-400/25 animate-pulse" />
-        <span className="absolute top-8 left-36 w-2 h-2 rounded-full bg-gray-300/35 dark:bg-gray-700/35" />
-        <span className="absolute top-1 right-10 w-1.5 h-1.5 rounded-full bg-gray-400/30 dark:bg-gray-600/30" />
-        <span className="absolute top-10 right-28 w-2 h-2 rounded-full bg-red-300/20" />
-      </div>
-
-      {/* Signature Breathing Red Dot with Full Fresh Majestic Leap */}
+      {/* Signature Breathing Red Dot with Cute Ground Wobble & Fresh Leap */}
       <div className="h-14 flex items-end pb-1 mb-2 relative z-10">
         <motion.div
           layoutId="nong-dot"
@@ -98,7 +90,7 @@ const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, 
           }}
           className="inline-flex items-center justify-center"
         >
-          <BreathingDot size={18} jumpHeight={35} />
+          <BreathingDot size={15} jumpHeight={35} cuteWobble={true} />
         </motion.div>
       </div>
 
