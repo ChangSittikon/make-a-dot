@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { INDUSTRIES_LIST } from '../constants';
 import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
 import { SubIndustryItem } from '../types';
@@ -74,27 +75,50 @@ const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, 
   }, [line1, line2]);
 
   return (
-    <div className="space-y-1 mb-3 pt-2">
-      {/* Signature Breathing Red Dot (Proper clearance so it never overlaps text) */}
-      <div className="h-9 flex items-end pb-1 mb-2">
-        <BreathingDot size={14} jumpHeight={16} />
+    <div className="space-y-1 mb-3 pt-2 relative">
+      {/* Ambient Floating Universe Dots (like in FlowApp / Home) */}
+      <div className="absolute -top-1 -left-2 right-0 h-24 pointer-events-none overflow-hidden z-0">
+        <span className="absolute top-2 left-16 w-1.5 h-1.5 rounded-full bg-red-400/25 animate-pulse" />
+        <span className="absolute top-8 left-36 w-2 h-2 rounded-full bg-gray-300/35 dark:bg-gray-700/35" />
+        <span className="absolute top-1 right-10 w-1.5 h-1.5 rounded-full bg-gray-400/30 dark:bg-gray-600/30" />
+        <span className="absolute top-10 right-28 w-2 h-2 rounded-full bg-red-300/20" />
       </div>
 
-      <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">
-        {disp1}
-        {typing1 && (
-          <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
-        )}
-      </h2>
+      {/* Signature Breathing Red Dot with Full Fresh Majestic Leap */}
+      <div className="h-14 flex items-end pb-1 mb-2 relative z-10">
+        <motion.div
+          layoutId="nong-dot"
+          transition={{
+            layout: {
+              type: "spring",
+              stiffness: 60,
+              damping: 11,
+              mass: 1.2
+            }
+          }}
+          className="inline-flex items-center justify-center"
+        >
+          <BreathingDot size={18} jumpHeight={35} />
+        </motion.div>
+      </div>
 
-      {(disp2 || typing2 || (!typing1 && line2)) && (
-        <p className="text-xs sm:text-[13px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
-          {disp2}
-          {typing2 && (
-            <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+      <div className="relative z-10 space-y-1">
+        <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+          {disp1}
+          {typing1 && (
+            <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
           )}
-        </p>
-      )}
+        </h2>
+
+        {(disp2 || typing2 || (!typing1 && line2)) && (
+          <p className="text-xs sm:text-[13px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
+            {disp2}
+            {typing2 && (
+              <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+            )}
+          </p>
+        )}
+      </div>
     </div>
   );
 };
