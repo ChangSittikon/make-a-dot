@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { INDUSTRIES_LIST } from '../constants';
 import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
 import { SubIndustryItem } from '../types';
+import { BreathingDot } from '@/components/flow/BreathingDot';
 
 interface StepScopeViewProps {
   selectedIndustryId: string;
@@ -32,7 +33,73 @@ const TILE_LABELS: Record<string, string> = {
 
 const industryImg = (id: string) => `/images/industries/${id}.jpg`;
 
-/* Compact milestone card during progressive selection */
+/* Signature Make A Dot Typewriter Header with Breathing Dot */
+const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, line2 }) => {
+  const [disp1, setDisp1] = useState('');
+  const [disp2, setDisp2] = useState('');
+  const [typing1, setTyping1] = useState(true);
+  const [typing2, setTyping2] = useState(false);
+
+  useEffect(() => {
+    setDisp1('');
+    setDisp2('');
+    setTyping1(true);
+    setTyping2(false);
+
+    let i = 0;
+    const t1 = setInterval(() => {
+      if (i < line1.length) {
+        setDisp1(line1.slice(0, i + 1));
+        i++;
+      } else {
+        clearInterval(t1);
+        setTyping1(false);
+        if (line2) {
+          setTyping2(true);
+          let j = 0;
+          const t2 = setInterval(() => {
+            if (j < line2.length) {
+              setDisp2(line2.slice(0, j + 1));
+              j++;
+            } else {
+              clearInterval(t2);
+              setTyping2(false);
+            }
+          }, 35);
+        }
+      }
+    }, 45);
+
+    return () => clearInterval(t1);
+  }, [line1, line2]);
+
+  return (
+    <div className="space-y-1 mb-2 pt-1">
+      {/* Signature Breathing Red Dot */}
+      <div className="h-6 flex items-center">
+        <BreathingDot size={14} />
+      </div>
+
+      <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+        {disp1}
+        {typing1 && (
+          <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+        )}
+      </h2>
+
+      {(disp2 || typing2 || (!typing1 && line2)) && (
+        <p className="text-xs sm:text-[13px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
+          {disp2}
+          {typing2 && (
+            <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+          )}
+        </p>
+      )}
+    </div>
+  );
+};
+
+/* Milestone Card during intermediate step completion */
 const StepMilestone: React.FC<{
   stepNumber: number;
   stepLabel: string;
@@ -105,7 +172,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
   const showL3 = showL2 && hasL2 && !isEditingL2 && segmentsList.length > 0;
   const showL3Grid = showL3 && (!hasL3 || isEditingL3);
 
-  // Complete blueprint state (all 3 selected, not currently in edit mode)
   const isComplete = hasL1 && !isEditingL1 && hasL2 && !isEditingL2 && (segmentsList.length === 0 || (hasL3 && !isEditingL3));
 
   const pickIndustry = (id: string) => {
@@ -126,28 +192,27 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
 
   return (
     <div className="p-3 sm:p-4 space-y-4 font-prompt">
-      {/* ================= TOP STEPPER STATUS ================= */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-1.5">
-          <span className="w-5 h-5 rounded-full bg-red-50 dark:bg-red-950/60 text-brand-red flex items-center justify-center text-[10px]">
-            <i className="fa-solid fa-layer-group"></i>
-          </span>
-          <span className="text-xs font-bold text-gray-800 dark:text-gray-100">
-            {isComplete ? 'พิมพ์เขียวโครงการพร้อมทำทุน' : 'สร้างสเปกโครงการ (Project Scope)'}
-          </span>
-        </div>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 font-bold">
-          {isComplete ? 'พร้อมคำนวณหุ้น 3/3' : hasL2 ? 'ขั้นตอน 3/3' : hasL1 ? 'ขั้นตอน 2/3' : 'ขั้นตอน 1/3'}
-        </span>
-      </div>
-
-      {/* ================= WHEN COMPLETE: HERO PROJECT BLUEPRINT CARD ================= */}
+      {/* ================= HERO BLUEPRINT WHEN COMPLETED ================= */}
       {isComplete && currentIndustry && activeSubIndustry ? (
         <div className="space-y-3 animate-fadeIn">
+          {/* Header Status */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-red-50 dark:bg-red-950/60 text-brand-red flex items-center justify-center text-[10px]">
+                <i className="fa-solid fa-check"></i>
+              </span>
+              <span className="text-xs font-bold text-gray-800 dark:text-gray-100">
+                พิมพ์เขียวโครงการพร้อมทำทุน
+              </span>
+            </div>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 font-bold">
+              ขั้นตอน 3/3 สำเร็จ
+            </span>
+          </div>
+
           <div className="bg-gradient-to-br from-white via-white to-amber-50/50 dark:from-[#181a20] dark:via-[#181a20] dark:to-[#221c17] rounded-3xl border border-amber-100/90 dark:border-amber-950/50 p-4 shadow-sm relative overflow-hidden space-y-4">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none"></div>
 
-            {/* Header Tag & Quick Edit */}
             <div className="flex items-center justify-between relative z-10">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -162,7 +227,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               </button>
             </div>
 
-            {/* Showcase Visual + Title */}
             <div className="flex items-center gap-3.5 relative z-10">
               <div className="w-[72px] h-[72px] rounded-2xl bg-white dark:bg-[#121418] border border-gray-100 dark:border-gray-800/80 p-1 flex items-center justify-center shrink-0 shadow-xs">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -190,7 +254,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               </div>
             </div>
 
-            {/* Breadcrumb Path Badges (Clickable to jump) */}
             <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-gray-100 dark:border-gray-800/80 text-[10px]">
               <button
                 onClick={() => setIsEditingL1(true)}
@@ -217,7 +280,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               </button>
             </div>
 
-            {/* Value Indicators */}
             <div className="space-y-1.5 pt-1">
               <div className="flex items-center gap-2 text-[10.5px] text-gray-600 dark:text-gray-300">
                 <span className="w-4 h-4 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center text-[9px] shrink-0">
@@ -234,7 +296,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
             </div>
           </div>
 
-          {/* Glowing Next Step Action Button */}
           <button
             onClick={onNextStep}
             className="w-full py-3.5 bg-gradient-to-r from-brand-red via-red-600 to-rose-600 hover:brightness-110 text-white rounded-2xl text-xs sm:text-[13px] font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-red-500/25 active:scale-[0.99]"
@@ -244,19 +305,17 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
           </button>
         </div>
       ) : (
-        /* ================= PROGRESSIVE PICKING FLOW ================= */
+        /* ================= PROGRESSIVE SELECTION WITH SIGNATURE PROMPT ================= */
         <div className="space-y-3">
           {/* STEP 1: สายงานอุตสาหกรรม */}
           <div className="space-y-2">
             {showL1Grid ? (
               <div className="space-y-2.5">
-                <div className="flex items-center justify-between text-[11px] font-semibold text-gray-500">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-brand-red text-white flex items-center justify-center text-[9px] font-bold">1</span>
-                    <span className="text-gray-900 dark:text-white font-bold">เลือกสายงานอุตสาหกรรม</span>
-                  </div>
-                  <span className="text-[10px] text-gray-400">12 สายงาน</span>
-                </div>
+                {/* Signature Make A Dot Typewriter Header */}
+                <TypewriterPrompt
+                  line1="ให้เรารู้จักคุณหน่อย"
+                  line2="โปรดเลือกวงการที่คุณจะทำ"
+                />
 
                 <div className="grid grid-cols-3 gap-2">
                   {INDUSTRIES_LIST.map((ind) => {
@@ -319,13 +378,10 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
             <div className="space-y-2 animate-fadeIn">
               {showL2Grid ? (
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-gray-500">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold">2</span>
-                      <span className="text-gray-900 dark:text-white font-bold">เลือกหมวดหลักในสายงาน</span>
-                    </div>
-                    <span className="text-[10px] text-gray-400">{currentSubIndustries.length} หมวด</span>
-                  </div>
+                  <TypewriterPrompt
+                    line1="เจาะลึกหมวดหลักของคุณ"
+                    line2={`เลือกหมวดหลักในสายงาน ${currentIndustry?.name}`}
+                  />
 
                   <div className="grid grid-cols-2 gap-2">
                     {currentSubIndustries.map((sub) => (
@@ -361,13 +417,10 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
             <div className="space-y-2 animate-fadeIn">
               {showL3Grid ? (
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-gray-500">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-4 h-4 rounded-full bg-purple-600 text-white flex items-center justify-center text-[9px] font-bold">3</span>
-                      <span className="text-gray-900 dark:text-white font-bold">เจาะจงรูปแบบโครงการ</span>
-                    </div>
-                    <span className="text-[10px] text-gray-400">{segmentsList.length} รูปแบบ</span>
-                  </div>
+                  <TypewriterPrompt
+                    line1="กำหนดรูปแบบโครงการ"
+                    line2={`เลือกรูปแบบเฉพาะสำหรับ ${activeSubIndustry?.name}`}
+                  />
 
                   <div className="grid grid-cols-2 gap-2">
                     {segmentsList.map((seg) => (
