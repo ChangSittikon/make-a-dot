@@ -42,17 +42,14 @@ export default function NongDotAdminGalleryPage() {
                 <span>แผงควบคุมแอดมิน</span>
               </Link>
               <span>/</span>
-              <span className="text-gray-800 dark:text-gray-200 font-bold">คลังน้องดอท (Nong Dot Gallery)</span>
+              <span className="text-gray-800 dark:text-gray-200 font-bold">แกลลอรี่น้องดอท</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
               <span className="w-7 h-7 rounded-full bg-brand-red text-white flex items-center justify-center text-xs shadow-xs">
                 <i className="fa-solid fa-circle-dot"></i>
               </span>
-              <span>คลังน้องดอท 12 อารมณ์ & บริบท</span>
+              <span>แกลลอรี่น้องดอท</span>
             </h1>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              ศูนย์รวมโมเดลแอนิเมชันน้องดอท 12 แบบ สำหรับเรียกใช้งานตามบริบทและสถานการณ์ใน MAKE A DOT
-            </p>
           </div>
 
           <Link

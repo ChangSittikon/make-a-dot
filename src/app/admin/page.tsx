@@ -125,10 +125,10 @@ export default async function SettingsPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-gray-900 dark:text-white">คลังน้องดอท (Nong Dot Gallery)</h4>
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-brand-red text-white">12 รูปแบบ</span>
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white">แกลลอรี่น้องดอท</h4>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-brand-red text-white">12+ รูปแบบ</span>
                     </div>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400">โมเดลแอนิเมชันน้องดอท 12 อารมณ์และบริบท สำหรับเรียกใช้งานในระบบ</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">โมเดลแอนิเมชันน้องดอทสำหรับเรียกใช้งานในระบบ</p>
                   </div>
                 </div>
                 <i className="fa-solid fa-circle-dot absolute -right-2 -bottom-2 text-5xl text-red-500/10 dark:text-red-500/10 group-hover:scale-110 transition-transform"></i>
