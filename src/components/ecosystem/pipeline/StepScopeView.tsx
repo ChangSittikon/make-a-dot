@@ -373,8 +373,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               {showL2Grid ? (
                 <div className="space-y-2.5">
                   <TypewriterPrompt
-                    line1="เจาะลึกหมวดหลักของคุณ"
-                    line2={`เลือกหมวดหลักในสายงาน ${currentIndustry?.name}`}
+                    line1="เจาะลึกลงไป"
                   />
 
                   <div className="grid grid-cols-2 gap-2">
