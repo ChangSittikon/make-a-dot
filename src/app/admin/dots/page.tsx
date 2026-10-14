@@ -152,7 +152,7 @@ export default function NongDotAdminGalleryPage() {
                 {/* Top Number & Tag */}
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">
-                    #{String(index + 1).padStart(2, '0')}
+                    #{String(item.no).padStart(2, '0')}
                   </span>
                   <span
                     className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${

@@ -29,6 +29,7 @@ export interface NongDotProps {
 
 export interface NongDotCatalogItem {
   id: NongDotMood;
+  no: number;
   name: string;
   nameEn: string;
   category: 'interaction' | 'finance' | 'status';
@@ -40,6 +41,7 @@ export interface NongDotCatalogItem {
 
 export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
   {
+    no: 1,
     id: 'classic',
     name: 'น้องดอทออริจินัลหน้าหลัก (Classic Jump)',
     nameEn: 'Original Classic Jump',
@@ -50,6 +52,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     liveLocation: 'FlowApp.tsx (หน้าแรก & หน้าผลลัพธ์)',
   },
   {
+    no: 2,
     id: 'greeting',
     name: 'น้องดอททักทาย (Playful Greeting)',
     nameEn: 'Playful Greeting',
@@ -60,6 +63,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     liveLocation: 'StepScopeView.tsx (หน้าคัดกรองสายงาน)',
   },
   {
+    no: 3,
     id: 'thinking',
     name: 'น้องดอทคิดวิเคราะห์ (Thinking)',
     nameEn: 'AI Calculating',
@@ -68,6 +72,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'ระหว่างรอประมวลผล Matching, คำนวณ Cap Table, วิเคราะห์สเปก',
   },
   {
+    no: 4,
     id: 'success',
     name: 'น้องดอทฉลองชัย (Celebration)',
     nameEn: 'Victory Pop',
@@ -76,6 +81,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'สร้างโปรเจกต์เสร็จ, ปิดดีลสำเร็จ, ได้รับรางวัล, ปลดล็อกเควสต์',
   },
   {
+    no: 5,
     id: 'alert',
     name: 'น้องดอทแจ้งเตือนด่วน (Urgent Alert)',
     nameEn: 'Pulse Alert',
@@ -84,6 +90,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'เควสต์ด่วนใกล้หมดเวลา, ข้อความใหม่, การแจ้งเตือนฉุกเฉิน',
   },
   {
+    no: 6,
     id: 'searching',
     name: 'น้องดอทค้นหา (Curious Search)',
     nameEn: 'Explorer Sway',
@@ -92,6 +99,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'ช่องค้นหา Search Box, หน้ารายชื่อ Expert, หน้ากรองข้อมูล',
   },
   {
+    no: 7,
     id: 'sleeping',
     name: 'น้องดอทพักผ่อน (Idle & Nap)',
     nameEn: 'Resting Zen',
@@ -100,6 +108,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'หน้าว่าง (Empty State), ไม่มีงานคงค้าง, ระบบออฟไลน์',
   },
   {
+    no: 8,
     id: 'shield',
     name: 'น้องดอทผู้พิทักษ์ (Guardian Shield)',
     nameEn: 'Escrow Guardian',
@@ -108,6 +117,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'หน้า Escrow ล็อกเงิน, ระบบความปลอดภัย, ตรวจสอบสัญญา BOQ',
   },
   {
+    no: 9,
     id: 'wealth',
     name: 'น้องดอทมั่งคั่ง (Capital & Wealth)',
     nameEn: 'Golden Investor',
@@ -116,6 +126,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'หน้าแปลงสินทรัพย์เป็นทุน, จำลองสัดส่วนหุ้น, มูลค่าระดมทุน Step 2',
   },
   {
+    no: 10,
     id: 'synergy',
     name: 'น้องดอทซินเนอร์ยี่ (Synergy Partners)',
     nameEn: 'Twin Orbit',
@@ -124,6 +135,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'ผังระบบนิเวศ (Synergy Matrix), การจับคู่ Requester กับ Solver',
   },
   {
+    no: 11,
     id: 'error',
     name: 'น้องดอทตกใจ (Shocked / Oops)',
     nameEn: 'Alert Oops',
@@ -132,6 +144,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'ฟอร์มไม่สมบูรณ์, การเชื่อมต่อขัดข้อง, ข้อพิพาท Dispute',
   },
   {
+    no: 12,
     id: 'launch',
     name: 'น้องดอทสปีดรัน (Rocket Launch)',
     nameEn: 'Blast Off',
@@ -140,6 +153,7 @@ export const NONG_DOT_CATALOG: NongDotCatalogItem[] = [
     recommendedPlaces: 'ปุ่มปล่อยงาน Step 12, Deploy โปรเจกต์, ยืนยันการเผยแพร่',
   },
   {
+    no: 13,
     id: 'quantum',
     name: 'น้องดอทควอนตัม (Quantum Core)',
     nameEn: 'Atomic Gravity',
