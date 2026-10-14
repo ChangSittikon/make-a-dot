@@ -11,6 +11,11 @@ export default function NongDotAdminGalleryPage() {
   const [playgroundMood, setPlaygroundMood] = useState<NongDotMood>('greeting');
   const [playgroundText, setPlaygroundText] = useState('ให้เรารู้จักคุณหน่อย โปรดเลือกวงการที่คุณจะทำ');
 
+  const countAll = NONG_DOT_CATALOG.length;
+  const countInteraction = NONG_DOT_CATALOG.filter((i) => i.category === 'interaction').length;
+  const countFinance = NONG_DOT_CATALOG.filter((i) => i.category === 'finance').length;
+  const countStatus = NONG_DOT_CATALOG.filter((i) => i.category === 'status').length;
+
   const filteredCatalog = activeCategory === 'all'
     ? NONG_DOT_CATALOG
     : NONG_DOT_CATALOG.filter((item) => item.category === activeCategory);
@@ -101,7 +106,7 @@ export default function NongDotAdminGalleryPage() {
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
-              ทั้งหมด (12)
+              ทั้งหมด ({countAll})
             </button>
             <button
               onClick={() => setActiveCategory('interaction')}
@@ -111,7 +116,7 @@ export default function NongDotAdminGalleryPage() {
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
-              การปฏิสัมพันธ์ (4)
+              การปฏิสัมพันธ์ ({countInteraction})
             </button>
             <button
               onClick={() => setActiveCategory('finance')}
@@ -121,7 +126,7 @@ export default function NongDotAdminGalleryPage() {
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
-              การเงิน & ทุน (2)
+              การเงิน & ทุน ({countFinance})
             </button>
             <button
               onClick={() => setActiveCategory('status')}
@@ -131,7 +136,7 @@ export default function NongDotAdminGalleryPage() {
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
-              สถานะ & แจ้งเตือน (6)
+              สถานะ & แจ้งเตือน ({countStatus})
             </button>
           </div>
 
