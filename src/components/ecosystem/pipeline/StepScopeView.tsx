@@ -16,6 +16,8 @@ interface StepScopeViewProps {
   onSelectSegment: (segId: string) => void;
   onNextStep: () => void;
   nextButtonLabel?: string;
+  step1PromptLine1?: string;
+  step1PromptLine2?: string;
 }
 
 const TILE_LABELS: Record<string, string> = {
@@ -149,6 +151,8 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
   onSelectSegment,
   onNextStep,
   nextButtonLabel,
+  step1PromptLine1,
+  step1PromptLine2,
 }) => {
   const [isEditingL1, setIsEditingL1] = useState(false);
   const [isEditingL2, setIsEditingL2] = useState(false);
@@ -312,8 +316,8 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
               <div className="space-y-2.5">
                 {/* Signature Make A Dot Typewriter Header */}
                 <TypewriterPrompt
-                  line1="ให้เรารู้จักคุณหน่อย"
-                  line2="โปรดเลือกวงการที่คุณจะทำ"
+                  line1={step1PromptLine1 || "ให้เรารู้จักคุณหน่อย"}
+                  line2={step1PromptLine2 !== undefined ? step1PromptLine2 : "โปรดเลือกวงการที่คุณจะทำ"}
                 />
 
                 <div className="grid grid-cols-3 gap-2">
