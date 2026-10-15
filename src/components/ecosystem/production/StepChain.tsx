@@ -13,6 +13,7 @@ interface Props {
   selectedOppKey: string;
   onSelectOpp: (key: string) => void;
   onAction: (k: ActionKind) => void;
+  onBackToStep1?: () => void;
 }
 
 const Row: React.FC<{ k: string; v: React.ReactNode }> = ({ k, v }) => (
@@ -132,7 +133,7 @@ const NodeDrawer: React.FC<{
   );
 };
 
-export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp, onAction }) => {
+export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp, onAction, onBackToStep1 }) => {
   const [openNode, setOpenNode] = useState<number | null>(null);
   const p = chain.product;
   const spread = p.total_value_spread;
@@ -142,12 +143,24 @@ export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp,
     <div className="pb-6">
       {/* Sticky Unit Normalization Banner */}
       <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#12141a]/95 backdrop-blur border-b border-gray-100 dark:border-gray-800 px-3 py-2.5 space-y-1.5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="text-sm font-black text-gray-900 dark:text-white leading-tight truncate">{p.product_name}</h3>
-            <p className="text-[10px] text-gray-400 truncate">
-              {chain.taxonomy.sector_id} {chain.taxonomy.sector_name} · {chain.taxonomy.sub_category_name}
-            </p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {onBackToStep1 && (
+              <button
+                onClick={onBackToStep1}
+                className="px-2.5 py-1 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold flex items-center gap-1 transition-all shadow-2xs shrink-0"
+                title="ย้อนกลับไปหน้าเลือกสินค้า (01 หาตัวตน)"
+              >
+                <span>←</span>
+                <span>เปลี่ยนสินค้า</span>
+              </button>
+            )}
+            <div className="min-w-0">
+              <h3 className="text-sm font-black text-gray-900 dark:text-white leading-tight truncate">{p.product_name}</h3>
+              <p className="text-[10px] text-gray-400 truncate">
+                {chain.taxonomy.sector_id} {chain.taxonomy.sector_name} · {chain.taxonomy.sub_category_name}
+              </p>
+            </div>
           </div>
           <span className="shrink-0 px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40 text-[#D32F2F] text-[10px] font-black font-mono">
             +{spread.total_markup_percent.toLocaleString('th-TH')}%

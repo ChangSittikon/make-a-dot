@@ -277,10 +277,11 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               <div className="flex items-center gap-2 min-w-0">
                 <button
                   onClick={() => setActiveStep(1)}
-                  className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
+                  className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shrink-0 hover:scale-105"
+                  title="ย้อนกลับไปเลือกสินค้าใหม่ที่ขั้นตอน 01 หาตัวตน"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>เปลี่ยนสินค้า</span>
+                  <span>เปลี่ยนสินค้า (01)</span>
                 </button>
 
                 <div className="min-w-0 flex items-center gap-1.5 text-xs">
@@ -351,9 +352,29 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
         {/* ================================================================= */}
         <div className="p-3 sm:p-5 max-w-5xl mx-auto">
           {activeStep === 1 && (
-            <StepIdentity
-              onPick={(name, ctx) => handleSelectProduct(name, ctx.sectorId, ctx.subName)}
-            />
+            <div className="space-y-4">
+              {selectedChain && (
+                <div className="bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                    <span className="text-zinc-500 dark:text-zinc-400">สินค้าที่เปิดล่าสุด:</span>
+                    <span className="font-bold text-zinc-900 dark:text-white truncate">
+                      {selectedChain.product.product_name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setActiveStep(2)}
+                    className="px-3 py-1 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 font-bold text-xs shrink-0 flex items-center gap-1 transition-colors"
+                  >
+                    <span>ดูผังสายพาน (02)</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              )}
+              <StepIdentity
+                onPick={(name, ctx) => handleSelectProduct(name, ctx.sectorId, ctx.subName)}
+              />
+            </div>
           )}
 
           {activeStep === 2 && (
@@ -365,6 +386,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                 setActiveStep(3);
               }}
               onAction={handleActionKind}
+              onBackToStep1={() => setActiveStep(1)}
             />
           )}
 
