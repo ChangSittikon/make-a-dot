@@ -38,7 +38,7 @@ const TILE_LABELS: Record<string, string> = {
 const industryImg = (id: string) => `/images/industries/${id}.jpg`;
 
 /* Signature Make A Dot Typewriter Header with Breathing Dot */
-const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, line2 }) => {
+export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, line2 }) => {
   const [disp1, setDisp1] = useState('');
   const [disp2, setDisp2] = useState('');
   const [typing1, setTyping1] = useState(true);

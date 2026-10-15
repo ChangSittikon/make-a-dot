@@ -228,6 +228,7 @@ function EcosystemContent() {
                 onSelectIndustry={handleSelectIndustryForCapTable}
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
+                onNavigateMainTab={(tab) => setMainTab(tab as MainTabType)}
               />
             )}
 
@@ -379,7 +380,7 @@ function EcosystemContent() {
           )}
 
           {mainTab === 'PRODUCTION' && (
-            <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto">
+            <div className="flex-1 flex overflow-hidden">
               <ProductionTab
                 selectedIndustryId={selectedIndustryId}
                 selectedSubIndustryId={selectedSubIndustryId}
@@ -387,6 +388,7 @@ function EcosystemContent() {
                 onSelectIndustry={handleSelectIndustryForCapTable}
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
+                onNavigateMainTab={(tab) => setMainTab(tab as MainTabType)}
               />
             </div>
           )}
