@@ -12,6 +12,7 @@ import { ProcessingTab } from '@/components/ecosystem/tabs/ProcessingTab';
 import { CapitalTab } from '@/components/ecosystem/tabs/CapitalTab';
 import { ProductionTab } from '@/components/ecosystem/tabs/ProductionTab';
 import { CityTab } from '@/components/ecosystem/tabs/CityTab';
+import { LocalTab } from '@/components/ecosystem/tabs/LocalTab';
 import { SolverTab } from '@/components/ecosystem/tabs/SolverTab';
 import { SynergyMatrixTab } from '@/components/ecosystem/tabs/SynergyMatrixTab';
 
@@ -21,6 +22,7 @@ const MAIN_TABS = [
   { id: 'CAPITAL', label: 'ทำทุน', icon: 'fa-solid fa-coins', badge: 'Cap Table' },
   { id: 'PRODUCTION', label: 'ทำผลิต', icon: 'fa-solid fa-industry', badge: 'Production' },
   { id: 'CITY', label: 'ทำเมือง', icon: 'fa-solid fa-city', badge: 'City' },
+  { id: 'LOCAL', label: 'ทำใกล้', icon: 'fa-solid fa-map-location-dot', badge: 'Local' },
   { id: 'SOLVER', label: 'เครื่องมือแก้ปัญหา', icon: 'fa-solid fa-toolbox', badge: '5 Tools' },
   { id: 'ECOSYSTEM', label: 'ผังระบบนิเวศ', icon: 'fa-solid fa-network-wired', badge: 'Matrix' },
 ];
@@ -240,6 +242,17 @@ function EcosystemContent() {
               />
             )}
 
+            {mainTab === 'LOCAL' && (
+              <LocalTab
+                selectedIndustryId={selectedIndustryId}
+                selectedSubIndustryId={selectedSubIndustryId}
+                selectedSegmentId={selectedSegmentId}
+                onSelectIndustry={handleSelectIndustryForCapTable}
+                onSelectSubIndustry={handleSelectSubIndustry}
+                onSelectSegment={handleSelectSegment}
+              />
+            )}
+
             {mainTab === 'SOLVER' && <SolverTab />}
 
             {mainTab === 'ECOSYSTEM' && (
@@ -381,6 +394,19 @@ function EcosystemContent() {
           {mainTab === 'CITY' && (
             <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto">
               <CityTab
+                selectedIndustryId={selectedIndustryId}
+                selectedSubIndustryId={selectedSubIndustryId}
+                selectedSegmentId={selectedSegmentId}
+                onSelectIndustry={handleSelectIndustryForCapTable}
+                onSelectSubIndustry={handleSelectSubIndustry}
+                onSelectSegment={handleSelectSegment}
+              />
+            </div>
+          )}
+
+          {mainTab === 'LOCAL' && (
+            <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto">
+              <LocalTab
                 selectedIndustryId={selectedIndustryId}
                 selectedSubIndustryId={selectedSubIndustryId}
                 selectedSegmentId={selectedSegmentId}
