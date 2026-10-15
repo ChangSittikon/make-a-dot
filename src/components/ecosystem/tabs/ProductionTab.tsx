@@ -56,7 +56,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                   ? 'border-brand-red bg-white dark:bg-[#12141a] text-brand-red font-bold shadow-2xs'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100/70 dark:hover:bg-[#1e2129] hover:text-gray-700 dark:hover:text-gray-300'
               }`}
-              title={isStep1 ? `${tab.code} ${tab.label}` : `ขั้นตอน ${tab.code}`}
+              title={isStep1 ? `${tab.code} หาตัวตน` : `ขั้นตอน ${tab.code}`}
             >
               {isStep1 ? (
                 <>
@@ -77,7 +77,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                       isActive ? 'text-brand-red font-bold' : ''
                     }`}
                   >
-                    {tab.label}
+                    หาตัวตน
                   </span>
                 </>
               ) : (
@@ -131,7 +131,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                 className="text-xs text-gray-500 hover:text-brand-red transition-colors flex items-center gap-1 font-medium"
               >
                 <i className="fa-solid fa-arrow-left text-[10px]"></i>
-                <span>กลับไป 01 หมวดโครงการ</span>
+                <span>กลับไป 01 หาตัวตน</span>
               </button>
             </div>
 
@@ -139,7 +139,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
             {currentIndustry && (
               <div className="p-3 rounded-2xl bg-gray-50 dark:bg-[#181a20] border border-gray-150 dark:border-gray-800 flex items-center justify-between gap-3 text-xs">
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] text-gray-400">โครงการที่เลือกจาก 01:</div>
+                  <div className="text-[10px] text-gray-400">ตัวตนและสายงานจาก 01:</div>
                   <div className="font-bold text-gray-800 dark:text-gray-200 truncate mt-0.5">
                     {currentIndustry.name} {activeSubIndustry ? `• ${activeSubIndustry.name}` : ''} {activeSegment ? `• ${activeSegment.name}` : ''}
                   </div>
