@@ -110,7 +110,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
             onNextStep={goToNext}
             nextButtonLabel="ถัดไป: เข้าสู่ขั้นตอนที่ 02 (ทำผลิต)"
             step1PromptLine1="ต้นน้ำ-ปลายน้ำ คุณเป็นใครได้บ้าง ฉันจะแสดงให้คุณดู"
-            step1PromptLine2="โปรดเลือกวงการที่คุณจะทำ"
+            step1PromptLine2="คุณสนใจทำสินค้าในกลุ่มวงการไหน?"
           />
         ) : (
           /* Steps 02-12: Workspace Placeholder for Production Pipeline */
