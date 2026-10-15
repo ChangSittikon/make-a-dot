@@ -10,6 +10,7 @@ import {
 import { ALL_SUB_INDUSTRIES } from '@/components/ecosystem/allSubIndustries';
 import { ProcessingTab } from '@/components/ecosystem/tabs/ProcessingTab';
 import { CapitalTab } from '@/components/ecosystem/tabs/CapitalTab';
+import { ProductionTab } from '@/components/ecosystem/tabs/ProductionTab';
 import { SolverTab } from '@/components/ecosystem/tabs/SolverTab';
 import { SynergyMatrixTab } from '@/components/ecosystem/tabs/SynergyMatrixTab';
 
@@ -17,6 +18,7 @@ import { SynergyMatrixTab } from '@/components/ecosystem/tabs/SynergyMatrixTab';
 const MAIN_TABS = [
   { id: 'PROCESS', label: 'ประมวลผล', icon: 'fa-solid fa-microchip', badge: 'AI' },
   { id: 'CAPITAL', label: 'ทำทุน', icon: 'fa-solid fa-coins', badge: 'Cap Table' },
+  { id: 'PRODUCTION', label: 'ทำผลิต', icon: 'fa-solid fa-industry', badge: 'Production' },
   { id: 'SOLVER', label: 'เครื่องมือแก้ปัญหา', icon: 'fa-solid fa-toolbox', badge: '5 Tools' },
   { id: 'ECOSYSTEM', label: 'ผังระบบนิเวศ', icon: 'fa-solid fa-network-wired', badge: 'Matrix' },
 ];
@@ -214,6 +216,17 @@ function EcosystemContent() {
               />
             )}
 
+            {mainTab === 'PRODUCTION' && (
+              <ProductionTab
+                selectedIndustryId={selectedIndustryId}
+                selectedSubIndustryId={selectedSubIndustryId}
+                selectedSegmentId={selectedSegmentId}
+                onSelectIndustry={handleSelectIndustryForCapTable}
+                onSelectSubIndustry={handleSelectSubIndustry}
+                onSelectSegment={handleSelectSegment}
+              />
+            )}
+
             {mainTab === 'SOLVER' && <SolverTab />}
 
             {mainTab === 'ECOSYSTEM' && (
@@ -335,6 +348,19 @@ function EcosystemContent() {
                 onSelectSegment={handleSelectSegment}
                 onUpdateCapItem={handleUpdateCapItem}
                 onResetPreset={handleResetPreset}
+              />
+            </div>
+          )}
+
+          {mainTab === 'PRODUCTION' && (
+            <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto">
+              <ProductionTab
+                selectedIndustryId={selectedIndustryId}
+                selectedSubIndustryId={selectedSubIndustryId}
+                selectedSegmentId={selectedSegmentId}
+                onSelectIndustry={handleSelectIndustryForCapTable}
+                onSelectSubIndustry={handleSelectSubIndustry}
+                onSelectSegment={handleSelectSegment}
               />
             </div>
           )}

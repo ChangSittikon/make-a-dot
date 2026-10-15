@@ -15,6 +15,7 @@ interface StepScopeViewProps {
   onSelectSubIndustry: (subId: string) => void;
   onSelectSegment: (segId: string) => void;
   onNextStep: () => void;
+  nextButtonLabel?: string;
 }
 
 const TILE_LABELS: Record<string, string> = {
@@ -147,6 +148,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
   onSelectSubIndustry,
   onSelectSegment,
   onNextStep,
+  nextButtonLabel,
 }) => {
   const [isEditingL1, setIsEditingL1] = useState(false);
   const [isEditingL2, setIsEditingL2] = useState(false);
@@ -297,7 +299,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
             onClick={onNextStep}
             className="w-full py-3.5 bg-gradient-to-r from-brand-red via-red-600 to-rose-600 hover:brightness-110 text-white rounded-2xl text-xs sm:text-[13px] font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-red-500/25 active:scale-[0.99]"
           >
-            <span>ถัดไป: คำนวณมูลค่าระดมทุน (Total Valuation)</span>
+            <span>{nextButtonLabel || "ถัดไป: คำนวณมูลค่าระดมทุน (Total Valuation)"}</span>
             <i className="fa-solid fa-arrow-right text-[11px]"></i>
           </button>
         </div>
