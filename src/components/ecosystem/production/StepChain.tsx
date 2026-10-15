@@ -141,41 +141,29 @@ export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp,
 
   return (
     <div className="pb-6">
-      {/* Sticky Unit Normalization Banner */}
-      <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#12141a]/95 backdrop-blur border-b border-gray-100 dark:border-gray-800 px-3 py-2.5 space-y-1.5">
+      {/* Unit Normalization Banner Card */}
+      <div className="rounded-2xl border border-gray-150 dark:border-gray-800 bg-gray-50/70 dark:bg-[#181a20] p-3 space-y-2 mb-4 shadow-2xs">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {onBackToStep1 && (
-              <button
-                onClick={onBackToStep1}
-                className="px-2.5 py-1 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold flex items-center gap-1 transition-all shadow-2xs shrink-0"
-                title="ย้อนกลับไปหน้าเลือกสินค้า (01 หาตัวตน)"
-              >
-                <span>←</span>
-                <span>เปลี่ยนสินค้า</span>
-              </button>
-            )}
-            <div className="min-w-0">
-              <h3 className="text-sm font-black text-gray-900 dark:text-white leading-tight truncate">{p.product_name}</h3>
-              <p className="text-[10px] text-gray-400 truncate">
-                {chain.taxonomy.sector_id} {chain.taxonomy.sector_name} · {chain.taxonomy.sub_category_name}
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white leading-tight truncate">{p.product_name}</h3>
+            <p className="text-[10px] text-gray-400 truncate">
+              {chain.taxonomy.sector_id} {chain.taxonomy.sector_name} · {chain.taxonomy.sub_category_name}
+            </p>
           </div>
-          <span className="shrink-0 px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40 text-[#D32F2F] text-[10px] font-black font-mono">
+          <span className="shrink-0 px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-950/40 text-[#D32F2F] text-[11px] font-black font-mono">
             +{spread.total_markup_percent.toLocaleString('th-TH')}%
           </span>
         </div>
-        <div className="rounded-xl bg-gray-50 dark:bg-[#181a20] p-2 text-[10px] leading-relaxed text-gray-600 dark:text-gray-300">
+        <div className="rounded-xl bg-white dark:bg-[#12141a] p-2 text-[10.5px] leading-relaxed text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-800/60">
           <div><b>หน่วยอ้างอิง:</b> {p.base_unit_reference}</div>
-          <div className="text-gray-500"><b>แปลงหน่วย:</b> {p.conversion_summary}</div>
+          <div className="text-gray-500 mt-0.5"><b>แปลงหน่วย:</b> {p.conversion_summary}</div>
         </div>
         <div className="flex items-center justify-between text-[11px] font-bold">
-          <span className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-[#20232b] text-gray-700 dark:text-gray-200">
+          <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#12141a] border border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200">
             ต้นทุนต้นน้ำ {baht(spread.origin_cost_thb)} บ.
           </span>
-          <span className="text-[#E53935]">───▶</span>
-          <span className="px-2 py-1 rounded-lg bg-gray-900 text-white dark:bg-white dark:text-gray-900">
+          <span className="text-[#E53935] font-black">───▶</span>
+          <span className="px-2.5 py-1 rounded-lg bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-2xs">
             มูลค่าปลายน้ำ {baht(spread.final_retail_value_thb)} บ.
           </span>
         </div>

@@ -271,78 +271,75 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       <div className="flex-1 min-w-0 overflow-y-auto pb-24 bg-white dark:bg-[#12141a]">
         {/* Top Product Switcher & Stepper Pill Navigation (Only visible on steps 02..06) */}
         {activeStep >= 2 && activeStep <= 6 && (
-          <div className="sticky top-0 z-30 bg-white/95 dark:bg-[#12141a]/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 py-2.5">
-            <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              {/* Back to 01 + Product name */}
-              <div className="flex items-center gap-2 min-w-0">
-                <button
-                  onClick={() => setActiveStep(1)}
-                  className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shrink-0 hover:scale-105"
-                  title="ย้อนกลับไปเลือกสินค้าใหม่ที่ขั้นตอน 01 หาตัวตน"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>เปลี่ยนสินค้า (01)</span>
-                </button>
+          <div className="sticky top-0 z-30 bg-white/98 dark:bg-[#12141a]/98 backdrop-blur-md border-b border-gray-150 dark:border-gray-800 px-3 py-2 space-y-1.5 shadow-xs">
+            {/* Row 1: Back to 01 button + Product name & markup */}
+            <div className="flex items-center justify-between gap-2">
+              <button
+                onClick={() => setActiveStep(1)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all shrink-0"
+                title="ย้อนกลับไปเลือกสินค้าใหม่ที่ขั้นตอน 01 หาตัวตน"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>เปลี่ยนสินค้า</span>
+              </button>
 
-                <div className="min-w-0 flex items-center gap-1.5 text-xs">
-                  <span className="font-bold text-zinc-900 dark:text-white truncate">
-                    {selectedChain.product.product_name}
-                  </span>
-                  <span className="text-zinc-400 hidden md:inline">•</span>
-                  <span className="text-zinc-500 dark:text-zinc-400 text-[11px] truncate hidden md:inline">
-                    {selectedChain.taxonomy.sector_name}
-                  </span>
-                </div>
+              <div className="min-w-0 flex items-center gap-1.5 text-right">
+                <span className="font-black text-xs text-zinc-900 dark:text-white truncate">
+                  {selectedChain.product.product_name}
+                </span>
+                <span className="shrink-0 px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40 text-[#D32F2F] text-[10px] font-black font-mono">
+                  +{selectedChain.product.total_value_spread.total_markup_percent.toLocaleString('th-TH')}%
+                </span>
+              </div>
+            </div>
+
+            {/* Row 2: Steps 02-06 quick pills (horizontally scrollable without collision) */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+              {[
+                { step: 2, label: '02 ผ่าสายพาน' },
+                { step: 3, label: '03 ชี้จุดแทรก' },
+                { step: 4, label: '04 ลองคำนวณ' },
+                { step: 5, label: '05 เช็กอาวุธ' },
+                { step: 6, label: '06 เชื่อมดอท' },
+              ].map((s) => (
+                <button
+                  key={s.step}
+                  onClick={() => setActiveStep(s.step)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all shrink-0 ${
+                    activeStep === s.step
+                      ? 'bg-[#E53935] text-white shadow-xs'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+
+              {/* AI / Seed indicator badge */}
+              <div
+                className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center gap-1 shrink-0 ml-auto"
+                title={`แหล่งที่มา: ${chainSource}`}
+              >
+                <Sparkles className="w-3 h-3 text-[#E53935]" />
+                <span className="hidden sm:inline">
+                  {chainSource === 'SEED'
+                    ? 'Seed Data'
+                    : chainSource === 'GEMINI'
+                    ? 'Gemini AI'
+                    : chainSource === 'CACHE'
+                    ? 'แคช'
+                    : 'Archetype'}
+                </span>
               </div>
 
-              {/* Steps 02-06 quick pills */}
-              <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar shrink-0">
-                {[
-                  { step: 2, label: '02 ผ่าสายพาน' },
-                  { step: 3, label: '03 ชี้จุดแทรก' },
-                  { step: 4, label: '04 ลองคำนวณ' },
-                  { step: 5, label: '05 เช็กอาวุธ' },
-                  { step: 6, label: '06 เชื่อมดอท' },
-                ].map((s) => (
-                  <button
-                    key={s.step}
-                    onClick={() => setActiveStep(s.step)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                      activeStep === s.step
-                        ? 'bg-[#E53935] text-white shadow-xs'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-
-                {/* AI / Seed indicator badge */}
-                <div
-                  className="px-2 py-1 rounded-full text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center gap-1 shrink-0 ml-1"
-                  title={`แหล่งที่มา: ${chainSource}`}
-                >
-                  <Sparkles className="w-3 h-3 text-[#E53935]" />
-                  <span className="hidden sm:inline">
-                    {chainSource === 'SEED'
-                      ? 'Seed Data'
-                      : chainSource === 'GEMINI'
-                      ? 'Gemini AI'
-                      : chainSource === 'CACHE'
-                      ? 'แคช'
-                      : 'Archetype'}
-                  </span>
-                </div>
-
-                {/* Gemini API Key config button */}
-                <button
-                  onClick={() => setShowKeyModal(true)}
-                  className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-                  title="ตั้งค่า Gemini API Key"
-                >
-                  <Key className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {/* Gemini API Key config button */}
+              <button
+                onClick={() => setShowKeyModal(true)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 shrink-0"
+                title="ตั้งค่า Gemini API Key"
+              >
+                <Key className="w-3 h-3" />
+              </button>
             </div>
           </div>
         )}
@@ -352,29 +349,9 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
         {/* ================================================================= */}
         <div className="p-3 sm:p-5 max-w-5xl mx-auto">
           {activeStep === 1 && (
-            <div className="space-y-4">
-              {selectedChain && (
-                <div className="bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                    <span className="text-zinc-500 dark:text-zinc-400">สินค้าที่เปิดล่าสุด:</span>
-                    <span className="font-bold text-zinc-900 dark:text-white truncate">
-                      {selectedChain.product.product_name}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setActiveStep(2)}
-                    className="px-3 py-1 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 font-bold text-xs shrink-0 flex items-center gap-1 transition-colors"
-                  >
-                    <span>ดูผังสายพาน (02)</span>
-                    <span>→</span>
-                  </button>
-                </div>
-              )}
-              <StepIdentity
-                onPick={(name, ctx) => handleSelectProduct(name, ctx.sectorId, ctx.subName)}
-              />
-            </div>
+            <StepIdentity
+              onPick={(name, ctx) => handleSelectProduct(name, ctx.sectorId, ctx.subName)}
+            />
           )}
 
           {activeStep === 2 && (
