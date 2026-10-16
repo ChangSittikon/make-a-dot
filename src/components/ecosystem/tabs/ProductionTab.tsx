@@ -29,6 +29,7 @@ import { StepOpportunities } from '../production/StepOpportunities';
 import { StepSimulator } from '../production/StepSimulator';
 import { StepWeapons } from '../production/StepWeapons';
 import { StepConnect } from '../production/StepConnect';
+import { StepRoadmap } from '../production/StepRoadmap';
 
 interface ProductionTabProps {
   selectedIndustryId?: string;
@@ -503,53 +504,12 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
           )}
 
           {activeStep >= 7 && activeStep <= 12 && (
-            <div className="py-8 max-w-xl mx-auto text-center space-y-5 animate-fadeIn">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-[#E53935] dark:bg-red-950/40 dark:text-red-300">
-                <i className={stepMeta.icon}></i>
-                ขั้นตอนที่ {stepMeta.code}: {stepMeta.title}
-              </div>
-
-              <div className="h-16 flex items-center justify-center">
-                <NongDot mood="thinking" size={20} />
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-xl font-black text-zinc-900 dark:text-white">
-                  {stepMeta.title} ({stepMeta.subtitle})
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                  ระบบขั้นตอนการทำผลิตลำดับที่ {stepMeta.code} ({stepMeta.title})
-                  สำหรับสินค้า &quot;{selectedChain.product.product_name}&quot; อยู่ระหว่างเชื่อมโยงข้อมูลภาคสนาม
-                  คุณสามารถย้อนกลับไปผ่าสายพานหรือคำนวณกำไรในขั้นตอน 02-06 ได้ตลอดเวลา
-                </p>
-              </div>
-
-              <div className="flex items-center justify-center gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                <button
-                  onClick={() => setActiveStep((prev) => Math.max(1, prev - 1))}
-                  className="px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold transition-all flex items-center gap-1.5"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>ขั้นตอนก่อนหน้า</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveStep(2)}
-                  className="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold transition-all"
-                >
-                  กลับไปผ่าสายพาน (02)
-                </button>
-
-                {activeStep < 12 && (
-                  <button
-                    onClick={() => setActiveStep((prev) => Math.min(12, prev + 1))}
-                    className="px-4 py-2 rounded-xl bg-[#E53935] hover:bg-red-600 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                  >
-                    <span>ถัดไป</span>
-                  </button>
-                )}
-              </div>
-            </div>
+            <StepRoadmap
+              step={activeStep}
+              chain={selectedChain}
+              onNavigateStep={setActiveStep}
+              onNavigateTab={handleNavigateTabString}
+            />
           )}
         </div>
       </div>
