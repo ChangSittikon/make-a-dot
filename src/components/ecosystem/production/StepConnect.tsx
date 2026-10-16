@@ -350,20 +350,22 @@ export function StepConnect({
     (previewCostPerMember * (Number(formDepositPct) || 30)) / 100
   );
 
+  const poCount = rooms.filter((r) => r.status === 'ESCROW_LOCKED_PO_SENT').length;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 pb-8">
       {/* =================================================================== */}
       {/* Live Toast Alert                                                    */}
       {/* =================================================================== */}
       {toastMessage && (
-        <div className="rounded-2xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 p-3.5 text-xs font-bold text-emerald-800 dark:text-emerald-200 flex items-center justify-between gap-3 shadow-md animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>{toastMessage}</span>
+        <div className="rounded-2xl border border-brand-red/30 bg-red-50 dark:bg-red-950/60 p-3 text-xs font-bold text-brand-black dark:text-white flex items-center justify-between gap-2 shadow-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <CheckCircle2 className="w-4 h-4 text-brand-red shrink-0" />
+            <span className="leading-snug">{toastMessage}</span>
           </div>
           <button
             onClick={() => setToastMessage(null)}
-            className="text-emerald-600 hover:text-emerald-800 font-black"
+            className="text-gray-400 hover:text-brand-black font-black px-1 shrink-0"
           >
             ✕
           </button>
@@ -371,121 +373,122 @@ export function StepConnect({
       )}
 
       {/* =================================================================== */}
-      {/* 1. Unified Wallet & Safe Escrow Vault Status Bar                    */}
+      {/* 1. Make-a-dot Safe Escrow & Wallet Card (Mobile-First Column Flow)  */}
       {/* =================================================================== */}
-      <div className="rounded-2xl border-2 border-zinc-900 dark:border-zinc-700 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 text-white p-4 shadow-lg space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#E53935] text-white text-[10px] font-bold flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              <span>Phase 5: Real Group-Buy & Safe Escrow</span>
-            </span>
-            <span className="text-[11px] text-zinc-300 font-medium">
-              ผูกกระเป๋าเงินจริง & บอร์ดประกาศ • ครบ MOQ ล็อกมัดจำและออกใบสั่งซื้อ PO ทันที
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/wallet"
-              className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10.5px] font-bold flex items-center gap-1 transition-colors"
-            >
-              <Wallet className="w-3 h-3 text-emerald-400" />
-              <span>กระเป๋าเงิน (/wallet)</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </Link>
-            <Link
-              href="/board?tab=PROJECT"
-              className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[10.5px] font-bold flex items-center gap-1 transition-colors"
-            >
-              <span>บอร์ดประกาศ (/board)</span>
-              <ArrowUpRight className="w-3 h-3" />
-            </Link>
+      <div className="rounded-3xl bg-brand-black text-white p-4 shadow-md space-y-3.5">
+        {/* Header with Breathing Dot */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className="w-3.5 h-3.5 bg-brand-red rounded-full shrink-0"
+              style={{
+                animation: 'breathe 3s cubic-bezier(0.32, 0.72, 0, 1) infinite',
+              }}
+            />
+            <div className="min-w-0">
+              <h2 className="text-sm font-extrabold tracking-tight text-white leading-tight">
+                รวมพลังคนตัวเล็ก • ทะลวงขั้นต่ำโรงงาน
+              </h2>
+              <p className="text-[10.5px] text-gray-300 mt-0.5 leading-snug">
+                พักเงินมัดจำในตู้เซฟกลาง ครบจำนวนเมื่อไหร่ ระบบส่งใบสั่งผลิตให้โรงงานทันที
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-          {/* Available Wallet Balance */}
-          <div className="rounded-xl bg-white/10 border border-white/15 p-3 flex items-center justify-between">
+        {/* 2-Column Stacked Wallet & Escrow Summary (Fits 320px Phone Frame) */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* Box 1: Available Cash */}
+          <div className="rounded-2xl bg-white/10 border border-white/10 p-3 flex flex-col justify-between">
             <div>
-              <div className="text-[10px] text-zinc-400">
-                💰 เงินสดพร้อมใช้ในกระเป๋า (Available)
+              <div className="text-[10px] text-gray-300 font-medium">
+                💰 เงินสดพร้อมใช้
               </div>
-              <div className="text-lg font-black font-mono text-emerald-400 mt-0.5">
-                ฿{wallet.balanceThb.toLocaleString()}
+              <div className="text-base font-extrabold font-mono text-white mt-0.5">
+                ฿{wallet.balanceThb.toLocaleString('th-TH')}
               </div>
             </div>
             <button
               type="button"
               disabled={isToppingUp}
               onClick={() => handleTopUpWallet(10000)}
-              className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold transition-all shrink-0"
+              className="mt-2.5 w-full py-1.5 px-2 rounded-xl bg-brand-red hover:opacity-90 active:scale-95 text-white text-[10.5px] font-bold transition-all text-center shadow-xs"
             >
-              {isToppingUp ? 'กำลังเติม...' : '+ เติม ฿10,000'}
+              {isToppingUp ? 'กำลังเติมเงิน...' : '+ เติมเงิน ฿10,000'}
             </button>
           </div>
 
-          {/* Locked in Escrow Vault */}
-          <div className="rounded-xl bg-white/10 border border-white/15 p-3 flex items-center justify-between">
+          {/* Box 2: Safe Escrow Locked */}
+          <div className="rounded-2xl bg-white/10 border border-white/10 p-3 flex flex-col justify-between">
             <div>
-              <div className="text-[10px] text-zinc-400">
-                🔒 ล็อกมัดจำในตู้เซฟ (Escrow Vault)
+              <div className="text-[10px] text-gray-300 font-medium">
+                🔒 ล็อกมัดจำปลอดภัย
               </div>
-              <div className="text-lg font-black font-mono text-sky-400 mt-0.5">
-                ฿{wallet.lockedBalanceThb.toLocaleString()}
+              <div className="text-base font-extrabold font-mono text-emerald-400 mt-0.5">
+                ฿{wallet.lockedBalanceThb.toLocaleString('th-TH')}
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9.5px] font-bold border border-sky-400/30">
-              คุ้มครอง 100%
-            </span>
-          </div>
-
-          {/* Active POs Issued */}
-          <div className="rounded-xl bg-white/10 border border-white/15 p-3 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] text-zinc-400">
-                📄 ใบสั่งซื้อโรงงาน OEM (Auto-PO)
-              </div>
-              <div className="text-lg font-black font-mono text-amber-400 mt-0.5">
-                {rooms.filter((r) => r.status === 'ESCROW_LOCKED_PO_SENT').length}{' '}
-                <span className="text-xs font-normal text-zinc-300">ใบสั่งซื้อ</span>
-              </div>
+            <div className="mt-2.5 w-full py-1.5 px-2 rounded-xl bg-white/10 text-gray-200 text-[10px] font-bold text-center">
+              คุ้มครอง 100% • {poCount} ใบสั่งผลิต
             </div>
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-[#E53935] hover:bg-red-600 text-white text-[10.5px] font-bold flex items-center gap-1 shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>เปิดห้องใหม่</span>
-            </button>
           </div>
         </div>
 
-        {/* 4-Stage Automated Pipeline Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 text-[10px]">
-          <div className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-300">
-            <b className="text-white">1. เปิดห้องหารล็อต:</b> โพสต์ขึ้นบอร์ด `/board` อัตโนมัติ
+        {/* Quick Navigation Pills (Wallet & Board) */}
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href="/wallet"
+            className="py-2 px-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-[11px] font-bold flex items-center justify-between transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <Wallet className="w-3.5 h-3.5 text-brand-red" />
+              <span>กระเป๋าเงินของฉัน</span>
+            </span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-gray-400" />
+          </Link>
+
+          <Link
+            href="/board?tab=PROJECT"
+            className="py-2 px-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-[11px] font-bold flex items-center justify-between transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-brand-red" />
+              <span>บอร์ดรวมล็อต</span>
+            </span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-gray-400" />
+          </Link>
+        </div>
+
+        {/* 4-Step Compact 2x2 Guide */}
+        <div className="grid grid-cols-2 gap-1.5 pt-0.5 text-[10px]">
+          <div className="px-2.5 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 leading-snug">
+            <b className="text-white block">1. เปิดห้องหารล็อต</b>
+            ขึ้นบอร์ดหาแนวร่วมอัตโนมัติ
           </div>
-          <div className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-300">
-            <b className="text-sky-300">2. วางมัดจำปลอดภัย:</b> หักจากกระเป๋าพักใน Escrow
+          <div className="px-2.5 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 leading-snug">
+            <b className="text-white block">2. วางมัดจำปลอดภัย</b>
+            พักเงินในตู้เซฟคนกลาง
           </div>
-          <div className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-300">
-            <b className="text-amber-300">3. ครบจำนวน MOQ:</b> ล็อกเงินมัดจำทั้งกลุ่ม 100%
+          <div className="px-2.5 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 leading-snug">
+            <b className="text-white block">3. คนครบขั้นต่ำ</b>
+            ล็อกยอดสั่งผลิตรวมทั้งกลุ่ม
           </div>
-          <div className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-300">
-            <b className="text-emerald-300">4. ส่งใบสั่งซื้อ PO:</b> ยิง PO เข้าโรงงาน OEM ทันที
+          <div className="px-2.5 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 leading-snug">
+            <b className="text-brand-red block">4. ส่งใบสั่งผลิตทันที</b>
+            โรงงานเริ่มเดินสายพานผลิต
           </div>
         </div>
       </div>
 
       {/* =================================================================== */}
-      {/* 2. Opportunity Selector Header                                      */}
+      {/* 2. Opportunity Selector Card                                        */}
       {/* =================================================================== */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm">
-        <label className="text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-2 block">
-          เลือกโมเดลธุรกิจในสายพาน &quot;{chain.product.product_name}&quot; ที่ต้องการเปิดห้องรวมล็อต:
-        </label>
+      <div className="bg-brand-gray dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 rounded-3xl p-3.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-extrabold text-brand-black dark:text-white">
+            เลือกโมเดลธุรกิจในสายพาน &ldquo;{chain.product.product_name}&rdquo;
+          </label>
+        </div>
         <OppPicker
           chain={chain}
           value={activeKey}
@@ -494,39 +497,52 @@ export function StepConnect({
       </div>
 
       {/* =================================================================== */}
-      {/* 3. Live Escrow Group-Buy Rooms List                                 */}
+      {/* 3. Live Group-Buy & Safe Escrow Rooms                               */}
       {/* =================================================================== */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm sm:text-base font-black text-zinc-900 dark:text-white flex items-center gap-2">
-              <span>🔥</span> ห้องรวมล็อตจริง & ตู้เซฟมัดจำปลอดภัย ({rooms.length} ห้อง)
-            </h3>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              เมื่อสมาชิกวางมัดจำครบตามจำนวนขั้นต่ำ (MOQ) ระบบจะล็อกเงินมัดจำและออกใบสั่งซื้อ PO ส่งโรงงาน OEM ทันที
-            </p>
+      <div className="space-y-3">
+        {/* Section Title + Primary Brand CTA */}
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl p-4 shadow-xs space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2.5 h-2.5 bg-brand-red rounded-full shrink-0"
+                  style={{
+                    animation: 'breathe 3s cubic-bezier(0.32, 0.72, 0, 1) infinite',
+                  }}
+                />
+                <h3 className="text-sm font-extrabold text-brand-black dark:text-white">
+                  ห้องรวมล็อตเปิดรับสมาชิก ({rooms.length} ห้อง)
+                </h3>
+              </div>
+              <p className="text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                รวมกลุ่มสั่งผลิตเพื่อได้ราคาต้นทุนโรงงาน พร้อมระบบคุ้มครองเงินมัดจำทุกบาท
+              </p>
+            </div>
           </div>
 
           <button
+            type="button"
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 rounded-xl bg-[#E53935] hover:bg-red-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-transform active:scale-95"
+            className="w-full py-2.5 px-4 rounded-2xl bg-brand-red hover:opacity-95 active:scale-98 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>เปิดห้องเชื่อมดอท + ประกาศขึ้นบอร์ด</span>
+            <span>เปิดห้องรวมล็อตใหม่ & โพสต์ขึ้นบอร์ด</span>
           </button>
         </div>
 
+        {/* Rooms List */}
         {loading ? (
-          <div className="py-12 text-center text-xs text-zinc-400 flex flex-col items-center gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-[#E53935]" />
-            <span>กำลังซิงก์ข้อมูลห้องรวมล็อตและตู้เซฟ Escrow...</span>
+          <div className="rounded-3xl bg-brand-gray dark:bg-zinc-900 py-10 px-4 text-center text-xs text-gray-500 flex flex-col items-center gap-2">
+            <Loader2 className="w-6 h-6 animate-spin text-brand-red" />
+            <span>กำลังโหลดห้องรวมล็อตและข้อมูลตู้เซฟมัดจำ...</span>
           </div>
         ) : rooms.length === 0 ? (
-          <div className="text-center py-10 text-zinc-400 text-xs">
-            ยังไม่มีห้องรวมล็อตสำหรับสินค้านี้ เป็นคนแรกที่เปิดห้องได้เลย!
+          <div className="rounded-3xl bg-brand-gray dark:bg-zinc-900 py-10 px-4 text-center text-gray-500 text-xs">
+            ยังไม่มีห้องรวมล็อตสำหรับสินค้านี้ กดปุ่มสีแดงด้านบนเพื่อประเดิมเปิดห้องแรกได้เลย!
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {rooms.map((room) => {
               const isLockedPo = room.status === 'ESCROW_LOCKED_PO_SENT';
               const memberPct = Math.min(
@@ -547,250 +563,228 @@ export function StepConnect({
               return (
                 <div
                   key={room.id}
-                  className={`p-4 rounded-2xl border-2 transition-all space-y-3 ${
+                  className={`p-4 rounded-3xl border transition-all space-y-3 ${
                     isLockedPo
-                      ? 'border-emerald-500/80 bg-emerald-50/30 dark:bg-emerald-950/20 shadow-md'
-                      : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 hover:border-zinc-300'
+                      ? 'border-emerald-500 bg-white dark:bg-zinc-900 shadow-sm'
+                      : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs'
                   }`}
                 >
-                  {/* Top Badges & PO Status */}
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
-                          isLockedPo
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300'
-                        }`}
-                      >
-                        {isLockedPo ? (
-                          <>
-                            <Lock className="w-3 h-3" />
-                            <span>
-                              ครบ MOQ! ล็อกมัดจำ & ส่งใบสั่งซื้อ {room.purchaseOrderNo}{' '}
-                              แล้ว
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="w-3 h-3" />
-                            <span>
-                              กำลังเปิดรับสมาชิก & วางมัดจำ ({room.members}/
-                              {room.targetMembers} คน)
-                            </span>
-                          </>
-                        )}
-                      </span>
-
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-200/80 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200">
-                        สินค้า: {room.productName}
-                      </span>
-
-                      {room.linkedProjectId && (
-                        <Link
-                          href="/board?tab=PROJECT"
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-sky-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 hover:underline"
-                        >
-                          <span>📢 ประกาศบนบอร์ดแล้ว</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </Link>
+                  {/* Status Row */}
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
+                        isLockedPo
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-red-50 text-brand-red border border-red-200/70'
+                      }`}
+                    >
+                      {isLockedPo ? (
+                        <>
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>ครบขั้นต่ำ • ส่งใบสั่งผลิตแล้ว</span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            เปิดรับแนวร่วม ({room.members}/{room.targetMembers} คน)
+                          </span>
+                        </>
                       )}
-                    </div>
-
-                    <span className="text-[10.5px] font-mono font-bold text-zinc-500">
-                      ล็อตรวม: {room.moqTotalUnits.toLocaleString()} {room.unitLabel} (฿
-                      {room.lotCost.toLocaleString()})
                     </span>
+
+                    {room.linkedProjectId && (
+                      <Link
+                        href="/board?tab=PROJECT"
+                        className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-zinc-200 inline-flex items-center gap-1 hover:underline"
+                      >
+                        <span>📢 ดูบนบอร์ด</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </Link>
+                    )}
                   </div>
 
-                  {/* Title & OEM Factory Info */}
-                  <div>
-                    <h4 className="text-sm sm:text-base font-black text-zinc-900 dark:text-white leading-snug">
+                  {/* Title & Factory */}
+                  <div className="space-y-1">
+                    <div className="text-[10.5px] font-bold text-brand-red">
+                      สินค้า: {room.productName} • ล็อตรวม {room.moqTotalUnits.toLocaleString('th-TH')}{' '}
+                      {room.unitLabel}
+                    </div>
+                    <h4 className="text-sm font-extrabold text-brand-black dark:text-white leading-snug">
                       {room.modelName}
                     </h4>
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-600 dark:text-zinc-300 mt-1">
-                      <span className="inline-flex items-center gap-1 font-semibold text-blue-700 dark:text-sky-400">
-                        <Factory className="w-3.5 h-3.5" />
-                        โรงงานรับใบสั่งซื้อ: {room.factoryName}
-                      </span>
+                    <div className="text-[11px] text-gray-500 dark:text-zinc-400 flex items-center gap-1.5 pt-0.5">
+                      <Factory className="w-3.5 h-3.5 text-brand-black dark:text-zinc-300 shrink-0" />
+                      <span className="truncate">{room.factoryName}</span>
                     </div>
                   </div>
 
-                  {/* 3 Financial & Quota Highlight Boxes */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
-                      <div className="text-[10px] text-zinc-400">
-                        1) โควต้าสินค้าต่อคน
+                  {/* 2-Column Quota & Deposit Highlight (Clean Mobile Fit) */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 rounded-2xl bg-brand-gray dark:bg-zinc-800/70">
+                      <div className="text-[10px] text-gray-500 dark:text-zinc-400">
+                        โควตาสินค้าต่อคน
                       </div>
-                      <div className="font-black text-zinc-900 dark:text-white mt-0.5">
-                        {room.unitsPerMember.toLocaleString()} {room.unitLabel}/คน
+                      <div className="text-xs font-extrabold text-brand-black dark:text-white mt-0.5">
+                        {room.unitsPerMember.toLocaleString('th-TH')} {room.unitLabel} / คน
                       </div>
-                      <div className="text-[10px] text-zinc-500">
-                        (มูลค่าเต็ม ฿{room.costPerMemberThb.toLocaleString()}/คน)
-                      </div>
-                    </div>
-
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
-                      <div className="text-[10px] text-zinc-400">
-                        2) วางมัดจำเข้า Escrow ({room.depositPercent}%)
-                      </div>
-                      <div className="font-black text-[#E53935] font-mono mt-0.5">
-                        ฿{room.depositPerMemberThb.toLocaleString()} / คน
-                      </div>
-                      <div className="text-[10px] text-zinc-500">
-                        ล็อกในตู้เซฟจนกว่าโรงงานจะส่งงาน
+                      <div className="text-[10px] text-gray-500 mt-0.5">
+                        มูลค่าล็อต ฿{room.costPerMemberThb.toLocaleString('th-TH')}
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800">
-                      <div className="text-[10px] text-zinc-400">
-                        3) ยอดมัดจำที่ล็อกใน Escrow แล้ว
+                    <div className="p-3 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-100 dark:border-red-900/40">
+                      <div className="text-[10px] text-gray-600 dark:text-zinc-300">
+                        มัดจำปลอดภัย ({room.depositPercent}%)
                       </div>
-                      <div className="font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
-                        ฿{room.escrowLockedThb.toLocaleString()} / ฿
-                        {room.totalDepositTargetThb.toLocaleString()}
+                      <div className="text-xs font-extrabold text-brand-red font-mono mt-0.5">
+                        ฿{room.depositPerMemberThb.toLocaleString('th-TH')} / คน
                       </div>
-                      <div className="text-[10px] text-zinc-500">
+                      <div className="text-[10px] text-gray-500 mt-0.5">
+                        คุ้มครองในตู้เซฟกลาง
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress & Escrow Total */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-brand-black dark:text-zinc-200">
+                        มัดจำรวมในตู้เซฟ: ฿{room.escrowLockedThb.toLocaleString('th-TH')} / ฿
+                        {room.totalDepositTargetThb.toLocaleString('th-TH')}
+                      </span>
+                      <span className="font-mono font-bold text-brand-red">
+                        {Math.max(memberPct, escrowPct)}%
+                      </span>
+                    </div>
+
+                    <div className="w-full h-2.5 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          isLockedPo ? 'bg-emerald-500' : 'bg-brand-red'
+                        }`}
+                        style={{ width: `${Math.max(memberPct, escrowPct)}%` }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10.5px] pt-0.5">
+                      <span className="text-gray-500">
                         {isLockedPo
-                          ? `ออกใบสั่งซื้อ ${room.purchaseOrderNo} แล้ว`
+                          ? `ใบสั่งผลิต: ${room.purchaseOrderNo}`
                           : `ขาดอีก ${Math.max(
                               0,
                               room.targetMembers - room.members
-                            )} คนจะยิง PO ทันที`}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-zinc-700 dark:text-zinc-300">
-                        ความคืบหน้าการรวมกลุ่ม MOQ: {room.members} /{' '}
-                        {room.targetMembers} ท่าน ({memberPct}%)
+                            )} คนจะส่งใบสั่งผลิตทันที`}
                       </span>
                       <button
                         type="button"
                         onClick={() =>
                           setExpandedRoomId(isExpanded ? null : room.id)
                         }
-                        className="text-[10.5px] font-bold text-[#E53935] hover:underline"
+                        className="font-bold text-brand-black dark:text-zinc-300 underline"
                       >
                         {isExpanded
-                          ? 'ซ่อนรายชื่อผู้วางมัดจำ ▲'
-                          : `ดูรายชื่อผู้วางมัดจำ (${room.participants.length} ท่าน) ▼`}
+                          ? 'ซ่อนรายชื่อ ▲'
+                          : `ดูผู้ร่วมลงขัน (${room.participants.length}) ▼`}
                       </button>
-                    </div>
-                    <div className="w-full h-2.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 rounded-full ${
-                          isLockedPo
-                            ? 'bg-emerald-500'
-                            : 'bg-gradient-to-r from-[#E53935] to-amber-500'
-                        }`}
-                        style={{ width: `${ Math.max(memberPct, escrowPct) }%` }}
-                      />
                     </div>
                   </div>
 
-                  {/* Expanded Participants & Escrow Ledger */}
+                  {/* Expanded Participants List */}
                   {isExpanded && (
-                    <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2 animate-fadeIn">
-                      <div className="text-[10.5px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
-                        <span>📋 ทะเบียนสมาชิกที่วางมัดจำในตู้เซฟ Escrow แล้ว:</span>
+                    <div className="p-3 rounded-2xl bg-brand-gray dark:bg-zinc-800/70 space-y-2">
+                      <div className="text-[10.5px] font-bold text-brand-black dark:text-white flex items-center justify-between">
+                        <span>รายชื่อผู้วางมัดจำในตู้เซฟ</span>
                         <span className="text-emerald-600 font-mono">
-                          รวม ฿{room.escrowLockedThb.toLocaleString()}
+                          รวม ฿{room.escrowLockedThb.toLocaleString('th-TH')}
                         </span>
                       </div>
-                      <div className="divide-y divide-zinc-100 dark:divide-zinc-800 text-[11px]">
+                      <div className="divide-y divide-gray-200/70 dark:divide-zinc-700 text-[11px]">
                         {room.participants.map((pt, idx) => (
                           <div
                             key={pt.id || idx}
                             className="py-1.5 flex items-center justify-between gap-2"
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="w-4 h-4 rounded-full bg-brand-black text-white text-[9px] font-bold flex items-center justify-center shrink-0">
                                 {idx + 1}
                               </span>
-                              <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                              <span className="font-bold text-brand-black dark:text-zinc-200 truncate">
                                 {pt.name}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0 font-mono text-[10.5px]">
-                              <span className="text-zinc-500">
-                                โควต้า {pt.unitsAllocated.toLocaleString()}{' '}
-                                {room.unitLabel}
-                              </span>
-                              <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold">
-                                🔒 มัดจำ ฿{pt.depositLockedThb.toLocaleString()}
-                              </span>
-                            </div>
+                            <span className="shrink-0 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                              {pt.unitsAllocated.toLocaleString('th-TH')} {room.unitLabel} • ฿
+                              {pt.depositLockedThb.toLocaleString('th-TH')}
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 flex flex-wrap items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleShare(room.id)}
-                      className="px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5"
-                    >
-                      {copiedId === room.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="text-emerald-600">คัดลอกลิงก์ชวนเพื่อนแล้ว</span>
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="w-3.5 h-3.5" />
-                          <span>แชร์ห้องหารล็อต</span>
-                        </>
-                      )}
-                    </button>
+                  {/* Vertical Stacked Action Buttons (Zero Overlap on Mobile) */}
+                  <div className="pt-1 space-y-2">
+                    {!isLockedPo ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => handleJoinAndStake(room.id, false)}
+                          className="w-full py-2.5 px-4 rounded-2xl bg-brand-black hover:opacity-90 active:scale-98 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all disabled:opacity-50"
+                        >
+                          <Lock className="w-3.5 h-3.5 text-brand-red" />
+                          <span>
+                            {isBusy
+                              ? 'กำลังล็อกเงินมัดจำ...'
+                              : `เข้าร่วมกลุ่ม & วางมัดจำ ฿${room.depositPerMemberThb.toLocaleString('th-TH')}`}
+                          </span>
+                        </button>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      {!isLockedPo ? (
-                        <>
-                          <button
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() => handleJoinAndStake(room.id, false)}
-                            className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-black text-white dark:bg-white dark:text-zinc-900 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-transform active:scale-95 disabled:opacity-50"
-                          >
-                            <Lock className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                            <span>
-                              {isBusy
-                                ? 'กำลังล็อกมัดจำ...'
-                                : `เข้าร่วม & วางมัดจำ ฿${room.depositPerMemberThb.toLocaleString()}`}
-                            </span>
-                          </button>
-
+                        <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
                             disabled={isBusy}
                             onClick={() => handleJoinAndStake(room.id, true)}
-                            className="px-3.5 py-2 rounded-xl bg-[#E53935] hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-transform active:scale-95 disabled:opacity-50"
-                            title="จำลองสมาชิกเข้าร่วมจนครบจำนวนขั้นต่ำ MOQ เพื่อทดสอบการล็อกเงินและออกใบสั่งซื้อโรงงาน OEM ทันที"
+                            className="py-2 px-2.5 rounded-2xl bg-red-50 hover:bg-red-100 text-brand-red border border-red-200 text-[11px] font-bold flex items-center justify-center gap-1 transition-all disabled:opacity-50"
                           >
-                            <Zap className="w-3.5 h-3.5" />
-                            <span>จำลองคนครบ MOQ & ออกใบ PO ทันที</span>
+                            <Zap className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">จำลองคนครบ & ออก PO</span>
                           </button>
-                        </>
-                      ) : (
+
+                          <button
+                            type="button"
+                            onClick={() => handleShare(room.id)}
+                            className="py-2 px-2.5 rounded-2xl bg-brand-gray hover:bg-gray-200 text-brand-black text-[11px] font-bold flex items-center justify-center gap-1 transition-all"
+                          >
+                            {copiedId === room.id ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span className="text-emerald-600 truncate">คัดลอกลิงก์แล้ว</span>
+                              </>
+                            ) : (
+                              <>
+                                <Share2 className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">แชร์ชวนเพื่อน</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
                         <button
                           type="button"
                           onClick={() => setActivePoRoom(room)}
-                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-transform active:scale-95"
+                          className="w-full py-2.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all"
                         >
-                          <FileText className="w-4 h-4" />
+                          <FileText className="w-4 h-4 shrink-0" />
                           <span>
-                            ดูใบสั่งซื้อโรงงาน OEM ({room.purchaseOrderNo}) & สัญญา Escrow
+                            เปิดดูใบสั่งผลิต #{room.purchaseOrderNo}
                           </span>
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -800,84 +794,97 @@ export function StepConnect({
       </div>
 
       {/* =================================================================== */}
-      {/* 4. Ecosystem Action Bridge                                          */}
+      {/* 4. Cross-Tab Ecosystem Shortcuts (Stacked Vertically for Mobile)    */}
       {/* =================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 text-white rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 mb-2">
-              <Wallet className="w-3 h-3" /> บริการทางการเงิน
+      <div className="space-y-2.5">
+        <div className="rounded-3xl bg-brand-gray dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 p-4 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold text-brand-red">
+              💰 ต่อยอดเงินทุน
             </div>
-            <h4 className="text-sm font-bold">ต้องการระดมทุนเพิ่มเพื่อเหมาล็อตใหญ่?</h4>
-            <p className="text-xs text-zinc-300 mt-1">
-              ส่งตัวเลขเงินทุนไปจัดตั้งตารางหุ้น (Cap Table) ร่วมกับนักลงทุนที่แท็บ &quot;ทำทุน&quot;
+            <h4 className="text-xs font-extrabold text-brand-black dark:text-white mt-0.5">
+              ต้องการระดมทุนเพิ่มเพื่อเหมาล็อตใหญ่?
+            </h4>
+            <p className="text-[10.5px] text-gray-500 mt-0.5">
+              ส่งงบลงทุนไปจัดตารางหุ้นอัตโนมัติในแท็บ &ldquo;ทำทุน&rdquo;
             </p>
           </div>
           <button
+            type="button"
             onClick={() =>
               onNavigateTab
                 ? onNavigateTab('ทำทุน')
                 : onAction?.('/ecosystem?tab=capital')
             }
-            className="mt-4 py-2 px-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            className="shrink-0 px-3.5 py-2 rounded-2xl bg-brand-black text-white text-[11px] font-bold flex items-center gap-1"
           >
-            <span>ไปที่แท็บ &quot;ทำทุน&quot;</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>ไปทำทุน</span>
+            <ArrowRight className="w-3 h-3" />
           </button>
         </div>
 
-        <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 text-white rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400 mb-2">
-              <Building className="w-3 h-3" /> เครือข่ายกายภาพ
+        <div className="rounded-3xl bg-brand-gray dark:bg-zinc-900 border border-gray-200/80 dark:border-zinc-800 p-4 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold text-brand-red">
+              📍 พิกัดโรงงานใกล้บ้าน
             </div>
-            <h4 className="text-sm font-bold">ต้องการเลือกโรงงาน OEM ใกล้บ้านมารับใบ PO?</h4>
-            <p className="text-xs text-zinc-300 mt-1">
-              เปิดเรดาร์ปักหมุดโรงงานและซัพพลายเออร์ตามรัศมีใกล้บ้านที่แท็บ &quot;ทำใกล้&quot;
+            <h4 className="text-xs font-extrabold text-brand-black dark:text-white mt-0.5">
+              ค้นหาโรงงานรับผลิตใกล้พื้นที่ของคุณ
+            </h4>
+            <p className="text-[10.5px] text-gray-500 mt-0.5">
+              เปิดเรดาร์ปักหมุดโรงงานและซัพพลายเออร์ในแท็บ &ldquo;ทำใกล้&rdquo;
             </p>
           </div>
           <button
+            type="button"
             onClick={() =>
               onNavigateTab
                 ? onNavigateTab('ทำใกล้')
                 : onAction?.('/ecosystem?tab=nearby')
             }
-            className="mt-4 py-2 px-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            className="shrink-0 px-3.5 py-2 rounded-2xl bg-brand-black text-white text-[11px] font-bold flex items-center gap-1"
           >
-            <span>ไปที่แท็บ &quot;ทำใกล้&quot;</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>ไปทำใกล้</span>
+            <ArrowRight className="w-3 h-3" />
           </button>
         </div>
       </div>
 
       {/* =================================================================== */}
-      {/* Modal 1: Create New Group-Buy & Safe Escrow Room                    */}
+      {/* Modal 1: เปิดห้องรวมล็อตใหม่ & ตั้งค่ามัดจำปลอดภัย                   */}
       {/* =================================================================== */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#E53935]" />
-                <span>เปิดห้องรวมล็อตจริง & ตั้งค่ามัดจำปลอดภัย (Escrow)</span>
-              </h3>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3">
+          <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl max-w-[390px] w-full p-4 shadow-2xl space-y-3.5 max-h-[88vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2.5 border-b border-gray-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2.5 h-2.5 bg-brand-red rounded-full shrink-0"
+                  style={{
+                    animation: 'breathe 3s cubic-bezier(0.32, 0.72, 0, 1) infinite',
+                  }}
+                />
+                <h3 className="text-sm font-extrabold text-brand-black dark:text-white">
+                  เปิดห้องรวมล็อตใหม่
+                </h3>
+              </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 text-sm font-bold"
+                className="w-7 h-7 rounded-full bg-brand-gray text-gray-500 hover:text-brand-black text-xs font-bold flex items-center justify-center"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreateRoom} className="space-y-3.5 text-xs">
+            <form onSubmit={handleCreateRoom} className="space-y-3 text-xs">
               <div>
-                <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
+                <label className="font-bold text-brand-black dark:text-zinc-200 block mb-1">
                   รูปแบบการรวมกลุ่ม
                 </label>
                 <select
                   value={formMode}
                   onChange={(e) => setFormMode(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                  className="w-full p-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-white font-medium"
                 >
                   {DEFAULT_MODES.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -888,70 +895,59 @@ export function StepConnect({
               </div>
 
               <div>
-                <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                  หัวข้อ / สเปกสินค้าที่ต้องการรวมล็อต
+                <label className="font-bold text-brand-black dark:text-zinc-200 block mb-1">
+                  ชื่อห้อง / สเปกสินค้าที่ต้องการรวมล็อต
                 </label>
                 <input
                   type="text"
                   placeholder={`เช่น รวมล็อตสั่งผลิต ${chain.product.product_name} เกรดพรีเมียม`}
                   value={formNote}
                   onChange={(e) => setFormNote(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                  className="w-full p-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                  โรงงาน OEM เป้าหมายที่จะรับใบสั่งซื้อ (PO)
+                <label className="font-bold text-brand-black dark:text-zinc-200 block mb-1">
+                  โรงงานผู้รับใบสั่งผลิต
                 </label>
                 <input
                   type="text"
                   value={formFactoryName}
                   onChange={(e) => setFormFactoryName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                  className="w-full p-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-white"
                 />
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    ยอดรวมทั้งล็อต (บาท)
+                  <label className="font-bold text-brand-black dark:text-zinc-200 block mb-1">
+                    มูลค่าทั้งล็อต (บาท)
                   </label>
                   <input
                     type="number"
                     value={formTargetCost}
                     onChange={(e) => setFormTargetCost(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-mono font-bold"
+                    className="w-full p-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-white font-mono font-bold"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    จำนวนขั้นต่ำ (MOQ)
+                  <label className="font-bold text-brand-black dark:text-zinc-200 block mb-1">
+                    จำนวนขั้นต่ำ ({formUnitLabel})
                   </label>
                   <input
                     type="number"
                     value={formMoqUnits}
                     onChange={(e) => setFormMoqUnits(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-mono font-bold"
-                  />
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    หน่วยนับ
-                  </label>
-                  <input
-                    type="text"
-                    value={formUnitLabel}
-                    onChange={(e) => setFormUnitLabel(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                    className="w-full p-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-white font-mono font-bold"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    จำนวนคนหารเป้าหมาย (คน)
+                  <label className="font-bold text-brand-black dark:text-zinc-200 block mb-1">
+                    จำนวนคนหาร (คน)
                   </label>
                   <input
                     type="number"
@@ -959,81 +955,80 @@ export function StepConnect({
                     max={50}
                     value={formTargetMembers}
                     onChange={(e) => setFormTargetMembers(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-mono font-bold"
+                    className="w-full p-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-white font-mono font-bold"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    สัดส่วนวางมัดจำ Escrow (%)
+                  <label className="font-bold text-brand-black dark:text-zinc-200 block mb-1">
+                    มัดจำเข้าตู้เซฟ (%)
                   </label>
                   <select
                     value={formDepositPct}
                     onChange={(e) => setFormDepositPct(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-bold"
+                    className="w-full p-2.5 rounded-2xl border border-gray-200 dark:border-zinc-700 bg-brand-gray dark:bg-zinc-800 text-brand-black dark:text-white font-bold"
                   >
-                    <option value="30">30% (มัดจำเริ่มผลิตมาตรฐาน)</option>
-                    <option value="50">50% (มัดจำครึ่งราคา)</option>
-                    <option value="100">100% (ล็อกเต็มจำนวน)</option>
+                    <option value="30">30% (มาตรฐาน)</option>
+                    <option value="50">50% (ครึ่งราคา)</option>
+                    <option value="100">100% (เต็มจำนวน)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Escrow Calculation Preview Box */}
-              <div className="p-3 rounded-xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 space-y-1">
-                <div className="font-bold text-[#D32F2F] flex items-center justify-between">
-                  <span>🔒 สรุปยอดมัดจำเข้าตู้เซฟ Escrow ต่อคน:</span>
+              {/* Escrow Calculation Preview */}
+              <div className="p-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 space-y-1">
+                <div className="font-extrabold text-brand-red flex items-center justify-between">
+                  <span>🔒 มัดจำปลอดภัยต่อคน:</span>
                   <span className="text-sm font-black font-mono">
-                    ฿{previewDepositPerMember.toLocaleString()} / คน
+                    ฿{previewDepositPerMember.toLocaleString('th-TH')} / คน
                   </span>
                 </div>
-                <p className="text-[10.5px] text-zinc-600 dark:text-zinc-300">
-                  จากยอดเต็มคนละ ฿{previewCostPerMember.toLocaleString()} • เมื่อครบ{' '}
-                  {formTargetMembers} คน ระบบจะล็อกเงินมัดจำรวม ฿
+                <p className="text-[10.5px] text-gray-600 dark:text-zinc-300 leading-snug">
+                  เมื่อครบ {formTargetMembers} คน ระบบจะล็อกเงินมัดจำรวม ฿
                   {(
                     previewDepositPerMember *
                     Math.max(2, Number(formTargetMembers) || 5)
-                  ).toLocaleString()}{' '}
-                  และส่งใบสั่งซื้อ PO ให้โรงงานทันที
+                  ).toLocaleString('th-TH')}{' '}
+                  และออกใบสั่งผลิตส่งโรงงานทันที
                 </p>
               </div>
 
               {/* Board Auto-Publish Checkbox */}
-              <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 cursor-pointer">
+              <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-brand-gray dark:bg-zinc-800/60 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formPublishBoard}
                   onChange={(e) => setFormPublishBoard(e.target.checked)}
-                  className="mt-0.5 accent-[#E53935]"
+                  className="mt-0.5 accent-brand-red"
                 />
                 <div>
-                  <span className="font-bold text-zinc-900 dark:text-white block">
-                    📢 โพสต์ประกาศขึ้นหน้า &quot;บอร์ด (/board)&quot; อัตโนมัติ
+                  <span className="font-bold text-brand-black dark:text-white block">
+                    📢 ประกาศหาแนวร่วมบนหน้าบอร์ดอัตโนมัติ
                   </span>
-                  <span className="text-[10.5px] text-zinc-500">
-                    สร้างการ์ดทั้งในแท็บ &quot;โปรเจกต์&quot; และ &quot;ภารกิจปัญหา&quot; เพื่อให้คนในระบบนิเวศเห็นและมาร่วมลงขันได้ทันที
+                  <span className="text-[10.5px] text-gray-500 leading-snug block mt-0.5">
+                    แสดงห้องรวมล็อตนี้บนหน้าบอร์ดเพื่อให้เพื่อนผู้ประกอบการเข้ามาร่วมแจมได้ทันที
                   </span>
                 </div>
               </label>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100"
-                >
-                  ยกเลิก
-                </button>
+              <div className="pt-1 flex flex-col gap-2">
                 <button
                   type="submit"
                   disabled={busyRoomId === 'CREATING'}
-                  className="px-5 py-2.5 rounded-xl bg-[#E53935] hover:bg-red-700 text-white font-bold shadow-md flex items-center gap-1.5"
+                  className="w-full py-2.5 px-4 rounded-2xl bg-brand-red hover:opacity-95 text-white font-bold shadow-sm flex items-center justify-center gap-1.5"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   <span>
                     {busyRoomId === 'CREATING'
                       ? 'กำลังเปิดห้อง & ล็อกมัดจำ...'
-                      : `เปิดห้อง & วางมัดจำ ฿${previewDepositPerMember.toLocaleString()}`}
+                      : `ยืนยันเปิดห้อง & วางมัดจำ ฿${previewDepositPerMember.toLocaleString('th-TH')}`}
                   </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="w-full py-2 rounded-2xl font-bold text-gray-500 hover:bg-brand-gray"
+                >
+                  ยกเลิก
                 </button>
               </div>
             </form>
@@ -1042,23 +1037,23 @@ export function StepConnect({
       )}
 
       {/* =================================================================== */}
-      {/* Modal 2: Official OEM Purchase Order (PO) & Safe Escrow Certificate */}
+      {/* Modal 2: ใบสั่งผลิตโรงงานอัตโนมัติ & สัญญาคุ้มครองเงินมัดจำ          */}
       {/* =================================================================== */}
       {activePoRoom && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 border-2 border-emerald-500 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-scaleUp">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3">
+          <div className="bg-white dark:bg-zinc-900 border-2 border-emerald-500 rounded-3xl max-w-[390px] w-full p-4 shadow-2xl space-y-3.5 max-h-[88vh] overflow-y-auto">
             {/* PO Header */}
-            <div className="flex items-start justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-gray-100 dark:border-zinc-800">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-black mb-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>OFFICIAL OEM PURCHASE ORDER & ESCROW LOCK CERTIFICATE</span>
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold mb-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>ออกใบสั่งผลิตอัตโนมัติเรียบร้อย</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white">
-                  ใบสั่งซื้อโรงงาน OEM อัตโนมัติ #{activePoRoom.purchaseOrderNo}
+                <h3 className="text-sm font-extrabold text-brand-black dark:text-white">
+                  ใบสั่งผลิต #{activePoRoom.purchaseOrderNo}
                 </h3>
-                <p className="text-[11px] text-zinc-500">
-                  ออกเมื่อ:{' '}
+                <p className="text-[10.5px] text-gray-500">
+                  วันที่ออกเอกสาร:{' '}
                   {activePoRoom.poIssuedAt
                     ? new Date(activePoRoom.poIssuedAt).toLocaleString('th-TH')
                     : new Date().toLocaleString('th-TH')}
@@ -1066,141 +1061,131 @@ export function StepConnect({
               </div>
               <button
                 onClick={() => setActivePoRoom(null)}
-                className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 font-bold flex items-center justify-center"
+                className="w-7 h-7 rounded-full bg-brand-gray text-gray-500 hover:text-brand-black font-bold flex items-center justify-center shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            {/* Parties Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700">
-                <div className="text-[10px] text-zinc-400 font-bold">
-                  ผู้สั่งซื้อ (Group-Buy Consortium):
+            {/* Parties Info (Stacked for clean mobile view) */}
+            <div className="space-y-2 text-xs">
+              <div className="p-3 rounded-2xl bg-brand-gray dark:bg-zinc-800">
+                <div className="text-[10px] text-gray-500 font-bold">
+                  ผู้สั่งผลิต (กลุ่มรวมล็อตเชื่อมดอท)
                 </div>
-                <div className="font-bold text-zinc-900 dark:text-white mt-0.5">
-                  กลุ่มผู้ประกอบการเชื่อมดอท ({activePoRoom.members} ท่าน)
+                <div className="font-extrabold text-brand-black dark:text-white mt-0.5">
+                  สมาชิกผู้ร่วมลงขันครบ {activePoRoom.members} ท่าน
                 </div>
-                <div className="text-[10.5px] text-emerald-600 font-semibold mt-0.5">
-                  ✓ ยืนยันตัวตนและวางเงินมัดจำครบ 100%
+                <div className="text-[10.5px] text-emerald-600 font-bold mt-0.5">
+                  ✓ ล็อกเงินมัดจำในตู้เซฟครบ 100%
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                <div className="text-[10px] text-blue-600 dark:text-sky-400 font-bold">
-                  ผู้รับใบสั่งซื้อ (Target OEM Factory):
+              <div className="p-3 rounded-2xl bg-brand-gray dark:bg-zinc-800">
+                <div className="text-[10px] text-gray-500 font-bold">
+                  โรงงานผู้รับใบสั่งผลิต
                 </div>
-                <div className="font-bold text-zinc-900 dark:text-white mt-0.5">
+                <div className="font-extrabold text-brand-black dark:text-white mt-0.5">
                   {activePoRoom.factoryName}
                 </div>
-                <div className="text-[10.5px] text-blue-600 dark:text-sky-300 font-semibold mt-0.5">
-                  ✓ ส่งใบสั่งซื้ออิเล็กทรอนิกส์เข้าสู่ระบบโรงงานแล้ว
+                <div className="text-[10.5px] text-brand-red font-bold mt-0.5">
+                  ✓ ส่งใบสั่งผลิตเข้าสู่ระบบโรงงานแล้ว
                 </div>
               </div>
             </div>
 
-            {/* Order Summary Table */}
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden text-xs">
-              <div className="bg-zinc-900 text-white px-3.5 py-2 font-bold flex items-center justify-between">
-                <span>รายการสั่งผลิต (Order Specification)</span>
+            {/* Order Summary */}
+            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 overflow-hidden text-xs">
+              <div className="bg-brand-black text-white px-3.5 py-2 font-bold flex items-center justify-between">
+                <span>รายละเอียดคำสั่งผลิต</span>
                 <span>จำนวน / ยอดเงิน</span>
               </div>
-              <div className="p-3.5 space-y-2 bg-white dark:bg-zinc-900">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">สินค้าอ้างอิง:</span>
-                  <span className="font-bold text-zinc-900 dark:text-white">
+              <div className="p-3 space-y-2 bg-white dark:bg-zinc-900">
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500 shrink-0">สินค้า:</span>
+                  <span className="font-bold text-brand-black dark:text-white text-right">
                     {activePoRoom.productName}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">รายละเอียดล็อตผลิต:</span>
-                  <span className="font-bold text-zinc-900 dark:text-white text-right">
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500 shrink-0">รายการผลิต:</span>
+                  <span className="font-bold text-brand-black dark:text-white text-right">
                     {activePoRoom.modelName}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">ปริมาณสั่งผลิตรวม (MOQ):</span>
-                  <span className="font-mono font-bold text-zinc-900 dark:text-white">
-                    {activePoRoom.moqTotalUnits.toLocaleString()}{' '}
-                    {activePoRoom.unitLabel} (เฉลี่ยคนละ{' '}
-                    {activePoRoom.unitsPerMember.toLocaleString()}{' '}
-                    {activePoRoom.unitLabel})
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500 shrink-0">ปริมาณรวมทั้งล็อต:</span>
+                  <span className="font-mono font-bold text-brand-black dark:text-white text-right">
+                    {activePoRoom.moqTotalUnits.toLocaleString('th-TH')}{' '}
+                    {activePoRoom.unitLabel} ({activePoRoom.unitsPerMember.toLocaleString('th-TH')}{' '}
+                    {activePoRoom.unitLabel}/คน)
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                  <span className="text-zinc-500">มูลค่าใบสั่งซื้อรวมทั้งล็อต:</span>
-                  <span className="font-mono font-black text-zinc-900 dark:text-white">
-                    ฿{activePoRoom.lotCost.toLocaleString()}
+                <div className="flex justify-between pt-2 border-t border-gray-100 dark:border-zinc-800">
+                  <span className="text-gray-500">มูลค่ารวมทั้งล็อต:</span>
+                  <span className="font-mono font-extrabold text-brand-black dark:text-white">
+                    ฿{activePoRoom.lotCost.toLocaleString('th-TH')}
                   </span>
                 </div>
-                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
-                  <span>
-                    🔒 เงินมัดจำที่ล็อกในตู้เซฟ Escrow แล้ว ({activePoRoom.depositPercent}%):
-                  </span>
+                <div className="flex justify-between text-emerald-600 font-bold">
+                  <span>🔒 มัดจำล็อกในตู้เซฟ ({activePoRoom.depositPercent}%):</span>
                   <span className="font-mono text-sm font-black">
-                    ฿{activePoRoom.escrowLockedThb.toLocaleString()}
+                    ฿{activePoRoom.escrowLockedThb.toLocaleString('th-TH')}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* 3-Stage Safe Escrow Milestone Schedule */}
-            <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 space-y-2 text-xs">
-              <div className="font-black text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-emerald-600" />
-                <span>เงื่อนไขการปล่อยเงินจากตู้เซฟคนกลาง (3-Stage Escrow Protection)</span>
+            {/* 3-Stage Protection */}
+            <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 space-y-1.5 text-[11px]">
+              <div className="font-extrabold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>การคุ้มครองเงินมัดจำ 3 งวด</span>
               </div>
-              <div className="space-y-1.5 text-[11px] text-zinc-700 dark:text-zinc-300">
-                <div className="flex items-center justify-between">
-                  <span>
-                    • <b>งวดที่ 1 (เริ่มเดินสายพานผลิต):</b> เมื่อโรงงานยืนยันคิวผลิตและวัตถุดิบ
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold">
-                    พร้อมเบิกจ่าย
+              <div className="space-y-1 text-gray-700 dark:text-zinc-300">
+                <div className="flex items-center justify-between gap-2">
+                  <span>1. โรงงานยืนยันคิวผลิตและวัตถุดิบ</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9.5px] font-bold shrink-0">
+                    พร้อมเบิกงวดแรก
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>
-                    • <b>งวดที่ 2 (ตรวจรับ QC ล็อตผลิต):</b> เมื่อส่งผลตรวจคุณภาพสินค้าผ่านเกณฑ์
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-[10px] font-bold">
-                    ล็อกใน Escrow
+                <div className="flex items-center justify-between gap-2">
+                  <span>2. ตรวจรับคุณภาพสินค้า (QC) ผ่าน</span>
+                  <span className="px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 text-[9.5px] font-bold shrink-0">
+                    ล็อกในตู้เซฟ
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>
-                    • <b>งวดที่ 3 (ส่งมอบครบทุกท่าน):</b> เมื่อจัดส่งสินค้าตามโควต้าถึงมือสมาชิกครบ
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-[10px] font-bold">
-                    ล็อกใน Escrow
+                <div className="flex items-center justify-between gap-2">
+                  <span>3. จัดส่งสินค้าถึงมือสมาชิกครบทุกคน</span>
+                  <span className="px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 text-[9.5px] font-bold shrink-0">
+                    ล็อกในตู้เซฟ
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-              <div className="flex items-center gap-2">
+            {/* Footer */}
+            <div className="space-y-2 pt-1">
+              <div className="grid grid-cols-2 gap-2">
                 <Link
                   href="/wallet"
-                  className="px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs font-bold flex items-center gap-1.5"
+                  className="py-2 px-3 rounded-2xl bg-brand-gray text-brand-black text-[11px] font-bold flex items-center justify-center gap-1"
                 >
-                  <Wallet className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>ดูยอดล็อกในกระเป๋าเงิน (/wallet)</span>
+                  <Wallet className="w-3.5 h-3.5 text-brand-red" />
+                  <span>ดูกระเป๋าเงิน</span>
                 </Link>
                 <Link
                   href="/board?tab=PROJECT"
-                  className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-sky-300 text-xs font-bold flex items-center gap-1.5"
+                  className="py-2 px-3 rounded-2xl bg-brand-gray text-brand-black text-[11px] font-bold flex items-center justify-center gap-1"
                 >
-                  <span>ดูสถานะบนบอร์ด (/board)</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>ดูบนบอร์ด</span>
+                  <ExternalLink className="w-3 h-3" />
                 </Link>
               </div>
-
               <button
                 type="button"
                 onClick={() => setActivePoRoom(null)}
-                className="px-5 py-2 rounded-xl bg-zinc-900 hover:bg-black text-white dark:bg-white dark:text-zinc-900 text-xs font-bold"
+                className="w-full py-2.5 rounded-2xl bg-brand-black text-white text-xs font-bold"
               >
                 ปิดหน้าต่าง
               </button>

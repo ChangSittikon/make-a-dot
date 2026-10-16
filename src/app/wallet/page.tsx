@@ -94,28 +94,34 @@ export default function WalletPage() {
           {/* Balance Section */}
           <div className="px-5 py-5 space-y-2 bg-white dark:bg-[#1e2329] mb-2 transition-colors duration-300">
             <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs">
-              <span className="flex items-center gap-1">
-                ยอดสินทรัพย์รวม (พร้อมใช้ + ล็อกใน Escrow)
+              <span className="flex items-center gap-2 font-medium">
+                <span
+                  className="w-2.5 h-2.5 bg-brand-red rounded-full shrink-0 inline-block"
+                  style={{
+                    animation: 'breathe 3s cubic-bezier(0.32, 0.72, 0, 1) infinite',
+                  }}
+                />
+                <span>ยอดสินทรัพย์รวมของคุณ</span>
               </span>
               <Link
                 href="/ecosystem"
                 className="text-[11px] font-bold text-brand-red hover:underline"
               >
-                ← กลับไปหน้าทำผลิต/เชื่อมดอท
+                ← กลับไปหน้าเชื่อมดอท
               </Link>
             </div>
             <div className="flex items-end gap-2">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white font-mono">
+              <h1 className="text-3xl font-bold tracking-tight text-brand-black dark:text-white font-mono">
                 ฿{totalAssetsThb.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
               </h1>
               <span className="text-sm font-medium mb-1 text-gray-500 dark:text-gray-400">
-                THB
+                บาท
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              คุ้มครองเงินมัดจำด้วยระบบ{' '}
-              <span className="text-emerald-500 font-bold">
-                Safe Escrow Vault & Auto-PO
+              คุ้มครองเงินทุกบาทด้วย{' '}
+              <span className="text-emerald-600 font-bold">
+                ระบบตู้เซฟมัดจำปลอดภัย • พลังของคนตัวเล็ก
               </span>
             </p>
           </div>
@@ -126,30 +132,30 @@ export default function WalletPage() {
               <button
                 onClick={() => handleQuickTopUp(10000)}
                 disabled={isToppingUp}
-                className="w-11 h-11 rounded-full bg-brand-red/10 flex items-center justify-center hover:bg-brand-red/20 transition-colors text-brand-red"
+                className="w-11 h-11 rounded-2xl bg-brand-red/10 flex items-center justify-center hover:bg-brand-red/20 transition-colors text-brand-red"
                 title="เติมเงินด่วน +฿10,000"
               >
                 <i className="fa-solid fa-plus"></i>
               </button>
-              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold">
-                {isToppingUp ? 'กำลังเติม...' : 'เติมเงิน +10k'}
+              <span className="text-[10px] text-brand-black dark:text-gray-300 font-bold">
+                {isToppingUp ? 'กำลังเติม...' : 'เติมเงิน +10,000'}
               </span>
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <button
                 onClick={() => setActiveTab('ESCROW')}
-                className="w-11 h-11 rounded-full bg-blue-500/10 flex items-center justify-center hover:bg-blue-500/20 transition-colors text-blue-600"
+                className="w-11 h-11 rounded-2xl bg-brand-gray dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 transition-colors text-brand-black dark:text-white"
               >
                 <i className="fa-solid fa-lock"></i>
               </button>
               <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">
-                ตู้เซฟ Escrow
+                ตู้เซฟมัดจำ
               </span>
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <Link
                 href="/board?tab=PROJECT"
-                className="w-11 h-11 rounded-full bg-emerald-500/10 flex items-center justify-center hover:bg-emerald-500/20 transition-colors text-emerald-600"
+                className="w-11 h-11 rounded-2xl bg-brand-gray dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 transition-colors text-brand-black dark:text-white"
               >
                 <i className="fa-solid fa-bullhorn"></i>
               </Link>
@@ -160,7 +166,7 @@ export default function WalletPage() {
             <div className="flex flex-col items-center gap-1.5">
               <button
                 onClick={() => setActiveTab('HISTORY')}
-                className="w-11 h-11 rounded-full bg-amber-500/10 flex items-center justify-center hover:bg-amber-500/20 transition-colors text-amber-600"
+                className="w-11 h-11 rounded-2xl bg-brand-gray dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 transition-colors text-brand-black dark:text-white"
               >
                 <i className="fa-solid fa-file-invoice-dollar"></i>
               </button>
@@ -172,10 +178,10 @@ export default function WalletPage() {
 
           {/* Balance Breakdown List */}
           <div className="mt-2 px-4 space-y-3">
-            <div className="bg-white dark:bg-[#1e2329] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+            <div className="bg-white dark:bg-[#1e2329] rounded-3xl p-4 shadow-xs border border-gray-100 dark:border-gray-800">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
-                  สถานะกระเป๋าเงินจริง (Live Prisma DB)
+                <h3 className="font-extrabold text-sm text-brand-black dark:text-gray-100">
+                  สัดส่วนเงินในกระเป๋าของคุณ
                 </h3>
               </div>
 
@@ -183,12 +189,12 @@ export default function WalletPage() {
                 {/* Available Balance */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center">
                       <i className="fa-solid fa-wallet text-sm"></i>
                     </div>
                     <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-gray-100">
-                        เงินสดพร้อมใช้ (Available)
+                      <h4 className="font-bold text-xs text-brand-black dark:text-gray-100">
+                        เงินสดพร้อมใช้
                       </h4>
                       <p className="text-[10px] text-gray-500 dark:text-gray-400">
                         พร้อมวางมัดจำห้องรวมล็อตหรือถอนออก
@@ -196,7 +202,7 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-sm font-mono text-emerald-600 dark:text-emerald-400">
+                    <p className="font-extrabold text-sm font-mono text-emerald-600 dark:text-emerald-400">
                       ฿{balanceThb.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -205,20 +211,20 @@ export default function WalletPage() {
                 {/* Escrow Balance */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/20 text-blue-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-500/20 text-brand-red flex items-center justify-center">
                       <i className="fa-solid fa-lock text-sm"></i>
                     </div>
                     <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-gray-100">
-                        ล็อกในระบบมัดจำปลอดภัย (Escrow)
+                      <h4 className="font-bold text-xs text-brand-black dark:text-gray-100">
+                        เงินมัดจำในตู้เซฟปลอดภัย
                       </h4>
                       <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                        จะปล่อยให้โรงงาน OEM เมื่อตรวจรับ QC ผ่านเท่านั้น
+                        ปล่อยให้โรงงานเมื่อตรวจรับคุณภาพผ่านเท่านั้น
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-sm font-mono text-blue-600 dark:text-sky-400">
+                    <p className="font-extrabold text-sm font-mono text-brand-red">
                       ฿{lockedBalanceThb.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -230,10 +236,10 @@ export default function WalletPage() {
           {/* Active Group-Buy Escrow Rooms & OEM POs */}
           {(activeTab === 'OVERVIEW' || activeTab === 'ESCROW') && (
             <div className="mt-4 px-4 space-y-3">
-              <div className="bg-white dark:bg-[#1e2329] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+              <div className="bg-white dark:bg-[#1e2329] rounded-3xl p-4 shadow-xs border border-gray-100 dark:border-gray-800">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
-                    ห้องรวมล็อต & ใบสั่งซื้อโรงงาน OEM (ขั้น 06 เชื่อมดอท)
+                  <h3 className="font-extrabold text-sm text-brand-black dark:text-gray-100">
+                    ห้องรวมล็อต & ใบสั่งผลิตโรงงาน
                   </h3>
                   <Link
                     href="/ecosystem"

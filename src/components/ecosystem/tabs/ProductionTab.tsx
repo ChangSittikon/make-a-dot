@@ -437,7 +437,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
           </div>
         )}
 
-        <div className="p-3 sm:p-5 max-w-5xl mx-auto">
+        <div className="p-3 max-w-5xl mx-auto">
           {activeStep === 1 && (
             <StepIdentity
               onPick={(name, ctx) => handleSelectProduct(name, ctx.sectorId, ctx.subName)}
