@@ -22,7 +22,10 @@ import { ActionKind } from '../production/OppCard';
 import { generateProductChain } from '../production/aiGenerator';
 import { getCachedChain, loadApiKey, saveApiKey } from '../production/storage';
 import { flattenOpps } from '../production/schema';
-import { CrossTabBridgePayload } from '../production/crossTabBridge';
+import {
+  CrossTabBridgePayload,
+  mapSectorToIndustryId,
+} from '../production/crossTabBridge';
 import { StepIdentity } from '../production/StepIdentity';
 import { StepChain } from '../production/StepChain';
 import { StepOpportunities } from '../production/StepOpportunities';
@@ -65,6 +68,9 @@ const STEP_META: Record<
 export const ProductionTab: React.FC<ProductionTabProps> = ({
   onNavigateMainTab,
   onCrossTabAction,
+  onSelectIndustry,
+  onSelectSubIndustry,
+  onSelectSegment,
   initialChain,
   initialStep,
 }) => {
@@ -97,6 +103,12 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       setActiveStep(initialStep);
     }
   }, [initialChain, initialStep]);
+
+  useEffect(() => {
+    if (selectedChain?.taxonomy?.sector_id && onSelectIndustry) {
+      onSelectIndustry(mapSectorToIndustryId(selectedChain.taxonomy.sector_id));
+    }
+  }, [selectedChain, onSelectIndustry]);
 
   const handleSaveApiKey = () => {
     saveApiKey(apiKeyInput);

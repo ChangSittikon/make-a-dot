@@ -79,22 +79,14 @@ export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ 
 
   return (
     <div className="space-y-1 mb-3 pt-2 relative">
-      {/* Signature Breathing Red Dot with Cute Ground Wobble & Fresh Leap */}
-      <div className="h-14 flex items-end pb-1 mb-2 relative z-10">
-        <motion.div
-          layoutId="nong-dot"
-          transition={{
-            layout: {
-              type: "spring",
-              stiffness: 60,
-              damping: 11,
-              mass: 1.2
-            }
-          }}
-          className="inline-flex items-center justify-center"
-        >
-          <NongDot mood="greeting" size={15} />
-        </motion.div>
+      {/* Nong Dot Guide Avatar Tag */}
+      <div className="flex items-center gap-2 mb-2 relative z-10">
+        <div className="w-7 h-7 rounded-full bg-red-50 dark:bg-red-950/40 flex items-center justify-center border border-red-200/60 dark:border-red-900/40 shadow-xs shrink-0">
+          <NongDot mood="greeting" size={13} />
+        </div>
+        <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500">
+          น้องดอทนำทาง
+        </span>
       </div>
 
       <div className="relative z-10 space-y-1">

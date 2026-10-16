@@ -257,7 +257,7 @@ export const StepChain: React.FC<Props> = ({
                     <div><b>• เจ้าตลาดเดิม:</b> {item.five_w_two_h.who_incumbent}</div>
                     <div><b>• วิธีทำ:</b> {item.five_w_two_h.what_how}</div>
                     <div><b>• จุดอ่อนเจ้าตลาด:</b> <span className="text-brand-red font-bold">{item.five_w_two_h.pain_point}</span></div>
-                    <div className="pt-1 flex items-center justify-end gap-2">
+                    <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -268,6 +268,33 @@ export const StepChain: React.FC<Props> = ({
                       >
                         ดู {item.micro_opportunities.length} โมเดลในโหนดนี้ →
                       </button>
+
+                      {item.micro_opportunities[0] && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAction('CAPITAL', item.micro_opportunities[0], item);
+                            }}
+                            className="px-2.5 py-1 rounded-xl bg-brand-red text-white text-[9.5px] font-bold hover:bg-brand-red/90 shadow-2xs"
+                            title="ส่งตัวเลขทุนตั้งต้นไปตั้งตารางหุ้นในแท็บทำทุน"
+                          >
+                            💰 หาทุน
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAction('LOCAL', item.micro_opportunities[0], item);
+                            }}
+                            className="px-2.5 py-1 rounded-xl bg-blue-600 text-white text-[9.5px] font-bold hover:bg-blue-700 shadow-2xs"
+                            title="ปักหมุดโรงงานและคู่ค้าใกล้บ้านในแท็บทำใกล้"
+                          >
+                            📍 หาคู่ค้า
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
