@@ -25,7 +25,7 @@ interface Props {
   node?: SupplyChainNode;
   selected?: boolean;
   onSelect?: () => void;
-  onAction?: (k: ActionKind) => void;
+  onAction?: (k: ActionKind, opp: MicroOpportunity, node?: SupplyChainNode) => void;
 }
 
 export const OppCard: React.FC<Props> = ({ opp, node, selected, onSelect, onAction }) => {
@@ -64,7 +64,7 @@ export const OppCard: React.FC<Props> = ({ opp, node, selected, onSelect, onActi
 
       <div className="grid grid-cols-2 gap-2 text-[10.5px]">
         <div className="rounded-xl bg-gray-50 dark:bg-[#14161b] p-2">
-          <div className="text-[9px] text-gray-400">งบลงทุน (บาท)</div>
+          <div className="text-[9px] text-gray-400">งบลงทุนตั้งต้น (บาท)</div>
           <div className="font-bold text-gray-900 dark:text-white">{opp.capital_required_thb}</div>
         </div>
         <div className="rounded-xl bg-gray-50 dark:bg-[#14161b] p-2">
@@ -109,14 +109,31 @@ export const OppCard: React.FC<Props> = ({ opp, node, selected, onSelect, onActi
       )}
 
       {onAction && (
-        <div className="grid grid-cols-1 gap-1.5 pt-0.5">
-          <button onClick={() => onAction('CAPITAL')} className="py-2 px-3 rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 text-[10.5px] font-bold text-left">
-            💰 ไปที่ &quot;ทำทุน&quot; - {opp.action_links.go_to_capital_tab}
-          </button>
-          <button onClick={() => onAction('LOCAL')} className="py-2 px-3 rounded-xl bg-gray-100 dark:bg-[#20232b] text-gray-800 dark:text-gray-100 text-[10.5px] font-bold text-left">
-            📍 ไปที่ &quot;ทำใกล้&quot; - {opp.action_links.go_to_nearby_tab}
-          </button>
-          <button onClick={() => onAction('CONNECT')} className="py-2 px-3 rounded-xl bg-red-50 dark:bg-red-950/30 text-[#D32F2F] text-[10.5px] font-bold text-left border border-red-200 dark:border-red-900">
+        <div className="space-y-1.5 pt-1 border-t border-gray-100 dark:border-gray-800">
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              onClick={() => onAction('CAPITAL', opp, node)}
+              className="py-2 px-2.5 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 text-[10.5px] font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-transform active:scale-95"
+              title={`ส่งงบตั้งต้น ${opp.capital_required_thb} บาท ไปตั้งตารางหุ้นในแท็บ "ทำทุน"`}
+            >
+              <span>💰 [หาทุน] ตั้งตารางหุ้น</span>
+            </button>
+            <button
+              onClick={() => onAction('LOCAL', opp, node)}
+              className="py-2 px-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[10.5px] font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-transform active:scale-95"
+              title={`ปักหมุดโรงงานและคู่ค้าใกล้บ้านในแท็บ "ทำใกล้"`}
+            >
+              <span>📍 [หาคู่ค้า] ปักหมุดโรงงาน</span>
+            </button>
+          </div>
+          <div className="text-[9.5px] text-gray-500 dark:text-gray-400 px-1 space-y-0.5">
+            <div className="truncate">• <b>ทำทุน:</b> {opp.action_links.go_to_capital_tab}</div>
+            <div className="truncate">• <b>ทำใกล้:</b> {opp.action_links.go_to_nearby_tab}</div>
+          </div>
+          <button
+            onClick={() => onAction('CONNECT', opp, node)}
+            className="w-full py-1.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/30 text-[#D32F2F] text-[10px] font-bold text-center border border-red-200 dark:border-red-900 transition-colors"
+          >
             🤝 ไปที่ &quot;เชื่อมดอท&quot; - {opp.action_links.go_to_connect_tab}
           </button>
         </div>

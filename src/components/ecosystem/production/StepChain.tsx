@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ProductChain, SupplyChainNode, STAGE_META, TRAFFIC_META } from './types';
+import {
+  ProductChain,
+  SupplyChainNode,
+  MicroOpportunity,
+  STAGE_META,
+  TRAFFIC_META,
+} from './types';
 import { baht } from './schema';
 import { OppCard, ActionKind } from './OppCard';
 import { ProfitSimulator } from './ProfitSimulator';
@@ -12,7 +18,7 @@ interface Props {
   chain: ProductChain;
   selectedOppKey: string;
   onSelectOpp: (key: string) => void;
-  onAction: (k: ActionKind) => void;
+  onAction: (k: ActionKind, opp?: MicroOpportunity, node?: SupplyChainNode, customCashThb?: number) => void;
   onBackToStep1?: () => void;
 }
 
@@ -28,11 +34,12 @@ const NodeDrawer: React.FC<{
   chain: ProductChain;
   selectedOppKey: string;
   onSelectOpp: (key: string) => void;
-  onAction: (k: ActionKind) => void;
+  onAction: (k: ActionKind, opp?: MicroOpportunity, node?: SupplyChainNode, customCashThb?: number) => void;
 }> = ({ node, chain, selectedOppKey, onSelectOpp, onAction }) => {
   const [tab, setTab] = useState<DrawerTab>('A');
   const [simIdx, setSimIdx] = useState(0);
   const f = node.five_w_two_h;
+  const primaryOpp = node.micro_opportunities[0];
   const simOpp = node.micro_opportunities[Math.min(simIdx, node.micro_opportunities.length - 1)];
 
   const tabs: { id: DrawerTab; label: string }[] = [
@@ -61,27 +68,52 @@ const NodeDrawer: React.FC<{
 
       <div className="p-3">
         {tab === 'A' && (
-          <div>
-            <Row k="เจ้าตลาดเดิม (Who)" v={f.who_incumbent} />
-            <Row k="กิจกรรม/วิธีทำ (What/How)" v={f.what_how} />
-            <Row k="สถานที่ (Where)" v={f.where} />
-            <Row
-              k="เวลา (When)"
-              v={
-                <span>
-                  ทำจริง <b>{f.when_cycle_time}</b> · รอคอย <b className="text-[#E53935]">{f.when_wait_time}</b>
-                </span>
-              }
-            />
-            <Row
-              k="ต้นทุน vs ขาย (How much)"
-              v={
-                <span className="font-mono">
-                  {baht(f.how_much_cost_thb)} → <b>{baht(f.how_much_selling_thb)}</b> บาท
-                </span>
-              }
-            />
-            <Row k="จุดอ่อนเจ้าตลาด (Pain Point)" v={<span className="text-[#D32F2F] font-medium">{f.pain_point}</span>} />
+          <div className="space-y-3">
+            <div>
+              <Row k="เจ้าตลาดเดิม (Who)" v={f.who_incumbent} />
+              <Row k="กิจกรรม/วิธีทำ (What/How)" v={f.what_how} />
+              <Row k="สถานที่ (Where)" v={f.where} />
+              <Row
+                k="เวลา (When)"
+                v={
+                  <span>
+                    ทำจริง <b>{f.when_cycle_time}</b> · รอคอย <b className="text-[#E53935]">{f.when_wait_time}</b>
+                  </span>
+                }
+              />
+              <Row
+                k="ต้นทุน vs ขาย (How much)"
+                v={
+                  <span className="font-mono">
+                    {baht(f.how_much_cost_thb)} → <b>{baht(f.how_much_selling_thb)}</b> บาท
+                  </span>
+                }
+              />
+              <Row k="จุดอ่อนเจ้าตลาด (Pain Point)" v={<span className="text-[#D32F2F] font-medium">{f.pain_point}</span>} />
+            </div>
+
+            {/* Quick Cross-Tab Action Bar directly inside 5W2H Node View */}
+            {primaryOpp && (
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                  ⚡ เชื่อมโยงโหนดนี้ข้ามแท็บอัตโนมัติ (งบตั้งต้น: <span className="text-gray-900 dark:text-white">{primaryOpp.capital_required_thb} บ.</span>):
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => onAction('CAPITAL', primaryOpp, node)}
+                    className="py-2 px-3 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-transform active:scale-95"
+                  >
+                    <span>💰 [หาทุน] ตั้งตารางหุ้น</span>
+                  </button>
+                  <button
+                    onClick={() => onAction('LOCAL', primaryOpp, node)}
+                    className="py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-transform active:scale-95"
+                  >
+                    <span>📍 [หาคู่ค้า] ปักหมุดโรงงาน</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -93,9 +125,10 @@ const NodeDrawer: React.FC<{
                 <OppCard
                   key={key}
                   opp={opp}
+                  node={node}
                   selected={selectedOppKey === key}
                   onSelect={() => onSelectOpp(key)}
-                  onAction={onAction}
+                  onAction={(k, o) => onAction(k, o, node)}
                 />
               );
             })}
@@ -125,6 +158,10 @@ const NodeDrawer: React.FC<{
               priceDefault={f.how_much_selling_thb}
               unitLabel={chain.product.base_unit_reference}
               capital={simOpp?.capital_required_thb}
+              onSendToCapital={(simulatedCapital) =>
+                onAction('CAPITAL', simOpp || primaryOpp, node, simulatedCapital)
+              }
+              onSendToLocal={() => onAction('LOCAL', simOpp || primaryOpp, node)}
             />
           </div>
         )}
@@ -133,8 +170,8 @@ const NodeDrawer: React.FC<{
   );
 };
 
-export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp, onAction, onBackToStep1 }) => {
-  const [openNode, setOpenNode] = useState<number | null>(null);
+export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp, onAction }) => {
+  const [openNode, setOpenNode] = useState<number | null>(1);
   const p = chain.product;
   const spread = p.total_value_spread;
   const nodes = chain.supply_chain_nodes;
@@ -170,7 +207,7 @@ export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp,
       </div>
 
       {/* Vertical flowchart */}
-      <div className="px-3 pt-3">
+      <div className="px-3 pt-1">
         {nodes.map((node, i) => {
           const meta = STAGE_META[node.stage_type];
           const tl = TRAFFIC_META[node.traffic_light];
@@ -178,43 +215,90 @@ export const StepChain: React.FC<Props> = ({ chain, selectedOppKey, onSelectOpp,
           const isOpen = openNode === node.node_order;
           const next = nodes[i + 1];
           const isMain = i < 3;
+          const firstOpp = node.micro_opportunities[0];
+
           return (
             <div key={node.node_order}>
-              <button
-                onClick={() => setOpenNode(isOpen ? null : node.node_order)}
+              <div
                 className={`w-full text-left rounded-2xl border p-3 transition-all ${
                   isOpen
                     ? 'border-[#E53935] shadow-md shadow-red-500/10 bg-white dark:bg-[#181a20]'
                     : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#181a20] hover:border-gray-400'
                 } ${node.stage_type === 'BYPRODUCT_SERVICE' ? 'border-dashed' : ''}`}
               >
-                <div className="flex items-start gap-2.5">
-                  <div className="w-9 h-9 shrink-0 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-base">
-                    {meta.emoji}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[9px] font-mono font-bold text-gray-400">
-                        โหนด {node.node_order} · {meta.label}
-                      </span>
-                      <span className={`shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold ${tl.cls}`}>
-                        {tl.emoji} {node.traffic_light}
-                      </span>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setOpenNode(isOpen ? null : node.node_order)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpenNode(isOpen ? null : node.node_order);
+                    }
+                  }}
+                  className="cursor-pointer"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-9 h-9 shrink-0 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-base">
+                      {meta.emoji}
                     </div>
-                    <h4 className="text-[13px] font-extrabold text-gray-900 dark:text-white leading-snug">{node.node_title}</h4>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">เทียบเท่า: {node.equivalent_quantity}</p>
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-200">
-                        {baht(f.how_much_cost_thb)} <span className="text-gray-400">→</span> {baht(f.how_much_selling_thb)} บ.
-                      </span>
-                      <span className="text-[9.5px] text-gray-400">
-                        {isOpen ? 'ย่อ ▲' : `${node.micro_opportunities.length} จุดแทรกตัว ▼`}
-                      </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[9px] font-mono font-bold text-gray-400">
+                          โหนด {node.node_order} · {meta.label}
+                        </span>
+                        <span className={`shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold ${tl.cls}`}>
+                          {tl.emoji} {node.traffic_light}
+                        </span>
+                      </div>
+                      <h4 className="text-[13px] font-extrabold text-gray-900 dark:text-white leading-snug">{node.node_title}</h4>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">เทียบเท่า: {node.equivalent_quantity}</p>
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <span className="text-[11px] font-mono font-bold text-gray-700 dark:text-gray-200">
+                          {baht(f.how_much_cost_thb)} <span className="text-gray-400">→</span> {baht(f.how_much_selling_thb)} บ.
+                        </span>
+                        <span className="text-[9.5px] text-[#E53935] font-bold">
+                          {isOpen ? 'ย่อรายละเอียด ▲' : `ผ่าตัด & ${node.micro_opportunities.length} จุดแทรกตัว ▼`}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <p className="mt-1.5 text-[9.5px] text-gray-400">{tl.label}</p>
                 </div>
-                <p className="mt-1.5 text-[9.5px] text-gray-400">{tl.label}</p>
-              </button>
+
+                {/* Direct Node-Level Cross-Tab Buttons ([หาทุน] & [หาคู่ค้า]) */}
+                {firstOpp && (
+                  <div className="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between gap-2">
+                    <span className="text-[9.5px] text-gray-500 dark:text-gray-400 truncate">
+                      ทุนเริ่ม: <b className="text-gray-800 dark:text-gray-200">{firstOpp.capital_required_thb} บ.</b>
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAction('CAPITAL', firstOpp, node);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 text-[10px] font-bold flex items-center gap-1 shadow-2xs transition-transform active:scale-95"
+                        title="ส่งตัวเลขเงินทุนตั้งต้นไปตั้งตารางหุ้นในแท็บ ทำทุน อัตโนมัติ"
+                      >
+                        <span>💰 หาทุน</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAction('LOCAL', firstOpp, node);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold flex items-center gap-1 shadow-2xs transition-transform active:scale-95"
+                        title="ปักหมุดโรงงานและคู่ค้าใกล้บ้านในแท็บ ทำใกล้"
+                      >
+                        <span>📍 หาคู่ค้า</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {isOpen && (
                 <NodeDrawer

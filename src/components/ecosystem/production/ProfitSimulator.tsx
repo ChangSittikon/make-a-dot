@@ -9,6 +9,8 @@ interface Props {
   unitLabel: string;
   capital?: string;
   detailed?: boolean;
+  onSendToCapital?: (simulatedCashThb: number, cost: number, price: number, volume: number) => void;
+  onSendToLocal?: () => void;
 }
 
 const niceMax = (v: number) => {
@@ -46,7 +48,15 @@ const Slider: React.FC<{
 );
 
 /** Mini Profit Simulator — ปรับต้นทุน/ราคาขาย/ปริมาณต่อเดือน แล้วคำนวณกำไร Real-time */
-export const ProfitSimulator: React.FC<Props> = ({ costDefault, priceDefault, unitLabel, capital, detailed }) => {
+export const ProfitSimulator: React.FC<Props> = ({
+  costDefault,
+  priceDefault,
+  unitLabel,
+  capital,
+  detailed,
+  onSendToCapital,
+  onSendToLocal,
+}) => {
   const maxCost = useMemo(() => niceMax(Math.max(costDefault, priceDefault) * 2), [costDefault, priceDefault]);
   const maxPrice = useMemo(() => niceMax(Math.max(costDefault, priceDefault) * 3), [costDefault, priceDefault]);
   const stepVal = maxPrice >= 10000 ? 100 : maxPrice >= 1000 ? 10 : 1;
@@ -62,7 +72,8 @@ export const ProfitSimulator: React.FC<Props> = ({ costDefault, priceDefault, un
   const net = monthly - fixed;
   const breakEven = profitUnit > 0 ? Math.ceil(fixed / profitUnit) : null;
   const [, capMax] = parseRange(capital || '');
-  const payback = net > 0 && capMax > 0 ? capMax / net : null;
+  const simulatedWorkingCapital = Math.max(capMax || 0, cost * volume + fixed);
+  const payback = net > 0 && simulatedWorkingCapital > 0 ? simulatedWorkingCapital / net : null;
   const good = profitUnit > 0;
 
   return (
@@ -101,14 +112,38 @@ export const ProfitSimulator: React.FC<Props> = ({ costDefault, priceDefault, un
             </div>
           </div>
           <div className="rounded-2xl p-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#181a20]">
-            <div className="text-[10px] text-gray-500">คืนทุน (งบสูงสุด {capital || '-'})</div>
+            <div className="text-[10px] text-gray-500">คืนทุน (งบหมุนเวียน ฿{baht(simulatedWorkingCapital)})</div>
             <div className="text-base font-black font-mono text-gray-900 dark:text-white">
               {payback === null ? '—' : `${payback.toFixed(1)} เดือน`}
             </div>
           </div>
         </div>
       )}
+
       {!good && <p className="text-[10px] text-[#E53935] font-medium">⚠️ ราคาขายต่ำกว่าต้นทุน — ลองปรับราคาหรือลดต้นทุน</p>}
+
+      {(onSendToCapital || onSendToLocal) && (
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-800 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {onSendToCapital && (
+            <button
+              type="button"
+              onClick={() => onSendToCapital(simulatedWorkingCapital, cost, price, volume)}
+              className="py-2.5 px-3 rounded-xl bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-transform active:scale-95"
+            >
+              <span>💰 [หาทุน] ส่งยอด ฿{baht(simulatedWorkingCapital)} ไปตั้งตารางหุ้น</span>
+            </button>
+          )}
+          {onSendToLocal && (
+            <button
+              type="button"
+              onClick={onSendToLocal}
+              className="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-transform active:scale-95"
+            >
+              <span>📍 [หาคู่ค้า] ปักหมุดโรงงานรับผลิต {volume} หน่วย/ด.</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

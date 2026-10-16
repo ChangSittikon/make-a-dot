@@ -1,27 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PIPELINE_TABS } from '../pipelineConstants';
 import { NongDot } from '@/components/flow/NongDot';
 import {
   ArrowLeft,
   Sparkles,
-  Layers,
-  TrendingUp,
-  Calculator,
-  ShieldCheck,
-  Users,
   Key,
   CheckCircle2,
   Loader2,
-  RefreshCw,
   ExternalLink,
 } from 'lucide-react';
-import { ProductChain, ChainSource } from '../production/types';
+import {
+  ProductChain,
+  SupplyChainNode,
+  MicroOpportunity,
+  ChainSource,
+} from '../production/types';
 import { SEED_CHAINS } from '../production/seed';
 import { ActionKind } from '../production/OppCard';
 import { generateProductChain } from '../production/aiGenerator';
 import { getCachedChain, loadApiKey, saveApiKey } from '../production/storage';
+import { flattenOpps } from '../production/schema';
+import { CrossTabBridgePayload } from '../production/crossTabBridge';
 import { StepIdentity } from '../production/StepIdentity';
 import { StepChain } from '../production/StepChain';
 import { StepOpportunities } from '../production/StepOpportunities';
@@ -37,6 +38,9 @@ interface ProductionTabProps {
   onSelectSubIndustry?: (subId: string) => void;
   onSelectSegment?: (segId: string) => void;
   onNavigateMainTab?: (tab: string) => void;
+  onCrossTabAction?: (payload: CrossTabBridgePayload) => void;
+  initialChain?: ProductChain | null;
+  initialStep?: number;
 }
 
 const STEP_META: Record<
@@ -58,16 +62,15 @@ const STEP_META: Record<
 };
 
 export const ProductionTab: React.FC<ProductionTabProps> = ({
-  selectedIndustryId,
-  selectedSubIndustryId,
-  selectedSegmentId,
-  onSelectIndustry,
-  onSelectSubIndustry,
-  onSelectSegment,
   onNavigateMainTab,
+  onCrossTabAction,
+  initialChain,
+  initialStep,
 }) => {
-  const [activeStep, setActiveStep] = useState<number>(1);
-  const [selectedChain, setSelectedChain] = useState<ProductChain>(SEED_CHAINS.coffee);
+  const [activeStep, setActiveStep] = useState<number>(initialStep || 1);
+  const [selectedChain, setSelectedChain] = useState<ProductChain>(
+    initialChain || SEED_CHAINS.coffee
+  );
   const [chainSource, setChainSource] = useState<ChainSource>('SEED');
   const [selectedOppKey, setSelectedOppKey] = useState<string>('');
 
@@ -82,13 +85,80 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
 
   useEffect(() => {
     setApiKeyInput(loadApiKey());
-    // Ensure central Prisma DB is seeded with flagship product chains
     fetch('/api/production/chains').catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (initialChain) {
+      setSelectedChain(initialChain);
+    }
+    if (initialStep && initialStep >= 1 && initialStep <= 12) {
+      setActiveStep(initialStep);
+    }
+  }, [initialChain, initialStep]);
 
   const handleSaveApiKey = () => {
     saveApiKey(apiKeyInput);
     setShowKeyModal(false);
+  };
+
+  // Resolve active node & opportunity fallback
+  const resolveContextNodeAndOpp = (
+    oppOverride?: MicroOpportunity,
+    nodeOverride?: SupplyChainNode
+  ): { node: SupplyChainNode; opp: MicroOpportunity; key: string } => {
+    const flat = flattenOpps(selectedChain);
+    if (nodeOverride && oppOverride) {
+      const found = flat.find(
+        (f) =>
+          f.node.node_order === nodeOverride.node_order &&
+          f.opp.model_name === oppOverride.model_name
+      );
+      return {
+        node: nodeOverride,
+        opp: oppOverride,
+        key: found?.key || `${nodeOverride.node_order}-0`,
+      };
+    }
+
+    const matched =
+      flat.find((f) => f.key === selectedOppKey) ||
+      flat[0] || {
+        node: selectedChain.supply_chain_nodes[0],
+        opp: selectedChain.supply_chain_nodes[0].micro_opportunities[0],
+        key: '1-0',
+      };
+
+    return {
+      node: nodeOverride || matched.node,
+      opp: oppOverride || matched.opp,
+      key: matched.key,
+    };
+  };
+
+  // Trigger Cross-Tab Deep Integration
+  const triggerCrossTab = (
+    targetTab: 'CAPITAL' | 'LOCAL',
+    oppOverride?: MicroOpportunity,
+    nodeOverride?: SupplyChainNode,
+    customCashThb?: number
+  ) => {
+    const { node, opp, key } = resolveContextNodeAndOpp(oppOverride, nodeOverride);
+    setSelectedOppKey(key);
+
+    if (onCrossTabAction) {
+      onCrossTabAction({
+        targetTab,
+        timestamp: Date.now(),
+        chain: selectedChain,
+        node,
+        opp,
+        oppKey: key,
+        customCashThb,
+      });
+    } else {
+      onNavigateMainTab?.(targetTab);
+    }
   };
 
   // Helper to match known seed products
@@ -130,7 +200,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
     sectorId?: string,
     subCategoryName?: string
   ) => {
-    // 1. Check local seed
     const seed = findSeed(productName);
     if (seed) {
       setSelectedChain(seed);
@@ -140,7 +209,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       return;
     }
 
-    // 2. Check local storage cache (and sync to central Prisma DB in background)
     const cached = getCachedChain(productName);
     if (cached) {
       setSelectedChain(cached);
@@ -154,7 +222,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       return;
     }
 
-    // 3. Run AI Product JSON Generator Engine
     setIsGenerating(true);
     setGeneratingName(productName);
     setGeneratingPhase(1);
@@ -185,10 +252,17 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
   // Action link router
   const handleAction = (url: string) => {
     if (!url) return;
-    if (url.includes('tab=capital') || url.includes('ทำทุน')) {
-      onNavigateMainTab?.('CAPITAL');
-    } else if (url.includes('tab=nearby') || url.includes('tab=local') || url.includes('ทำใกล้')) {
-      onNavigateMainTab?.('LOCAL');
+    if (url.includes('tab=capital') || url.includes('ทำทุน') || url.includes('ระดมทุน') || url.includes('ทุน')) {
+      triggerCrossTab('CAPITAL');
+    } else if (
+      url.includes('tab=nearby') ||
+      url.includes('tab=local') ||
+      url.includes('ทำใกล้') ||
+      url.includes('ใกล้บ้าน') ||
+      url.includes('โรงงาน') ||
+      url.includes('ซัพพลายเออร์')
+    ) {
+      triggerCrossTab('LOCAL');
     } else if (url.includes('step=4') || url.includes('คำนวณ')) {
       setActiveStep(4);
     } else if (url.includes('step=5') || url.includes('อาวุธ')) {
@@ -196,33 +270,33 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
     } else if (url.includes('step=6') || url.includes('เชื่อมดอท')) {
       setActiveStep(6);
     } else {
-      window.open(url, '_blank');
+      triggerCrossTab('LOCAL');
     }
   };
 
-  const handleActionKind = (k: ActionKind) => {
-    if (k === 'CAPITAL') onNavigateMainTab?.('CAPITAL');
-    else if (k === 'LOCAL') onNavigateMainTab?.('LOCAL');
+  const handleActionKind = (
+    k: ActionKind,
+    opp?: MicroOpportunity,
+    node?: SupplyChainNode,
+    customCashThb?: number
+  ) => {
+    if (k === 'CAPITAL') triggerCrossTab('CAPITAL', opp, node, customCashThb);
+    else if (k === 'LOCAL') triggerCrossTab('LOCAL', opp, node, customCashThb);
     else if (k === 'CONNECT') setActiveStep(6);
   };
 
   const handleNavigateTabString = (tabName: string) => {
-    if (tabName === 'ทำทุน') onNavigateMainTab?.('CAPITAL');
-    else if (tabName === 'ทำใกล้') onNavigateMainTab?.('LOCAL');
+    if (tabName === 'ทำทุน') triggerCrossTab('CAPITAL');
+    else if (tabName === 'ทำใกล้') triggerCrossTab('LOCAL');
     else if (tabName === 'ทำเมือง') onNavigateMainTab?.('CITY');
     else if (tabName === 'ประมวลผล') onNavigateMainTab?.('PROCESS');
   };
 
-  const currentTab = PIPELINE_TABS.find((t) => t.id === activeStep) || PIPELINE_TABS[0];
   const stepMeta = STEP_META[activeStep] || STEP_META[1];
 
   return (
     <div className="flex-1 flex w-full h-full font-prompt bg-white dark:bg-[#12141a] overflow-hidden">
-      {/* ==================================================================== */}
-      {/* Left Sidebar (12 Pipeline Steps)                                     */}
-      {/* 01: Has Logo & Name "หาตัวตน"                                        */}
-      {/* 02-12: Clean numeric badges with hover tooltip & red active state   */}
-      {/* ==================================================================== */}
+      {/* Left Sidebar (12 Pipeline Steps) */}
       <div className="w-[56px] sm:w-[62px] shrink-0 bg-[#f8f9fa] dark:bg-[#16181f] overflow-y-auto pb-24 border-r border-gray-150 dark:border-gray-800/80 scrollbar-none flex flex-col">
         {PIPELINE_TABS.map((tab) => {
           const isActive = activeStep === tab.id;
@@ -265,7 +339,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                   </span>
                 </>
               ) : (
-                /* Steps 02-12: Display only number, bold and styled */
                 <span
                   className={`font-mono transition-all ${
                     isActive
@@ -281,14 +354,10 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
         })}
       </div>
 
-      {/* ==================================================================== */}
-      {/* Right Content Area: Active Step Deep-Dive                            */}
-      {/* ==================================================================== */}
+      {/* Right Content Area: Active Step Deep-Dive */}
       <div className="flex-1 min-w-0 overflow-y-auto pb-24 bg-white dark:bg-[#12141a]">
-        {/* Top Product Switcher & Stepper Pill Navigation (Only visible on steps 02..06) */}
         {activeStep >= 2 && activeStep <= 6 && (
           <div className="sticky top-0 z-30 bg-white/98 dark:bg-[#12141a]/98 backdrop-blur-md border-b border-gray-150 dark:border-gray-800 px-3 py-2 space-y-1.5 shadow-xs">
-            {/* Row 1: Back to 01 button + Product name & markup */}
             <div className="flex items-center justify-between gap-2">
               <button
                 onClick={() => setActiveStep(1)}
@@ -309,7 +378,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               </div>
             </div>
 
-            {/* Row 2: Steps 02-06 quick pills (horizontally scrollable without collision) */}
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
               {[
                 { step: 2, label: '02 ผ่าสายพาน' },
@@ -331,7 +399,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                 </button>
               ))}
 
-              {/* AI / Seed indicator badge */}
               <div
                 className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center gap-1 shrink-0 ml-auto"
                 title={`แหล่งที่มา: ${chainSource} (ซิงก์ฐานข้อมูลกลาง Prisma DOT017)`}
@@ -348,7 +415,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                 </span>
               </div>
 
-              {/* Link to DOT017 Taxonomy Center */}
               <a
                 href="/admin/taxonomy"
                 target="_blank"
@@ -360,7 +426,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                 <ExternalLink className="w-2.5 h-2.5" />
               </a>
 
-              {/* Gemini API Key config button */}
               <button
                 onClick={() => setShowKeyModal(true)}
                 className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 shrink-0"
@@ -372,9 +437,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
           </div>
         )}
 
-        {/* ================================================================= */}
-        {/* Step Views Router                                                 */}
-        {/* ================================================================= */}
         <div className="p-3 sm:p-5 max-w-5xl mx-auto">
           {activeStep === 1 && (
             <StepIdentity
@@ -409,6 +471,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               chain={selectedChain}
               selectedOppKey={selectedOppKey}
               onSelectOpp={setSelectedOppKey}
+              onAction={handleActionKind}
             />
           )}
 
@@ -432,17 +495,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
             />
           )}
 
-          {activeStep === 6 && (
-            <StepConnect
-              chain={selectedChain}
-              selectedOppKey={selectedOppKey}
-              onSelectOppKey={setSelectedOppKey}
-              onAction={handleAction}
-              onNavigateTab={handleNavigateTabString}
-            />
-          )}
-
-          {/* Steps 07 - 12: Workspaces */}
           {activeStep >= 7 && activeStep <= 12 && (
             <div className="py-8 max-w-xl mx-auto text-center space-y-5 animate-fadeIn">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-[#E53935] dark:bg-red-950/40 dark:text-red-300">
@@ -460,12 +512,11 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                 </h3>
                 <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
                   ระบบขั้นตอนการทำผลิตลำดับที่ {stepMeta.code} ({stepMeta.title})
-                  สำหรับสินค้า "{selectedChain.product.product_name}" อยู่ระหว่างเชื่อมโยงข้อมูลภาคสนาม
+                  สำหรับสินค้า &quot;{selectedChain.product.product_name}&quot; อยู่ระหว่างเชื่อมโยงข้อมูลภาคสนาม
                   คุณสามารถย้อนกลับไปผ่าสายพานหรือคำนวณกำไรในขั้นตอน 02-06 ได้ตลอดเวลา
                 </p>
               </div>
 
-              {/* Navigation buttons */}
               <div className="flex items-center justify-center gap-3 pt-6 border-t border-zinc-100 dark:border-zinc-800">
                 <button
                   onClick={() => setActiveStep((prev) => Math.max(1, prev - 1))}
@@ -496,9 +547,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
         </div>
       </div>
 
-      {/* ==================================================================== */}
-      {/* AI Analysis Loading Modal Overlay                                    */}
-      {/* ==================================================================== */}
+      {/* AI Analysis Loading Modal Overlay */}
       {isGenerating && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 text-center space-y-5 shadow-2xl animate-scaleUp">
@@ -515,11 +564,10 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
                 กำลังผ่าตัดห่วงโซ่อุปทาน
               </h3>
               <p className="text-xs font-semibold text-[#E53935] mt-0.5">
-                "{generatingName}"
+                &quot;{generatingName}&quot;
               </p>
             </div>
 
-            {/* 4 Steps Checklist Animation */}
             <div className="space-y-2.5 text-left bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 text-xs">
               {[
                 {
@@ -573,9 +621,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
         </div>
       )}
 
-      {/* ==================================================================== */}
-      {/* Gemini API Key Modal                                                 */}
-      {/* ==================================================================== */}
+      {/* Gemini API Key Modal */}
       {showKeyModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">

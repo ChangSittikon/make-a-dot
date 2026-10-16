@@ -15,6 +15,11 @@ import { CityTab } from '@/components/ecosystem/tabs/CityTab';
 import { LocalTab } from '@/components/ecosystem/tabs/LocalTab';
 import { SolverTab } from '@/components/ecosystem/tabs/SolverTab';
 import { SynergyMatrixTab } from '@/components/ecosystem/tabs/SynergyMatrixTab';
+import {
+  CrossTabBridgePayload,
+  computeCapTableFromProduction,
+} from '@/components/ecosystem/production/crossTabBridge';
+import { ProductChain } from '@/components/ecosystem/production/types';
 
 /* Tab Header Bar Items */
 const MAIN_TABS = [
@@ -29,7 +34,7 @@ const MAIN_TABS = [
 
 function EcosystemContent() {
   const [viewMode, setViewMode] = useState<'MOBILE' | 'PC'>('MOBILE');
-  const [mainTab, setMainTab] = useState<MainTabType>('PROCESS');
+  const [mainTab, setMainTab] = useState<MainTabType>('PRODUCTION');
 
   /* Tab 1 State: AI Processing Pipeline */
   const [promptInput, setPromptInput] = useState('');
@@ -38,10 +43,17 @@ function EcosystemContent() {
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
   /* Tab 2 State: Cap Table Simulation */
-  const [selectedIndustryId, setSelectedIndustryId] = useState('');
+  const [selectedIndustryId, setSelectedIndustryId] = useState('ind_01');
   const [selectedSubIndustryId, setSelectedSubIndustryId] = useState('');
   const [selectedSegmentId, setSelectedSegmentId] = useState('');
   const [capTableData, setCapTableData] = useState<CapTableItem[]>(INITIAL_CAP_TABLE);
+
+  /* Cross-Tab Deep Integration State (Production <-> Capital <-> Local) */
+  const [productionBridge, setProductionBridge] =
+    useState<CrossTabBridgePayload | null>(null);
+  const [lastProductionChain, setLastProductionChain] =
+    useState<ProductChain | null>(null);
+  const [lastProductionStep, setLastProductionStep] = useState<number>(2);
 
   /* Tab 4 State: Synergy Matrix */
   const [selectedEngineId, setSelectedEngineId] = useState<string | null>(null);
@@ -49,7 +61,9 @@ function EcosystemContent() {
   /* Trigger Pipeline Simulation */
   const handleRunProcessing = () => {
     if (!promptInput.trim()) {
-      setPromptInput('ต้องการสร้างอาคารพาณิชย์ 3 ชั้นแต่งบจำกัด ต้องการผู้รับเหมาหลักและผู้ค้ำประกันป้องกันทิ้งงาน');
+      setPromptInput(
+        'ต้องการสร้างอาคารพาณิชย์ 3 ชั้นแต่งบจำกัด ต้องการผู้รับเหมาหลักและผู้ค้ำประกันป้องกันทิ้งงาน'
+      );
     }
     setIsProcessing(true);
     setProcessingPhase(1);
@@ -66,7 +80,13 @@ function EcosystemContent() {
 
   /* Cap Table Event Handlers */
   const handleUpdateCapItem = (id: string, val: number) => {
-    setCapTableData(prev => prev.map(item => item.id === id ? { ...item, value: val } : item));
+    setCapTableData((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, value: val } : item))
+    );
+  };
+
+  const handleSetAllCapItems = (items: CapTableItem[]) => {
+    setCapTableData(items);
   };
 
   const handleSelectIndustryForCapTable = (indId: string) => {
@@ -88,7 +108,7 @@ function EcosystemContent() {
     setSelectedSubIndustryId(subId);
     setSelectedSegmentId('');
     const subList = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
-    const sub = subList.find(s => s.id === subId);
+    const sub = subList.find((s) => s.id === subId);
     if (sub) {
       const preset = sub.preset;
       setCapTableData([
@@ -104,9 +124,9 @@ function EcosystemContent() {
   const handleSelectSegment = (segId: string) => {
     setSelectedSegmentId(segId);
     const subList = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
-    const sub = subList.find(s => s.id === selectedSubIndustryId);
+    const sub = subList.find((s) => s.id === selectedSubIndustryId);
     if (sub && sub.segments) {
-      const seg = sub.segments.find(s => s.id === segId);
+      const seg = sub.segments.find((s) => s.id === segId);
       if (seg) {
         setCapTableData([
           { id: 'cash', name: 'เงินสด (Cash)', value: seg.preset.cash.val, color: '#56b6f7' },
@@ -120,13 +140,20 @@ function EcosystemContent() {
   };
 
   const handleResetPreset = () => {
+    if (productionBridge) {
+      const computed = computeCapTableFromProduction(productionBridge);
+      setCapTableData(computed.items);
+      return;
+    }
     const subList = ALL_SUB_INDUSTRIES[selectedIndustryId] || [];
-    const activeSub = subList.find(s => s.id === selectedSubIndustryId);
-    const activeSeg = activeSub?.segments?.find(s => s.id === selectedSegmentId);
-    const currentPreset = activeSeg 
-      ? activeSeg.preset 
-      : (activeSub ? activeSub.preset : (INDUSTRY_CAP_PRESETS[selectedIndustryId] || INDUSTRY_CAP_PRESETS.ind_01));
-    
+    const activeSub = subList.find((s) => s.id === selectedSubIndustryId);
+    const activeSeg = activeSub?.segments?.find((s) => s.id === selectedSegmentId);
+    const currentPreset = activeSeg
+      ? activeSeg.preset
+      : activeSub
+      ? activeSub.preset
+      : INDUSTRY_CAP_PRESETS[selectedIndustryId] || INDUSTRY_CAP_PRESETS.ind_01;
+
     setCapTableData([
       { id: 'cash', name: 'เงินสด (Cash)', value: currentPreset.cash.val, color: '#56b6f7' },
       { id: 'sweat', name: 'หยาดเหงื่อแรงงาน (Sweat)', value: currentPreset.sweat.val, color: '#9d9ff7' },
@@ -134,6 +161,23 @@ function EcosystemContent() {
       { id: 'venue', name: 'สถานที่/ออฟฟิศ (Venue)', value: currentPreset.venue.val, color: '#a3e635' },
       { id: 'ip', name: 'ทรัพย์สินทางปัญญา (IP)', value: currentPreset.ip.val, color: '#f3e8c8' },
     ]);
+  };
+
+  /* Cross-Tab Deep Integration Handler */
+  const handleCrossTabAction = (payload: CrossTabBridgePayload) => {
+    setProductionBridge(payload);
+    setLastProductionChain(payload.chain);
+    setLastProductionStep(2);
+
+    const computed = computeCapTableFromProduction(payload);
+    setSelectedIndustryId(computed.sectorIndustryId);
+    setCapTableData(computed.items);
+    setMainTab(payload.targetTab);
+  };
+
+  const handleBackToProduction = () => {
+    setLastProductionStep(2);
+    setMainTab('PRODUCTION');
   };
 
   /* ---------------------------------------------------------------- */
@@ -144,7 +188,6 @@ function EcosystemContent() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[#161a1e] font-prompt sm:py-8 transition-colors duration-300">
         {/* Mobile Device Container Frame (430px x 900px) */}
         <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-[#fdfdfd] dark:bg-[#111315] relative flex flex-col overflow-hidden shadow-2xl transition-colors duration-300">
-          
           {/* Top Header Bar */}
           <header className="px-4 py-2.5 bg-white dark:bg-[#16191e] border-b border-gray-100 dark:border-gray-800/80 flex items-center justify-between shrink-0 z-30">
             <div className="min-w-0">
@@ -169,24 +212,35 @@ function EcosystemContent() {
             </div>
           </header>
 
-          {/* Subheader: 4 Main Tabs Bar */}
+          {/* Subheader: Main Tabs Bar */}
           <div className="px-2 py-1.5 bg-gray-50/90 dark:bg-[#16191e] border-b border-gray-100 dark:border-gray-800/80 flex gap-1 overflow-x-auto hide-scrollbar shrink-0 z-20">
             {MAIN_TABS.map((tab) => {
               const isActive = mainTab === tab.id;
+              const hasBridgeSync =
+                productionBridge &&
+                (tab.id === 'CAPITAL' || tab.id === 'LOCAL');
               return (
                 <button
                   key={tab.id}
                   onClick={() => setMainTab(tab.id as MainTabType)}
                   className={`
-                    flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] whitespace-nowrap transition-all shrink-0
-                    ${isActive
-                      ? 'bg-gray-900 text-white font-bold shadow-xs dark:bg-white dark:text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-100/80 dark:text-gray-400 dark:hover:bg-[#20252e]'
+                    flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] whitespace-nowrap transition-all shrink-0 relative
+                    ${
+                      isActive
+                        ? 'bg-gray-900 text-white font-bold shadow-xs dark:bg-white dark:text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-100/80 dark:text-gray-400 dark:hover:bg-[#20252e]'
                     }
                   `}
                 >
-                  <i className={`${tab.icon} text-[9px] ${isActive ? 'text-brand-red' : ''}`}></i>
+                  <i
+                    className={`${tab.icon} text-[9px] ${
+                      isActive ? 'text-brand-red' : ''
+                    }`}
+                  ></i>
                   <span>{tab.label}</span>
+                  {hasBridgeSync && !isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E53935] animate-ping" />
+                  )}
                 </button>
               );
             })}
@@ -216,7 +270,11 @@ function EcosystemContent() {
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
                 onUpdateCapItem={handleUpdateCapItem}
+                onSetAllCapItems={handleSetAllCapItems}
                 onResetPreset={handleResetPreset}
+                productionBridge={productionBridge}
+                onBackToProduction={handleBackToProduction}
+                onNavigateToLocalWithBridge={handleCrossTabAction}
               />
             )}
 
@@ -229,6 +287,9 @@ function EcosystemContent() {
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
                 onNavigateMainTab={(tab) => setMainTab(tab as MainTabType)}
+                onCrossTabAction={handleCrossTabAction}
+                initialChain={lastProductionChain}
+                initialStep={lastProductionChain ? lastProductionStep : undefined}
               />
             )}
 
@@ -251,6 +312,9 @@ function EcosystemContent() {
                 onSelectIndustry={handleSelectIndustryForCapTable}
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
+                productionBridge={productionBridge}
+                onBackToProduction={handleBackToProduction}
+                onSendFactoryMoqToCapital={handleCrossTabAction}
               />
             )}
 
@@ -283,7 +347,6 @@ function EcosystemContent() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#161a1e] font-prompt flex flex-col items-center p-4 lg:p-8 transition-colors duration-300">
       <div className="w-full max-w-7xl h-[92vh] min-h-[760px] bg-[#fdfdfd] dark:bg-[#111315] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-2xl flex flex-col overflow-hidden">
-        
         {/* Top PC Master Header */}
         <header className="px-6 py-3.5 bg-white dark:bg-[#16191e] border-b border-gray-100 dark:border-gray-800/80 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -313,29 +376,43 @@ function EcosystemContent() {
           </div>
         </header>
 
-        {/* PC Subheader: 4 Main Tabs Bar */}
+        {/* PC Subheader: Main Tabs Bar */}
         <div className="px-6 py-2 bg-gray-50 dark:bg-[#16191e] border-b border-gray-100 dark:border-gray-800/80 flex items-center justify-between shrink-0">
           <div className="flex gap-2">
             {MAIN_TABS.map((tab) => {
               const isActive = mainTab === tab.id;
+              const hasBridgeSync =
+                productionBridge &&
+                (tab.id === 'CAPITAL' || tab.id === 'LOCAL');
               return (
                 <button
                   key={tab.id}
                   onClick={() => setMainTab(tab.id as MainTabType)}
                   className={`
                     flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all
-                    ${isActive
-                      ? 'bg-gray-900 text-white font-bold shadow-xs dark:bg-white dark:text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-[#20252e]'
+                    ${
+                      isActive
+                        ? 'bg-gray-900 text-white font-bold shadow-xs dark:bg-white dark:text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-[#20252e]'
                     }
                   `}
                 >
-                  <i className={`${tab.icon} text-xs ${isActive ? 'text-brand-red' : ''}`}></i>
+                  <i
+                    className={`${tab.icon} text-xs ${
+                      isActive ? 'text-brand-red' : ''
+                    }`}
+                  ></i>
                   <span>{tab.label}</span>
-                  <span className={`text-[8px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                    isActive ? 'bg-white/20 text-white dark:bg-black/10 dark:text-black' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
-                  }`}>
-                    {tab.badge}
+                  <span
+                    className={`text-[8px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      isActive
+                        ? 'bg-white/20 text-white dark:bg-black/10 dark:text-black'
+                        : hasBridgeSync
+                        ? 'bg-[#E53935] text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                    }`}
+                  >
+                    {hasBridgeSync && !isActive ? 'SYNCED' : tab.badge}
                   </span>
                 </button>
               );
@@ -343,7 +420,7 @@ function EcosystemContent() {
           </div>
 
           <span className="text-[10px] text-gray-400 font-mono hidden md:inline-block">
-            5-Tier Architecture • Escrow Guaranteed
+            5-Tier Architecture • Cross-Tab Deep Sync
           </span>
         </div>
 
@@ -364,7 +441,7 @@ function EcosystemContent() {
           )}
 
           {mainTab === 'CAPITAL' && (
-            <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto">
+            <div className="flex-1 flex overflow-hidden">
               <CapitalTab
                 selectedIndustryId={selectedIndustryId}
                 selectedSubIndustryId={selectedSubIndustryId}
@@ -374,7 +451,11 @@ function EcosystemContent() {
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
                 onUpdateCapItem={handleUpdateCapItem}
+                onSetAllCapItems={handleSetAllCapItems}
                 onResetPreset={handleResetPreset}
+                productionBridge={productionBridge}
+                onBackToProduction={handleBackToProduction}
+                onNavigateToLocalWithBridge={handleCrossTabAction}
               />
             </div>
           )}
@@ -389,6 +470,9 @@ function EcosystemContent() {
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
                 onNavigateMainTab={(tab) => setMainTab(tab as MainTabType)}
+                onCrossTabAction={handleCrossTabAction}
+                initialChain={lastProductionChain}
+                initialStep={lastProductionChain ? lastProductionStep : undefined}
               />
             </div>
           )}
@@ -407,7 +491,7 @@ function EcosystemContent() {
           )}
 
           {mainTab === 'LOCAL' && (
-            <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto">
+            <div className="flex-1 flex overflow-hidden">
               <LocalTab
                 selectedIndustryId={selectedIndustryId}
                 selectedSubIndustryId={selectedSubIndustryId}
@@ -415,6 +499,9 @@ function EcosystemContent() {
                 onSelectIndustry={handleSelectIndustryForCapTable}
                 onSelectSubIndustry={handleSelectSubIndustry}
                 onSelectSegment={handleSelectSegment}
+                productionBridge={productionBridge}
+                onBackToProduction={handleBackToProduction}
+                onSendFactoryMoqToCapital={handleCrossTabAction}
               />
             </div>
           )}
@@ -438,7 +525,6 @@ function EcosystemContent() {
             />
           )}
         </div>
-
       </div>
     </div>
   );
@@ -451,7 +537,9 @@ export default function EcosystemPage() {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center font-prompt">
           <div className="flex items-center gap-2 text-gray-500">
             <span className="w-2 h-2 rounded-full bg-brand-red animate-pulse"></span>
-            <span className="text-xs uppercase tracking-widest font-mono">กำลังเปิดหน้าเชื่อมดอท...</span>
+            <span className="text-xs uppercase tracking-widest font-mono">
+              กำลังเปิดหน้าเชื่อมดอท...
+            </span>
           </div>
         </div>
       }
