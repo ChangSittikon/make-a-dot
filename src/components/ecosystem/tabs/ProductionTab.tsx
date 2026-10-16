@@ -111,6 +111,16 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
     if (q.includes('ทุเรียน') || q.includes('durian') || q.includes('ผลไม้')) {
       return SEED_CHAINS.durian;
     }
+    if (
+      q.includes('เครื่องหอม') ||
+      q.includes('น้ำหอม') ||
+      q.includes('ก้านไม้หอม') ||
+      q.includes('diffuser') ||
+      q.includes('เทียนหอม') ||
+      q.includes('aroma')
+    ) {
+      return SEED_CHAINS.aroma;
+    }
     return null;
   };
 

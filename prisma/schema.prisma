@@ -1121,9 +1121,11 @@ model ProductChain {
   source              String                @default("SEED") // SEED | GEMINI | FALLBACK
   status              String                @default("VERIFIED") // VERIFIED | PENDING_REVIEW
   searchCount         Int                   @default(1)
+  clusterKey          String?               // เช่น "cluster_aroma", "cluster_coffee"
 
   nodes               SupplyChainNodeRecord[]
   poolingRooms        GroupPoolingRoom[]
+  synonyms            ProductSynonym[]
 
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
@@ -1131,6 +1133,7 @@ model ProductChain {
   @@index([industryId])
   @@index([productName])
   @@index([status])
+  @@index([clusterKey])
 }
 
 // 3. โหนดขั้นตอนในห่วงโซ่แนวตั้ง 5 ระดับ (01 ต้นน้ำ -> 05 ปลายน้ำ/บริการเสริม)
@@ -1217,5 +1220,25 @@ model GroupPoolingRoom {
   updatedAt      DateTime      @updatedAt
 
   @@index([productChainId])
+}
+
+// 6. คำพ้องและความหมายใกล้เคียง (Phase 3: Semantic Search & Synonym Mapping)
+model ProductSynonym {
+  id             String       @id @default(cuid())
+  productChainId String
+  productChain   ProductChain @relation(fields: [productChainId], references: [id], onDelete: Cascade)
+
+  keyword        String       // เช่น "น้ำหอมรถยนต์", "ก้านไม้หอม", "เทียนหอมอโรมา", "reed diffuser"
+  normalized     String       // คำที่ตัดช่องว่าง/ตัวพิมพ์เล็ก
+  matchType      String       @default("SYNONYM") // SYNONYM | SUB_PRODUCT | VARIANT | SLANG
+  confidence     Float        @default(1.0)
+  hitCount       Int          @default(0)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([productChainId, normalized])
+  @@index([normalized])
+  @@index([keyword])
 }
 

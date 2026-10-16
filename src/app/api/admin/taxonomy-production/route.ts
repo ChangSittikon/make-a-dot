@@ -24,6 +24,9 @@ export async function GET() {
           archetype: {
             select: { id: true, code: true, name: true },
           },
+          synonyms: {
+            orderBy: { hitCount: 'desc' },
+          },
           nodes: {
             orderBy: { nodeOrder: 'asc' },
             include: {
@@ -59,6 +62,7 @@ export async function GET() {
     let totalNodes = 0;
     let totalOpportunities = 0;
     let totalLinkedProblems = 0;
+    let totalSynonyms = 0;
     let verifiedCount = 0;
     let pendingCount = 0;
 
@@ -66,6 +70,7 @@ export async function GET() {
       if (c.status === 'VERIFIED') verifiedCount++;
       else pendingCount++;
       totalNodes += c.nodes.length;
+      totalSynonyms += c.synonyms.length;
       for (const n of c.nodes) {
         totalOpportunities += n.opportunities.length;
         totalLinkedProblems += n.linkedProblems.length;
@@ -82,6 +87,7 @@ export async function GET() {
         totalNodes,
         totalOpportunities,
         totalLinkedProblems,
+        totalSynonyms,
       },
       chains,
       archetypes,
@@ -100,6 +106,47 @@ export async function POST(req: Request) {
     await ensureProductionSeeded();
     const body = await req.json();
     const { action } = body;
+
+    if (action === 'ADD_SYNONYM') {
+      const { productChainId, keyword, matchType } = body;
+      if (!productChainId || !keyword) {
+        return NextResponse.json({ success: false, error: 'Missing parameters' }, { status: 400 });
+      }
+      const { addProductSynonym } = await import('@/lib/productionDb');
+      const syn = await addProductSynonym(productChainId, keyword, matchType || 'SYNONYM');
+      return NextResponse.json({
+        success: true,
+        message: `เพิ่มคำพ้อง "${syn.keyword}" ให้ผังสินค้าเรียบร้อยแล้ว`,
+        synonym: syn,
+      });
+    }
+
+    if (action === 'DELETE_SYNONYM') {
+      const { synonymId } = body;
+      if (!synonymId) {
+        return NextResponse.json({ success: false, error: 'Missing synonymId' }, { status: 400 });
+      }
+      const { deleteProductSynonym } = await import('@/lib/productionDb');
+      await deleteProductSynonym(synonymId);
+      return NextResponse.json({
+        success: true,
+        message: 'ลบคำพ้องเรียบร้อยแล้ว',
+      });
+    }
+
+    if (action === 'SEMANTIC_TEST') {
+      const { query } = body;
+      if (!query || !query.trim()) {
+        return NextResponse.json({ success: false, error: 'Missing query' }, { status: 400 });
+      }
+      const { resolveSemanticQuery } = await import('@/lib/semanticSearch');
+      const result = await resolveSemanticQuery(query.trim());
+      return NextResponse.json({
+        success: true,
+        query: query.trim(),
+        result,
+      });
+    }
 
     if (action === 'VERIFY_AND_SYNC') {
       const { productChainId } = body;

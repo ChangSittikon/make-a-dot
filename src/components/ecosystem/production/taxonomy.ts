@@ -175,6 +175,7 @@ export const STYLE_FILTERS: { id: StyleFilter; label: string; tag: string }[] = 
 
 export const TRENDING_CHIPS: { label: string; query: string; seedId?: string; sectorId: string }[] = [
   { label: '#กาแฟครบวงจร', query: 'กาแฟ (อาราบิก้า)', seedId: 'coffee', sectorId: '05' },
+  { label: '#ก้านไม้หอม/น้ำหอมรถยนต์', query: 'ผลิตภัณฑ์เครื่องหอมและอโรมา (Aroma & Fragrance)', seedId: 'aroma', sectorId: '02' },
   { label: '#สกินแคร์OEM', query: 'สกินแคร์/ครีมบำรุงผิว OEM', seedId: 'skincare', sectorId: '02' },
   { label: '#ติดโซลาร์เซลล์', query: 'โซลาร์เซลล์และงานติดตั้ง', seedId: 'solar', sectorId: '01' },
   { label: '#ทุเรียนพรีเมียม', query: 'ทุเรียนและผลไม้เกรดพรีเมียม', seedId: 'durian', sectorId: '06' },

@@ -3,6 +3,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
+export interface AdminSynonym {
+  id: string;
+  keyword: string;
+  matchType: string;
+  hitCount: number;
+  confidence: number;
+}
+
 export interface AdminOpportunityItem {
   id: string;
   strategyType: string;
@@ -58,6 +66,7 @@ export interface AdminProductChain {
   source: string;
   status: string;
   searchCount: number;
+  clusterKey?: string | null;
   industry: {
     id: string;
     name: string;
@@ -69,6 +78,7 @@ export interface AdminProductChain {
     code: string;
     name: string;
   } | null;
+  synonyms?: AdminSynonym[];
   nodes: AdminSupplyNode[];
 }
 
@@ -80,6 +90,7 @@ export interface ProductionStats {
   totalNodes: number;
   totalOpportunities: number;
   totalLinkedProblems: number;
+  totalSynonyms?: number;
 }
 
 interface TaxonomySupplyChainTabProps {
@@ -128,6 +139,15 @@ export const TaxonomySupplyChainTab: React.FC<TaxonomySupplyChainTabProps> = ({
   const [newProductSector, setNewProductSector] = useState<number>(5);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Phase 3: Semantic Sandbox state
+  const [semanticTestQuery, setSemanticTestQuery] = useState("");
+  const [semanticTestLoading, setSemanticTestLoading] = useState(false);
+  const [semanticTestResult, setSemanticTestResult] = useState<any>(null);
+
+  // Phase 3: Inline add synonym state
+  const [addingSynonymForChainId, setAddingSynonymForChainId] = useState<string | null>(null);
+  const [synonymInput, setSynonymInput] = useState("");
 
   const toggleExpand = (id: string) => {
     setExpandedChainIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -227,6 +247,80 @@ export const TaxonomySupplyChainTab: React.FC<TaxonomySupplyChainTabProps> = ({
     }
   };
 
+  // Phase 3: Add Synonym Handler
+  const handleAddSynonym = async (chainId: string) => {
+    if (!synonymInput.trim()) return;
+    setBusyId(chainId);
+    try {
+      const res = await fetch("/api/admin/taxonomy-production", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "ADD_SYNONYM",
+          productChainId: chainId,
+          keyword: synonymInput.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSynonymInput("");
+        setAddingSynonymForChainId(null);
+        onShowMessage(`🔗 ${data.message}`);
+        await onRefreshAll();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  // Phase 3: Delete Synonym Handler
+  const handleDeleteSynonym = async (synonymId: string) => {
+    try {
+      const res = await fetch("/api/admin/taxonomy-production", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "DELETE_SYNONYM",
+          synonymId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onShowMessage(`🗑️ ${data.message}`);
+        await onRefreshAll();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Phase 3: Test Semantic Matcher
+  const handleTestSemantic = async () => {
+    if (!semanticTestQuery.trim()) return;
+    setSemanticTestLoading(true);
+    setSemanticTestResult(null);
+    try {
+      const res = await fetch("/api/admin/taxonomy-production", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SEMANTIC_TEST",
+          query: semanticTestQuery.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSemanticTestResult(data.result);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSemanticTestLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* ======================================================== */}
@@ -244,15 +338,11 @@ export const TaxonomySupplyChainTab: React.FC<TaxonomySupplyChainTabProps> = ({
                   ศูนย์ฐานข้อมูลผังห่วงโซ่สินค้า (Production Supply Chain Registry)
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-50 text-brand-red border border-red-200">
-                  เชื่อมตรง 12 อุตสาหกรรม (DOT017)
+                  Phase 3: Semantic Search & Synonym Mapping
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                เชื่อมโยงผังการผลิต 5 ขั้นตอน (ต้นน้ำ → ปลายน้ำ) เข้ากับ{" "}
-                <span className="font-bold text-gray-800">Layer 1 (WorkType)</span>,{" "}
-                <span className="font-bold text-gray-800">Layer 2 (12 อุตสาหกรรม)</span>,{" "}
-                <span className="font-bold text-gray-800">Layer 3 (อาชีพ & ทักษะ)</span> และ{" "}
-                <span className="font-bold text-brand-red">ภารกิจแก้คอขวด (ProblemNode Bounty)</span> ในฐานข้อมูลเดียว
+                ผูกระบบคำพ้องความหมาย (เช่น พิมพ์ &ldquo;น้ำหอมรถยนต์&rdquo; หรือ &ldquo;ก้านไม้หอม&rdquo; → ชี้เป้าไปที่ผังกลุ่มเครื่องหอมตัวเดียวกัน) ลดความซ้ำซ้อนในฐานข้อมูล 100%
               </p>
             </div>
           </div>
@@ -266,39 +356,128 @@ export const TaxonomySupplyChainTab: React.FC<TaxonomySupplyChainTabProps> = ({
           </Link>
         </div>
 
-        {/* 5 Database Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-5">
+        {/* 6 Database Metric Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5">
           <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200/70">
-            <div className="text-[11px] font-bold text-gray-500">ผังสินค้าทั้งหมด (ProductChain)</div>
+            <div className="text-[11px] font-bold text-gray-500">ผังสินค้า (ProductChain)</div>
             <div className="text-xl font-black text-gray-900 mt-1">{stats.totalChains}</div>
             <div className="text-[10px] text-emerald-600 font-bold mt-0.5">
-              อนุมัติแล้ว {stats.verifiedCount} • รอตรวจ {stats.pendingCount}
+              อนุมัติ {stats.verifiedCount} • รอ {stats.pendingCount}
             </div>
           </div>
-          <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200/70">
-            <div className="text-[11px] font-bold text-gray-500">แม่พิมพ์ห่วงโซ่ (Archetypes)</div>
-            <div className="text-xl font-black text-gray-900 mt-1">{stats.totalArchetypes}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">ผูกใต้ 12 อุตสาหกรรมหลัก</div>
+          <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-100">
+            <div className="text-[11px] font-bold text-sky-800">คำพ้อง (Synonyms)</div>
+            <div className="text-xl font-black text-sky-700 mt-1">{stats.totalSynonyms || 0}</div>
+            <div className="text-[10px] text-sky-600 mt-0.5">จับคู่คำพ้องในระบบ</div>
           </div>
           <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200/70">
-            <div className="text-[11px] font-bold text-gray-500">โหนดการผลิต (5 Stages)</div>
+            <div className="text-[11px] font-bold text-gray-500">แม่พิมพ์ห่วงโซ่</div>
+            <div className="text-xl font-black text-gray-900 mt-1">{stats.totalArchetypes}</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">12 อุตสาหกรรม</div>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200/70">
+            <div className="text-[11px] font-bold text-gray-500">โหนด 5 ขั้นตอน</div>
             <div className="text-xl font-black text-gray-900 mt-1">{stats.totalNodes}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">ต้นน้ำ → กลางน้ำ → ปลายน้ำ</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">ต้นน้ำ → ปลายน้ำ</div>
           </div>
           <div className="p-3.5 rounded-2xl bg-red-50/50 border border-red-100">
-            <div className="text-[11px] font-bold text-brand-red">จุดแทรกตัวอาชีพ (Micro-Opps)</div>
+            <div className="text-[11px] font-bold text-brand-red">จุดแทรกตัวอาชีพ</div>
             <div className="text-xl font-black text-brand-red mt-1">{stats.totalOpportunities}</div>
-            <div className="text-[10px] text-gray-600 mt-0.5">เชื่อมตรง Layer 3 (Occupation/Skill)</div>
+            <div className="text-[10px] text-gray-600 mt-0.5">เชื่อม L3 อาชีพ & ทักษะ</div>
           </div>
           <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/70">
-            <div className="text-[11px] font-bold text-amber-800">ภารกิจแก้คอขวด (Linked Bounties)</div>
+            <div className="text-[11px] font-bold text-amber-800">ภารกิจคอขวด</div>
             <div className="text-xl font-black text-amber-700 mt-1">{stats.totalLinkedProblems}</div>
-            <div className="text-[10px] text-amber-700 mt-0.5">แปลงจาก Pain Point โหนดการผลิต</div>
+            <div className="text-[10px] text-amber-700 mt-0.5">ProblemNode Bounty</div>
           </div>
         </div>
 
+        {/* ======================================================== */}
+        {/* PHASE 3: LIVE SEMANTIC SEARCH TESTER (กล่องทดสอบจับคู่คำพ้อง) */}
+        {/* ======================================================== */}
+        <div className="mt-5 p-4 rounded-2xl bg-gradient-to-r from-sky-950 via-gray-900 to-gray-950 text-white space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-sky-500 text-white flex items-center justify-center text-xs">
+                <i className="fa-solid fa-magnifying-glass-chart"></i>
+              </span>
+              <div>
+                <h4 className="text-xs font-black text-sky-200">
+                  ทดสอบระบบค้นหาด้วยความหมาย (Semantic Search & Synonym Matcher Sandbox)
+                </h4>
+                <p className="text-[10px] text-gray-400">
+                  พิมพ์คำค้นหาจำลอง เช่น &ldquo;น้ำหอมรถยนต์&rdquo;, &ldquo;ก้านไม้หอม&rdquo;, &ldquo;diffuser&rdquo;, &ldquo;เมล็ดกาแฟดิบ&rdquo; เพื่อทดสอบการชี้เป้าเข้าผังกลาง
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="พิมพ์คำค้นทดสอบ..."
+                value={semanticTestQuery}
+                onChange={(e) => setSemanticTestQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleTestSemantic();
+                }}
+                className="w-56 px-3 py-1.5 rounded-xl bg-gray-800 text-white text-xs border border-gray-700 focus:outline-none focus:border-sky-400"
+              />
+              <button
+                onClick={handleTestSemantic}
+                disabled={semanticTestLoading || !semanticTestQuery.trim()}
+                className="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-1.5 shrink-0"
+              >
+                {semanticTestLoading ? (
+                  <i className="fa-solid fa-spinner animate-spin"></i>
+                ) : (
+                  <i className="fa-solid fa-bolt"></i>
+                )}
+                <span>ทดสอบ</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Test Result Display */}
+          {semanticTestResult && (
+            <div className="p-3 rounded-xl bg-gray-800/90 border border-sky-400/30 text-xs space-y-1.5 animate-fadeIn">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sky-300">ผลลัพธ์คำว่า &ldquo;{semanticTestQuery}&rdquo;:</span>
+                  {semanticTestResult.isMatch ? (
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 text-[11px]">
+                      ✓ ชี้เป้าสำเร็จ ({semanticTestResult.matchType})
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 text-[11px]">
+                      ⚡ สินค้าใหม่ (NEW_CHAIN)
+                    </span>
+                  )}
+                  <span className="text-[10px] text-gray-400 font-mono">
+                    ความมั่นใจ: {(semanticTestResult.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+                {semanticTestResult.canonicalChain && (
+                  <span className="font-extrabold text-white bg-sky-600/60 px-2.5 py-0.5 rounded-md">
+                    ผังกลาง: {semanticTestResult.canonicalChain.product.product_name}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-300 italic">{semanticTestResult.explanation}</p>
+              {semanticTestResult.suggestedNodeTitle && (
+                <div className="text-[10px] text-sky-300 flex items-center gap-1 font-semibold">
+                  <i className="fa-solid fa-arrow-right text-[9px]"></i>
+                  <span>
+                    โหนดแนะนำที่ตรงกับสินค้าตัวนี้: ขั้นที่ {semanticTestResult.suggestedNodeOrder} (
+                    {semanticTestResult.suggestedNodeTitle})
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Live AI Product Unbundler Bar for Admin */}
-        <div className="mt-5 p-4 rounded-2xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span className="w-8 h-8 rounded-xl bg-brand-red flex items-center justify-center text-white shrink-0">
               <i className="fa-solid fa-wand-magic-sparkles text-xs"></i>
@@ -308,7 +487,7 @@ export const TaxonomySupplyChainTab: React.FC<TaxonomySupplyChainTabProps> = ({
                 เพิ่มผังสินค้าใหม่ลงฐานข้อมูล Prisma ทันที (AI Supply Chain Unbundler)
               </div>
               <div className="text-[11px] text-gray-300">
-                พิมพ์ชื่อสินค้าใดก็ได้ ระบบจะผ่าตัด 5 โหนดต้นน้ำ-ปลายน้ำ พร้อมผูกเข้ากับ 12 อุตสาหกรรมอัตโนมัติ
+                ผ่าตัด 5 โหนดต้นน้ำ-ปลายน้ำ พร้อมบันทึกคลังคำพ้องเข้าสู่ฐานข้อมูลอัตโนมัติ
               </div>
             </div>
           </div>
@@ -420,6 +599,7 @@ export const TaxonomySupplyChainTab: React.FC<TaxonomySupplyChainTabProps> = ({
             {filteredChains.map((chain) => {
               const isExpanded = !!expandedChainIds[chain.id];
               const isBusy = busyId === chain.id;
+              const isAddingSynonym = addingSynonymForChainId === chain.id;
 
               return (
                 <div
@@ -460,10 +640,82 @@ export const TaxonomySupplyChainTab: React.FC<TaxonomySupplyChainTabProps> = ({
                           | Markup +{chain.totalMarkupPercent}%)
                         </span>
                       </div>
+
+                      {/* Phase 3: Synonyms Chips Row */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                        <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+                          <i className="fa-solid fa-tags text-[9px] text-sky-600"></i>
+                          คำพ้องที่ชี้เป้ามายังผังนี้:
+                        </span>
+                        {chain.synonyms && chain.synonyms.length > 0 ? (
+                          chain.synonyms.map((syn) => (
+                            <span
+                              key={syn.id}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 text-[10px] font-semibold"
+                            >
+                              <span>#{syn.keyword}</span>
+                              {syn.hitCount > 0 && (
+                                <span className="text-[9px] text-sky-500">({syn.hitCount})</span>
+                              )}
+                              <button
+                                onClick={() => handleDeleteSynonym(syn.id)}
+                                className="text-sky-400 hover:text-red-600 ml-0.5"
+                                title="ลบคำพ้องนี้"
+                              >
+                                &times;
+                              </button>
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[10px] text-gray-400 italic">ยังไม่มีคำพ้องเพิ่มเติม</span>
+                        )}
+
+                        {/* Add Synonym inline form */}
+                        {isAddingSynonym ? (
+                          <div className="inline-flex items-center gap-1">
+                            <input
+                              type="text"
+                              placeholder="พิมพ์คำพ้องใหม่ เช่น น้ำหอมรถยนต์..."
+                              value={synonymInput}
+                              onChange={(e) => setSynonymInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleAddSynonym(chain.id);
+                              }}
+                              className="px-2 py-0.5 rounded-md text-[10px] bg-white border border-sky-400 text-gray-800 focus:outline-none w-36"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleAddSynonym(chain.id)}
+                              className="px-2 py-0.5 rounded-md bg-sky-600 text-white text-[10px] font-bold cursor-pointer"
+                            >
+                              บันทึก
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAddingSynonymForChainId(null);
+                                setSynonymInput("");
+                              }}
+                              className="text-gray-400 hover:text-gray-600 text-[11px]"
+                            >
+                              ยกเลิก
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setAddingSynonymForChainId(chain.id);
+                              setSynonymInput("");
+                            }}
+                            className="px-2 py-0.5 rounded-md bg-gray-100 hover:bg-sky-50 text-gray-600 hover:text-sky-700 text-[10px] font-bold transition-colors cursor-pointer border border-dashed border-gray-300"
+                          >
+                            + เพิ่มคำพ้อง
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Card Action Buttons */}
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 self-start lg:self-center">
                       <button
                         onClick={() => handleVerifyAndSync(chain.id)}
                         disabled={isBusy}

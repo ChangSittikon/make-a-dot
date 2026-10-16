@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { TypewriterPrompt } from '../pipeline/StepScopeView';
 import { INDUSTRIES_LIST } from '../constants';
 import {
@@ -69,8 +69,47 @@ export const StepIdentity: React.FC<Props> = ({ onPick }) => {
   const [apiKey, setApiKey] = useState(() => loadApiKey());
   const [keySaved, setKeySaved] = useState(false);
 
+  // Phase 3: Real-time Semantic Search & Synonym suggestions
+  const [semanticMatch, setSemanticMatch] = useState<{
+    isMatch: boolean;
+    canonicalProductName: string;
+    matchedKeyword: string;
+    matchType: string;
+    confidence: number;
+    explanation: string;
+    suggestedNodeOrder?: number;
+    suggestedNodeTitle?: string;
+  } | null>(null);
+  const [synonymSuggestions, setSynonymSuggestions] = useState<
+    { keyword: string; canonicalName: string; hint?: string }[]
+  >([]);
+
   const filterActive = budget !== 'ALL' || styles.length > 0;
   const budgetLevel = BUDGET_FILTERS.find((b) => b.id === budget)?.level ?? 99;
+
+  /* ---------- Phase 3: Real-time Semantic Search Hook ---------- */
+  useEffect(() => {
+    const qClean = query.trim();
+    if (!qClean || qClean.length < 2) {
+      setSemanticMatch(null);
+      setSynonymSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetch(`/api/production/search?q=${encodeURIComponent(qClean)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.success) {
+            setSemanticMatch(data.semanticMatch || null);
+            setSynonymSuggestions(data.suggestions || []);
+          }
+        })
+        .catch(() => {});
+    }, 180);
+
+    return () => clearTimeout(timer);
+  }, [query]);
 
   /* ---------- Reverse Lookup: คำนวณจุดแทรกตัวที่ตรงกับตัวกรอง ---------- */
   const { sectorCounts, recommended } = useMemo(() => {
@@ -122,7 +161,9 @@ export const StepIdentity: React.FC<Props> = ({ onPick }) => {
     for (const { sector, sub, product } of ALL_TAX_PRODUCTS) {
       const hitKeyword =
         product.seedId &&
-        SEED_CHAINS[product.seedId].product.search_keywords.some((k) => normalizeName(k).includes(nq) || nq.includes(normalizeName(k)));
+        SEED_CHAINS[product.seedId]?.product?.search_keywords?.some(
+          (k) => normalizeName(k).includes(nq) || nq.includes(normalizeName(k))
+        );
       if (normalizeName(product.name).includes(nq) || hitKeyword) push(product.name, sector.id, sub.name, product.seedId);
     }
     for (const sub of TAXONOMY.flatMap((s) => s.subs.map((x) => ({ s, x })))) {
@@ -140,6 +181,11 @@ export const StepIdentity: React.FC<Props> = ({ onPick }) => {
 
   const submitSearch = () => {
     if (!q) return;
+    // Phase 3: If semantic match found, route to canonical master chain immediately!
+    if (semanticMatch && semanticMatch.isMatch && semanticMatch.canonicalProductName) {
+      onPick(semanticMatch.canonicalProductName, {});
+      return;
+    }
     if (suggestions[0] && exactMatch) {
       const s = suggestions.find((x) => normalizeName(x.name) === normalizeName(q)) || suggestions[0];
       onPick(s.name, { sectorId: s.sectorId, subName: s.sub, seedId: s.seedId });
@@ -186,6 +232,58 @@ export const StepIdentity: React.FC<Props> = ({ onPick }) => {
           />
         </div>
 
+        {/* Phase 3: Semantic Match Detected Pill (e.g. น้ำหอมรถยนต์ -> เครื่องหอมและอโรมา) */}
+        {semanticMatch && semanticMatch.isMatch && (
+          <button
+            onClick={() => onPick(semanticMatch.canonicalProductName, {})}
+            className="w-full p-3 rounded-2xl bg-gradient-to-r from-sky-50 via-white to-sky-50 dark:from-sky-950/40 dark:via-[#1a1c23] dark:to-sky-950/40 border border-sky-300 dark:border-sky-800 text-left transition-all hover:border-sky-500 shadow-xs cursor-pointer animate-fadeIn"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-black text-sky-800 dark:text-sky-300 flex items-center gap-1.5">
+                <i className="fa-solid fa-lightbulb text-amber-500 text-xs"></i>
+                <span>ตรวจพบคำพ้อง: ชี้เป้าไปยัง &ldquo;{semanticMatch.canonicalProductName}&rdquo;</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-200 text-[9.5px] font-extrabold shrink-0">
+                ผังกลุ่มเดียวกัน ({semanticMatch.matchType})
+              </span>
+            </div>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+              {semanticMatch.explanation}
+            </p>
+            {semanticMatch.suggestedNodeTitle && (
+              <div className="mt-1.5 text-[10px] font-bold text-sky-700 dark:text-sky-400 flex items-center gap-1">
+                <i className="fa-solid fa-arrow-right text-[9px]"></i>
+                <span>
+                  จุดแทรกตัวแนะนำ: ขั้นที่ {semanticMatch.suggestedNodeOrder} ({semanticMatch.suggestedNodeTitle})
+                </span>
+              </div>
+            )}
+          </button>
+        )}
+
+        {/* Synonym Suggestions Chips (Autocomplete) */}
+        {synonymSuggestions.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <span className="text-[9.5px] text-sky-700 dark:text-sky-400 font-bold flex items-center gap-1">
+              <i className="fa-solid fa-tags text-[8.5px]"></i>
+              คำพ้องที่เกี่ยวข้อง:
+            </span>
+            {synonymSuggestions.map((syn) => (
+              <button
+                key={syn.keyword}
+                onClick={() => {
+                  setQuery(syn.keyword);
+                  onPick(syn.canonicalName, {});
+                }}
+                className="px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-sky-800 dark:text-sky-200 text-[10px] font-bold hover:bg-sky-100 transition-colors"
+                title={`ชี้เป้าเข้าผัง: ${syn.canonicalName}`}
+              >
+                #{syn.keyword}
+              </button>
+            ))}
+          </div>
+        )}
+
         {q && suggestions.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {suggestions.map((s) => (
@@ -200,10 +298,10 @@ export const StepIdentity: React.FC<Props> = ({ onPick }) => {
           </div>
         )}
 
-        {q && !exactMatch && (
+        {q && !exactMatch && (!semanticMatch || !semanticMatch.isMatch) && (
           <button
             onClick={() => onPick(q, {})}
-            className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-[#E53935] to-[#D32F2F] text-white text-[11.5px] font-black text-left shadow-md shadow-red-500/20 active:scale-[0.99]"
+            className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-[#E53935] to-[#D32F2F] text-white text-[11.5px] font-black text-left shadow-md shadow-red-500/20 active:scale-[0.99] cursor-pointer"
           >
             ✨ ให้ AI ผ่าตัดห่วงโซ่และหาจุดแทรกตัวของ: &apos;{q}&apos;
           </button>

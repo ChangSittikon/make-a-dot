@@ -257,13 +257,13 @@ export async function upsertProductChainToDb(
 }
 
 /**
- * Seed ข้อมูลเริ่มต้น (4 Flagship Chains + Default Pooling Rooms) เข้าสู่ Prisma DB อัตโนมัติ
+ * Seed ข้อมูลเริ่มต้น (5 Flagship Chains + Default Pooling Rooms + Synonyms) เข้าสู่ Prisma DB อัตโนมัติ
  */
 export async function ensureProductionSeeded() {
   if (isSeededCache) return;
   try {
     const count = await prisma.productChain.count();
-    if (count === 0) {
+    if (count < 5) {
       for (const chain of Object.values(SEED_CHAINS)) {
         await upsertProductChainToDb(chain, 'SEED', 'VERIFIED');
       }
@@ -276,6 +276,9 @@ export async function ensureProductionSeeded() {
         });
         const skincareRecord = await prisma.productChain.findFirst({
           where: { productName: { contains: 'สกินแคร์' } },
+        });
+        const aromaRecord = await prisma.productChain.findFirst({
+          where: { productName: { contains: 'เครื่องหอม' } },
         });
 
         await prisma.groupPoolingRoom.createMany({
@@ -300,10 +303,25 @@ export async function ensureProductionSeeded() {
               lotCost: 50000,
               status: 'OPEN',
             },
+            {
+              productChainId: aromaRecord?.id ?? null,
+              productName: 'ผลิตภัณฑ์เครื่องหอมและอโรมา (Aroma & Fragrance)',
+              modelName: 'รวมกลุ่มสั่งขวดแก้วมินิมอล + ก้านหวายไฟเบอร์ล็อต 5,000 ชุด',
+              mode: 'รวมล็อตสั่งซื้อขั้นต่ำ (MOQ Group Buy)',
+              members: 5,
+              targetMembers: 10,
+              lotCost: 28000,
+              status: 'OPEN',
+            },
           ],
         });
       }
     }
+
+    // Seed Synonym Knowledge Graph & Semantic Dictionary
+    const { seedSynonymsInDb } = await import('@/lib/semanticSearch');
+    await seedSynonymsInDb();
+
     isSeededCache = true;
   } catch (err) {
     console.error('[ensureProductionSeeded] Error:', err);
@@ -311,7 +329,7 @@ export async function ensureProductionSeeded() {
 }
 
 /**
- * ค้นหา ProductChain จากฐานข้อมูล Prisma ด้วยชื่อสินค้าหรือคำค้นหา
+ * ค้นหา ProductChain จากฐานข้อมูล Prisma ด้วยระบบ Semantic Search & Synonym Mapping (Phase 3)
  */
 export async function findProductChainInDb(query: string): Promise<{
   chain: ProductChain;
@@ -319,11 +337,50 @@ export async function findProductChainInDb(query: string): Promise<{
   source: ChainSource;
   status: string;
   searchCount: number;
+  semanticInfo?: {
+    matchedKeyword: string;
+    matchType: string;
+    confidence: number;
+    explanation: string;
+    suggestedNodeOrder?: number;
+    suggestedNodeTitle?: string;
+  };
 } | null> {
   await ensureProductionSeeded();
   const clean = query.trim();
   if (!clean) return null;
 
+  // 1. ลองใช้ Semantic Search & Synonym Engine ก่อนเสมอ (ชี้เป้าคำพ้อง เช่น "น้ำหอมรถยนต์" -> "เครื่องหอม")
+  try {
+    const { resolveSemanticQuery } = await import('@/lib/semanticSearch');
+    const semantic = await resolveSemanticQuery(clean);
+    if (semantic.isMatch && semantic.canonicalChain && semantic.productChainRecordId) {
+      const rec = await prisma.productChain.findUnique({
+        where: { id: semantic.productChainRecordId },
+        select: { source: true, status: true, searchCount: true },
+      });
+
+      return {
+        chain: semantic.canonicalChain,
+        recordId: semantic.productChainRecordId,
+        source: (rec?.source as ChainSource) || 'SEED',
+        status: rec?.status || 'VERIFIED',
+        searchCount: (rec?.searchCount || 0) + 1,
+        semanticInfo: {
+          matchedKeyword: semantic.matchedKeyword,
+          matchType: semantic.matchType,
+          confidence: semantic.confidence,
+          explanation: semantic.explanation,
+          suggestedNodeOrder: semantic.suggestedNodeOrder,
+          suggestedNodeTitle: semantic.suggestedNodeTitle,
+        },
+      };
+    }
+  } catch (semErr) {
+    console.warn('[findProductChainInDb] Semantic search fallback:', semErr);
+  }
+
+  // 2. Direct string / keyword match fallback
   const slug = buildSlug(clean);
   const candidates = await prisma.productChain.findMany({
     where: {
@@ -340,12 +397,10 @@ export async function findProductChainInDb(query: string): Promise<{
 
   if (candidates.length === 0) return null;
 
-  // Prefer exact productName match if available
   const normQuery = normalizeName(clean);
   const best =
     candidates.find((c) => normalizeName(c.productName) === normQuery) || candidates[0];
 
-  // Increment searchCount in background
   await prisma.productChain
     .update({
       where: { id: best.id },
@@ -369,6 +424,50 @@ export async function findProductChainInDb(query: string): Promise<{
     /* ignore malformed JSON */
   }
   return null;
+}
+
+/**
+ * เพิ่มคำพ้องใหม่ให้ ProductChain (Admin Taxonomy Center)
+ */
+export async function addProductSynonym(
+  productChainId: string,
+  keyword: string,
+  matchType: string = 'SYNONYM'
+) {
+  const { cleanSearchWord } = await import('@/lib/semanticSearch');
+  const norm = cleanSearchWord(keyword);
+  if (!norm) throw new Error('Invalid keyword');
+
+  return prisma.productSynonym.upsert({
+    where: {
+      productChainId_normalized: {
+        productChainId,
+        normalized: norm,
+      },
+    },
+    update: {
+      keyword: keyword.trim(),
+      matchType,
+      hitCount: { increment: 1 },
+    },
+    create: {
+      productChainId,
+      keyword: keyword.trim(),
+      normalized: norm,
+      matchType,
+      confidence: 1.0,
+      hitCount: 1,
+    },
+  });
+}
+
+/**
+ * ลบคำพ้อง
+ */
+export async function deleteProductSynonym(synonymId: string) {
+  return prisma.productSynonym.delete({
+    where: { id: synonymId },
+  });
 }
 
 /**
