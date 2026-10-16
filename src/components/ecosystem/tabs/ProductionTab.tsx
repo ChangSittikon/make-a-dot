@@ -82,6 +82,8 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
 
   useEffect(() => {
     setApiKeyInput(loadApiKey());
+    // Ensure central Prisma DB is seeded with flagship product chains
+    fetch('/api/production/chains').catch(() => {});
   }, []);
 
   const handleSaveApiKey = () => {
@@ -128,13 +130,17 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       return;
     }
 
-    // 2. Check local storage cache
+    // 2. Check local storage cache (and sync to central Prisma DB in background)
     const cached = getCachedChain(productName);
     if (cached) {
       setSelectedChain(cached);
       setChainSource('CACHE');
       setActiveStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      void generateProductChain(productName, {
+        sectorId,
+        subName: subCategoryName,
+      });
       return;
     }
 
@@ -318,19 +324,31 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               {/* AI / Seed indicator badge */}
               <div
                 className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center gap-1 shrink-0 ml-auto"
-                title={`แหล่งที่มา: ${chainSource}`}
+                title={`แหล่งที่มา: ${chainSource} (ซิงก์ฐานข้อมูลกลาง Prisma DOT017)`}
               >
                 <Sparkles className="w-3 h-3 text-[#E53935]" />
                 <span className="hidden sm:inline">
                   {chainSource === 'SEED'
-                    ? 'Seed Data'
+                    ? 'Seed DB'
                     : chainSource === 'GEMINI'
                     ? 'Gemini AI'
                     : chainSource === 'CACHE'
-                    ? 'แคช'
-                    : 'Archetype'}
+                    ? 'DB Cache'
+                    : 'Archetype DB'}
                 </span>
               </div>
+
+              {/* Link to DOT017 Taxonomy Center */}
+              <a
+                href="/admin/taxonomy"
+                target="_blank"
+                rel="noreferrer"
+                className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-50 hover:bg-red-100 text-[#D32F2F] border border-red-200/70 flex items-center gap-1 shrink-0 transition-colors"
+                title="เปิดศูนย์ฐานข้อมูล DOT017 Taxonomy Center (/admin/taxonomy)"
+              >
+                <span>DOT017 DB</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
 
               {/* Gemini API Key config button */}
               <button

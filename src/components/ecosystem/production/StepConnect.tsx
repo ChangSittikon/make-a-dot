@@ -107,12 +107,12 @@ export function StepConnect({
   const [formNote, setFormNote] = useState('');
 
   // Initial load
+  // Initial load from localStorage + sync with central Prisma DB
   useEffect(() => {
     const saved = loadRooms();
     if (saved.length > 0) {
       setRooms(saved);
     } else {
-      // Seed default rooms for coffee or current product
       const seedRooms: GroupRoom[] = [
         {
           id: 'room_coffee_1',
@@ -145,6 +145,22 @@ export function StepConnect({
       setRooms(seedRooms);
       saveRooms(seedRooms);
     }
+
+    // Fetch live rooms from central Prisma DB
+    fetch('/api/production/chains')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.rooms) && data.rooms.length > 0) {
+          setRooms((prev) => {
+            const existingIds = new Set(prev.map((r) => r.id));
+            const dbNew = data.rooms.filter((r: GroupRoom) => !existingIds.has(r.id));
+            const merged = [...dbNew, ...prev];
+            saveRooms(merged);
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
   }, [chain.product.product_name]);
 
   const handleCreateRoom = (e: React.FormEvent) => {
@@ -152,13 +168,16 @@ export function StepConnect({
     if (!active) return;
 
     const selectedModeObj = DEFAULT_MODES.find((m) => m.id === formMode);
+    const modelName = formNote.trim() || `${selectedModeObj?.title} - ${active.opp.model_name}`;
+    const lotCost = Number(formTargetCost) || 50000;
+
     const newRoom: GroupRoom = {
       id: `room_${Date.now()}`,
       productName: chain.product.product_name,
-      modelName: formNote.trim() || `${selectedModeObj?.title} - ${active.opp.model_name}`,
+      modelName,
       mode: formMode,
       members: 1,
-      lotCost: Number(formTargetCost) || 50000,
+      lotCost,
       createdAt: Date.now(),
     };
 
@@ -168,27 +187,45 @@ export function StepConnect({
     setJoinedRooms((prev) => ({ ...prev, [newRoom.id]: true }));
     setShowCreateModal(false);
     setFormNote('');
+
+    // Persist room to central Prisma DB
+    fetch('/api/production/chains', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'CREATE_ROOM',
+        productName: chain.product.product_name,
+        modelName,
+        mode: formMode,
+        lotCost,
+      }),
+    }).catch(() => {});
   };
 
   const handleJoin = (roomId: string) => {
-    setJoinedRooms((prev) => {
-      const isJoined = !!prev[roomId];
-      const nextJoined = { ...prev, [roomId]: !isJoined };
-      setRooms((prevRooms) => {
-        const updated = prevRooms.map((r) => {
-          if (r.id === roomId) {
-            return {
-              ...r,
-              members: isJoined ? Math.max(1, r.members - 1) : r.members + 1,
-            };
-          }
-          return r;
-        });
-        saveRooms(updated);
-        return updated;
+    const wasJoined = !!joinedRooms[roomId];
+    setJoinedRooms((prev) => ({ ...prev, [roomId]: !wasJoined }));
+    setRooms((prevRooms) => {
+      const updated = prevRooms.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            members: wasJoined ? Math.max(1, r.members - 1) : r.members + 1,
+          };
+        }
+        return r;
       });
-      return nextJoined;
+      saveRooms(updated);
+      return updated;
     });
+
+    if (!wasJoined && !roomId.startsWith('room_')) {
+      fetch('/api/production/chains', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'JOIN_ROOM', roomId }),
+      }).catch(() => {});
+    }
   };
 
   const handleShare = (roomId: string) => {

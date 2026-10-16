@@ -8,17 +8,20 @@ export { SYSTEM_PROMPT } from './prompt';
 export interface GenerateResult {
   chain: ProductChain;
   source: ChainSource;
+  fromDb?: boolean;
+  status?: string;
+  recordId?: string;
 }
 
 /**
- * AI Product JSON Generator Engine
- * 1) ลองเรียก Gemini ผ่าน /api/production/generate (ใช้ Key จากผู้ใช้หรือ ENV)
- * 2) ผ่าน normalizeChain (schema เดียวกับ Seed) ถ้าไม่ผ่าน/ไม่มี Key -> Smart Archetype Fallback
- * 3) บันทึกลง LocalStorage ทุกครั้ง
+ * AI Product JSON Generator Engine (Prisma DB + DOT017 Integrated)
+ * 1) เรียก /api/production/generate ซึ่งเช็กฐานข้อมูลกลาง Prisma ก่อน
+ * 2) หากยังไม่มีใน DB จะสร้างด้วย Gemini (หรือ Smart Archetype Fallback) แล้วบันทึกลงตาราง ProductChain อัตโนมัติ
+ * 3) บันทึกลง LocalStorage cache ควบคู่กันเพื่อความเร็วสูงสุดฝั่ง Client
  */
 export async function generateProductChain(
   name: string,
-  opts: { sectorId?: string; subName?: string } = {}
+  opts: { sectorId?: string; subName?: string; forceRegenerate?: boolean } = {}
 ): Promise<GenerateResult> {
   let result: GenerateResult | null = null;
   try {
@@ -29,16 +32,25 @@ export async function generateProductChain(
         name,
         sectorHint: opts.sectorId,
         subHint: opts.subName,
+        forceRegenerate: opts.forceRegenerate,
         apiKey: loadApiKey() || undefined,
       }),
     });
     if (res.ok) {
       const data = await res.json();
       const chain = normalizeChain(data?.chain);
-      if (chain) result = { chain, source: 'GEMINI' };
+      if (chain) {
+        result = {
+          chain,
+          source: (data?.source as ChainSource) || 'GEMINI',
+          fromDb: !!data?.fromDb,
+          status: data?.status,
+          recordId: data?.recordId,
+        };
+      }
     }
   } catch {
-    /* ใช้ fallback ด้านล่าง */
+    /* ใช้ fallback ด้านล่างหากออฟไลน์ */
   }
   if (!result) {
     result = { chain: buildArchetypeChain(name, opts), source: 'FALLBACK' };

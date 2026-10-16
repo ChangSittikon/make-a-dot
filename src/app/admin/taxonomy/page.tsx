@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { IMPACT_SCALE_LIST, ScaleStats } from "@/config/taxonomy";
+import {
+  TaxonomySupplyChainTab,
+  AdminProductChain,
+  ProductionStats,
+} from "@/components/admin/TaxonomySupplyChainTab";
 
 interface WorkType {
   id: string;
@@ -47,7 +52,9 @@ interface LearnedTag {
 }
 
 export default function TaxonomyAdminPage() {
-  const [activeTab, setActiveTab] = useState<"PROBLEM_SCALE" | "TAXONOMY" | "AI_LEARNING">("PROBLEM_SCALE");
+  const [activeTab, setActiveTab] = useState<
+    "PROBLEM_SCALE" | "TAXONOMY" | "AI_LEARNING" | "SUPPLY_CHAIN"
+  >("PROBLEM_SCALE");
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
   const [industries, setIndustries] = useState<Industry[]>([]);
   const [learnedTags, setLearnedTags] = useState<LearnedTag[]>([]);
@@ -59,6 +66,19 @@ export default function TaxonomyAdminPage() {
   const [testTagInput, setTestTagInput] = useState("");
   const [isAnalyzingTest, setIsAnalyzingTest] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
+
+  // Production Supply Chain Registry State
+  const [productChains, setProductChains] = useState<AdminProductChain[]>([]);
+  const [productionStats, setProductionStats] = useState<ProductionStats>({
+    totalChains: 0,
+    verifiedCount: 0,
+    pendingCount: 0,
+    totalArchetypes: 0,
+    totalNodes: 0,
+    totalOpportunities: 0,
+    totalLinkedProblems: 0,
+  });
+  const [productionLoading, setProductionLoading] = useState(false);
 
   const fetchTaxonomy = async () => {
     try {
@@ -91,11 +111,28 @@ export default function TaxonomyAdminPage() {
     }
   };
 
+  const fetchProductionTaxonomy = async () => {
+    try {
+      setProductionLoading(true);
+      const res = await fetch("/api/admin/taxonomy-production");
+      const data = await res.json();
+      if (data.success) {
+        setProductChains(data.chains || []);
+        if (data.stats) setProductionStats(data.stats);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setProductionLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Load official taxonomy first - opens page instantly (< 70ms)
     fetchTaxonomy().finally(() => setLoading(false));
-    // Fetch AI learned tags in background
+    // Fetch AI learned tags & Production Supply Chains in background
     fetchLearnedTags();
+    fetchProductionTaxonomy();
   }, []);
 
   // Handle Approve & Merge
@@ -268,6 +305,28 @@ export default function TaxonomyAdminPage() {
                 }`}
               >
                 {learnedTags.length}
+              </span>
+            </button>
+
+            {/* Tab 4: Production Supply Chain Registry */}
+            <button
+              onClick={() => setActiveTab("SUPPLY_CHAIN")}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                activeTab === "SUPPLY_CHAIN"
+                  ? "bg-white text-gray-900 shadow-xs border border-gray-200/50"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/50"
+              }`}
+            >
+              <i className="fa-solid fa-sitemap text-brand-red"></i>
+              <span>ผังห่วงโซ่สินค้า (ทำผลิต)</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                  productionStats.pendingCount > 0
+                    ? "bg-amber-500 text-white"
+                    : "bg-red-50 text-brand-red border border-red-200/60"
+                }`}
+              >
+                {productionStats.totalChains} ผัง
               </span>
             </button>
           </div>
@@ -822,11 +881,29 @@ export default function TaxonomyAdminPage() {
                 <i className="fa-solid fa-inbox text-3xl text-gray-300 mb-2"></i>
                 <p className="text-xs font-bold text-gray-700">ยังไม่มีคำแปลกใหม่ค้างในคิวการตรวจสอบ</p>
                 <p className="text-[11px] text-gray-400 mt-0.5 max-w-md">
-                  เมื่อ Requester สร้างแท็กใหม่ใน Step 5 ระบบจะนำมาให้ AI วิเคราะห์และขึ้นแจ้งเตือนที่นี่โดยอัตโนมัติ (หรือทดลองพิมพ์ในกล่อง "วิเคราะห์สด" ด้านบนเพื่อทดสอบได้เลยครับ)
+                  เมื่อ Requester สร้างแท็กใหม่ใน Step 5 ระบบจะนำมาให้ AI วิเคราะห์และขึ้นแจ้งเตือนที่นี่โดยอัตโนมัติ (หรือทดลองพิมพ์ในกล่อง &ldquo;วิเคราะห์สด&rdquo; ด้านบนเพื่อทดสอบได้เลยครับ)
                 </p>
               </div>
             )}
           </section>
+        )}
+
+        {/* ============================================================ */}
+        {/* TAB 4 CONTENT: PRODUCTION SUPPLY CHAIN REGISTRY (DOT017)     */}
+        {/* ============================================================ */}
+        {activeTab === "SUPPLY_CHAIN" && (
+          <TaxonomySupplyChainTab
+            chains={productChains}
+            stats={productionStats}
+            loading={productionLoading}
+            onRefreshAll={async () => {
+              await Promise.all([fetchProductionTaxonomy(), fetchTaxonomy()]);
+            }}
+            onShowMessage={(msg) => {
+              setActionSuccessMsg(msg);
+              setTimeout(() => setActionSuccessMsg(null), 5000);
+            }}
+          />
         )}
       </main>
     </div>

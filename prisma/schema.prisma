@@ -36,9 +36,11 @@ model Industry {
   projects       Project[]
   occupations    Occupation[] // Cascading taxonomy: Industry → Occupation → SkillTag
 
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  problemPatterns ProblemPattern[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  problemPatterns  ProblemPattern[]
+  supplyArchetypes SupplyChainArchetype[]
+  productChains    ProductChain[]
 }
 
 model Node {
@@ -662,7 +664,8 @@ model WorkType {
   name String @unique
 
   // Relations
-  problemNodes ProblemNode[]
+  problemNodes       ProblemNode[]
+  microOpportunities MicroOpportunityRecord[]
 
   createdAt DateTime @default(now())
 }
@@ -683,8 +686,9 @@ model Occupation {
   relatedDotCode String? // Logical FK → IdeaDot.code
 
   // Relations
-  skillTags    SkillTag[] // Occupation → SkillTag (One-to-Many)
-  problemNodes ProblemNode[] // ปัญหาในระบบที่ต้องการอาชีพนี้
+  skillTags          SkillTag[] // Occupation → SkillTag (One-to-Many)
+  problemNodes       ProblemNode[] // ปัญหาในระบบที่ต้องการอาชีพนี้
+  microOpportunities MicroOpportunityRecord[] // จุดแทรกตัวในแท็บทำผลิตที่ตรงกับอาชีพนี้
 
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -795,9 +799,11 @@ model ProblemNode {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   // Negotiations & KPI Proposals
-  negotiations     BountyNegotiation[]
-  revShareAndSplit RevShareAndSplit?
-  escrowCondition  EscrowCondition?
+  negotiations      BountyNegotiation[]
+  revShareAndSplit  RevShareAndSplit?
+  escrowCondition   EscrowCondition?
+  supplyChainNodeId String?
+  supplyChainNode   SupplyChainNodeRecord? @relation(fields: [supplyChainNodeId], references: [id], onDelete: SetNull)
 }
 
 // ============================================================
@@ -1065,3 +1071,151 @@ model UpgradeProposal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ============================================================
+// PHASE 2: PRODUCTION & VERTICAL SUPPLY CHAIN ECOSYSTEM (DOT017 BRIDGE)
+// ============================================================
+
+// 1. แม่พิมพ์โครงสร้างห่วงโซ่อุปทานมาตรฐาน (Supply Chain Archetype)
+model SupplyChainArchetype {
+  id               String         @id @default(cuid())
+  code             String         @unique // เช่น "ARCH_05_BEVERAGE", "ARCH_01_SOLAR"
+  name             String         // เช่น "แม่พิมพ์ห่วงโซ่เครื่องดื่มและเกษตรแปรรูป"
+  industryId       String
+  industry         Industry       @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  description      String?
+  defaultNodesJson String?        // โครงสร้าง 5 โหนดมาตรฐาน (JSON)
+  productChains    ProductChain[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([industryId])
+}
+
+// 2. ผังห่วงโซ่คุณค่าของสินค้าแต่ละตัว (Product Supply Chain)
+model ProductChain {
+  id                  String                @id @default(cuid())
+  slug                String                @unique // เช่น "coffee-arabica", "solar-rooftop"
+  productName         String                // ชื่อสินค้า เช่น "กาแฟ (อาราบิก้า)"
+  subCategoryName     String                // หมวดหมู่ย่อย เช่น "เครื่องดื่ม"
+  archetypeName       String                // ชื่อแม่พิมพ์
+
+  // เชื่อมตรงกับ 12 อุตสาหกรรมหลัก (Single Source of Truth)
+  industryId          String
+  industry            Industry              @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  sectorOrder         Int                   @default(1) // 1..12
+
+  archetypeId         String?
+  archetype           SupplyChainArchetype? @relation(fields: [archetypeId], references: [id], onDelete: SetNull)
+
+  baseUnitReference   String                // หน่วยอ้างอิงพื้นฐาน
+  conversionSummary   String                // สรุปการแปรสภาพ
+  originCostThb       Float                 @default(0)
+  finalRetailValueThb Float                 @default(0)
+  totalMarkupPercent  Float                 @default(0)
+
+  searchKeywordsJson  String                // JSON array ของคำค้นหา
+  fullChainJson       String                // JSON ฉบับเต็มตาม ProductChain Schema เพื่อการโหลดความเร็วสูง
+
+  // แหล่งที่มาและสถานะใน DOT017 Taxonomy Center
+  source              String                @default("SEED") // SEED | GEMINI | FALLBACK
+  status              String                @default("VERIFIED") // VERIFIED | PENDING_REVIEW
+  searchCount         Int                   @default(1)
+
+  nodes               SupplyChainNodeRecord[]
+  poolingRooms        GroupPoolingRoom[]
+
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([industryId])
+  @@index([productName])
+  @@index([status])
+}
+
+// 3. โหนดขั้นตอนในห่วงโซ่แนวตั้ง 5 ระดับ (01 ต้นน้ำ -> 05 ปลายน้ำ/บริการเสริม)
+model SupplyChainNodeRecord {
+  id                     String                   @id @default(cuid())
+  productChainId         String
+  productChain           ProductChain             @relation(fields: [productChainId], references: [id], onDelete: Cascade)
+
+  nodeOrder              Int                      // 1 ถึง 5
+  stageType              String                   // UPSTREAM | MIDSTREAM_EARLY | MIDSTREAM_LATE | DOWNSTREAM | BYPRODUCT_SERVICE
+  nodeTitle              String
+  equivalentQuantity     String
+
+  // 5W2H & Pain Point
+  whatHow                String
+  whoIncumbent           String
+  whereLocation          String
+  whenCycleTime          String
+  whenWaitTime           String
+  costThb                Float                    @default(0)
+  sellingThb             Float                    @default(0)
+  painPoint              String                   // คอขวด/จุดอ่อนเจ้าตลาด (สามารถเปิดเป็น ProblemNode Bounty ได้!)
+
+  marginJumpPercent      Float                    @default(0)
+  isHighMarginBottleneck Boolean                  @default(false)
+  trafficLight           String                   @default("GREEN") // GREEN | YELLOW | RED
+
+  // เชื่อมกับภารกิจปัญหา (ProblemNode) ที่เกิดจากคอขวดในโหนดนี้
+  linkedProblems         ProblemNode[]
+  opportunities          MicroOpportunityRecord[]
+
+  createdAt              DateTime                 @default(now())
+
+  @@index([productChainId, nodeOrder])
+}
+
+// 4. จุดแทรกตัวขอส่วนแบ่งตลาด (Micro-Opportunity) เชื่อมกับ L1 WorkType & L3 Occupation
+model MicroOpportunityRecord {
+  id                    String                @id @default(cuid())
+  nodeId                String
+  node                  SupplyChainNodeRecord @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  strategyType          String                // DISINTERMEDIATION | UNBUNDLING | AGGREGATION_OEM | MICRO_VALUE_ADD
+  modelName             String                // ชื่ออาชีพ/โมเดลแทรกตัว
+  howToStart            String
+  capitalRequiredThb    String
+  expectedMarginPercent String
+  personaTagsJson       String                // JSON array
+  feasibilityScoreJson  String                // JSON object
+
+  // อาวุธที่ต้องใช้ (Step 05 เช็กอาวุธ)
+  toolsAndEquipment     String
+  skillsNeeded          String
+  legalAndPermits       String
+  actionLinksJson       String                // JSON object
+
+  // เชื่อมกับ DOT017 Taxonomy Center (Layer 1 WorkType & Layer 3 Occupation)
+  workTypeId            String?
+  workType              WorkType?             @relation(fields: [workTypeId], references: [id], onDelete: SetNull)
+  occupationId          String?
+  occupation            Occupation?           @relation(fields: [occupationId], references: [id], onDelete: SetNull)
+
+  createdAt             DateTime              @default(now())
+
+  @@index([nodeId])
+  @@index([occupationId])
+}
+
+// 5. ห้องรวมกลุ่มสั่งผลิต/ทะลวงขั้นต่ำ (Step 06 เชื่อมดอท)
+model GroupPoolingRoom {
+  id             String        @id @default(cuid())
+  productChainId String?
+  productChain   ProductChain? @relation(fields: [productChainId], references: [id], onDelete: Cascade)
+
+  productName    String
+  modelName      String
+  mode           String        // เช่น "รวมกลุ่มสั่งผลิต OEM", "รวมออเดอร์ซื้อวัตถุดิบต้นน้ำ"
+  members        Int           @default(1)
+  targetMembers  Int           @default(10)
+  lotCost        Float         @default(30000)
+  status         String        @default("OPEN") // OPEN | FULL | COMPLETED
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([productChainId])
+}
+
