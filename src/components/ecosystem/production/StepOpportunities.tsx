@@ -21,6 +21,7 @@ interface Props {
     node?: SupplyChainNode,
     customCashThb?: number
   ) => void;
+  onNavigateStep?: (step: number, oppKey?: string) => void;
 }
 
 /** 03 ชี้จุดแทรก — โหนดไฟเขียว (🟢) และจุดคอขวดที่ส่วนต่างราคาสูงสุด */
@@ -29,6 +30,7 @@ export const StepOpportunities: React.FC<Props> = ({
   selectedOppKey,
   onSelectOpp,
   onAction,
+  onNavigateStep,
 }) => {
   const nodes = chain.supply_chain_nodes;
   const bottlenecks = nodes
@@ -50,90 +52,123 @@ export const StepOpportunities: React.FC<Props> = ({
         b.opp.feasibility_score.total_score -
         a.opp.feasibility_score.total_score
     )
-    .slice(0, 3);
+    .slice(0, 4);
+
+  const handleCardAction = (
+    k: ActionKind,
+    opp: MicroOpportunity,
+    node: SupplyChainNode | undefined,
+    key: string
+  ) => {
+    onSelectOpp(key);
+    if (k === 'SIMULATE') {
+      onNavigateStep?.(4, key);
+    } else if (k === 'WEAPONS') {
+      onNavigateStep?.(5, key);
+    } else {
+      onAction(k, opp, node);
+    }
+  };
 
   return (
-    <div className="p-3 space-y-4 pb-8">
-      <section className="space-y-2">
-        <h4 className="text-[12px] font-black text-gray-900 dark:text-white">
-          🔥{' '}
-          {hasReal
-            ? 'จุดคอขวดส่วนต่างราคาสูงสุด'
-            : 'ช่วงที่ราคากระโดดมากที่สุด'}
-        </h4>
-        {!hasReal && (
-          <p className="text-[10px] text-gray-400">
-            ห่วงโซ่นี้ไม่มีช่วงที่ส่วนต่างเกิน 100% แสดงช่วงที่กระโดดสูงสุดแทน
-          </p>
-        )}
+    <div className="space-y-4 pb-8">
+      {/* 1. Bottleneck Spotlight Card */}
+      <section className="rounded-3xl bg-brand-black text-white p-4 shadow-md space-y-3">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-3 h-3 bg-brand-red rounded-full shrink-0"
+            style={{
+              animation: 'breathe 3s cubic-bezier(0.32, 0.72, 0, 1) infinite',
+            }}
+          />
+          <h4 className="text-xs font-extrabold text-white">
+            🔥 ช่วงที่ราคากระโดดแรงที่สุด (โอกาสตัดตอนคนกลาง)
+          </h4>
+        </div>
+
         {topBottlenecks.map((n) => {
           const next = nodes[n.node_order];
           return (
             <div
               key={n.node_order}
-              className="rounded-2xl border-2 border-[#E53935] bg-red-50/50 dark:bg-red-950/20 p-3"
+              className="rounded-2xl bg-white/10 border border-white/15 p-3 space-y-2"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="text-[11.5px] font-extrabold text-gray-900 dark:text-white">
-                  {STAGE_META[n.stage_type].emoji} {n.node_title} →{' '}
-                  {next.node_title}
+                <div className="text-xs font-extrabold text-white truncate">
+                  {STAGE_META[n.stage_type].emoji} {n.node_title} ➔{' '}
+                  {next?.node_title}
                 </div>
-                <span className="shrink-0 px-2 py-0.5 rounded-full bg-[#E53935] text-white text-[10px] font-black font-mono">
+                <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-brand-red text-white text-[10px] font-black font-mono">
                   +{n.margin_jump_to_next_node_percent}%
                 </span>
               </div>
-              <p className="text-[10.5px] text-gray-600 dark:text-gray-300 mt-1 font-mono">
-                {baht(n.five_w_two_h.how_much_selling_thb)} บ. →{' '}
-                {baht(next.five_w_two_h.how_much_selling_thb)} บ.
-              </p>
-              <p className="text-[10.5px] text-[#D32F2F] mt-1 font-medium">
-                จุดอ่อนเจ้าตลาด: {next.five_w_two_h.pain_point}
-              </p>
+
+              <div className="flex items-center justify-between text-xs font-mono bg-white/10 rounded-xl px-3 py-2">
+                <span className="text-gray-300">
+                  ราคาต้นทาง <b>฿{baht(n.five_w_two_h.how_much_selling_thb)}</b>
+                </span>
+                <span className="text-brand-red font-black">━━▶</span>
+                <span className="text-emerald-400 font-extrabold">
+                  ปลายทาง ฿{baht(next?.five_w_two_h.how_much_selling_thb || 0)}
+                </span>
+              </div>
+
+              {next && (
+                <p className="text-[10.5px] text-gray-300 leading-snug">
+                  💡 <b className="text-white">ช่องว่างทำเงิน:</b>{' '}
+                  {next.five_w_two_h.pain_point}
+                </p>
+              )}
             </div>
           );
         })}
       </section>
 
-      <section className="space-y-2">
-        <h4 className="text-[12px] font-black text-gray-900 dark:text-white">
-          {TRAFFIC_META.GREEN.emoji} โหนดไฟเขียว — {TRAFFIC_META.GREEN.label}
-        </h4>
-        {greenNodes.length === 0 && (
-          <p className="text-[10.5px] text-gray-500">
-            สายพานนี้ยังไม่มีโหนดไฟเขียวเต็มตัว แนะนำ 3 โมเดลที่คะแนนสูงสุดแทน
-          </p>
-        )}
-        {greenNodes.map((n) => (
-          <div key={n.node_order} className="space-y-2">
-            <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-              โหนด {n.node_order} · {n.node_title}
-            </div>
-            {n.micro_opportunities.map((opp, i) => {
-              const key = `${n.node_order}-${i}`;
-              return (
-                <OppCard
-                  key={key}
-                  opp={opp}
-                  node={n}
-                  selected={selectedOppKey === key}
-                  onSelect={() => onSelectOpp(key)}
-                  onAction={(k, o) => onAction(k, o, n)}
-                />
-              );
-            })}
-          </div>
-        ))}
-        {greenNodes.length === 0 &&
-          bestOverall.map((f) => (
-            <OppCard
-              key={f.key}
-              opp={f.opp}
-              node={f.node}
-              selected={selectedOppKey === f.key}
-              onSelect={() => onSelectOpp(f.key)}
-              onAction={(k, o) => onAction(k, o, f.node)}
-            />
-          ))}
+      {/* 2. Green Nodes & Top Ranked Opportunities */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h4 className="text-xs font-extrabold text-brand-black dark:text-white">
+            {TRAFFIC_META.GREEN.emoji} จุดแทรกทำเงินที่น่าลุยที่สุด
+          </h4>
+          <span className="text-[10px] text-gray-500">
+            เรียงตามคะแนนความคุ้มค่า
+          </span>
+        </div>
+
+        {greenNodes.length > 0
+          ? greenNodes.map((n) => (
+              <div key={n.node_order} className="space-y-2.5">
+                {n.micro_opportunities.map((opp, i) => {
+                  const key = `${n.node_order}-${i}`;
+                  return (
+                    <OppCard
+                      key={key}
+                      opp={opp}
+                      node={n}
+                      selected={selectedOppKey === key}
+                      onSelect={() => {
+                        onSelectOpp(key);
+                        onNavigateStep?.(4, key);
+                      }}
+                      onAction={(k, o) => handleCardAction(k, o, n, key)}
+                    />
+                  );
+                })}
+              </div>
+            ))
+          : bestOverall.map((f) => (
+              <OppCard
+                key={f.key}
+                opp={f.opp}
+                node={f.node}
+                selected={selectedOppKey === f.key}
+                onSelect={() => {
+                  onSelectOpp(f.key);
+                  onNavigateStep?.(4, f.key);
+                }}
+                onAction={(k, o) => handleCardAction(k, o, f.node, f.key)}
+              />
+            ))}
       </section>
     </div>
   );

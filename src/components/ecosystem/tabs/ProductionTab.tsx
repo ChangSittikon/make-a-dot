@@ -283,6 +283,8 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
     if (k === 'CAPITAL') triggerCrossTab('CAPITAL', opp, node, customCashThb);
     else if (k === 'LOCAL') triggerCrossTab('LOCAL', opp, node, customCashThb);
     else if (k === 'CONNECT') setActiveStep(6);
+    else if (k === 'SIMULATE') setActiveStep(4);
+    else if (k === 'WEAPONS') setActiveStep(5);
   };
 
   const handleNavigateTabString = (tabName: string) => {
@@ -448,12 +450,13 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
             <StepChain
               chain={selectedChain}
               selectedOppKey={selectedOppKey}
-              onSelectOpp={(oppKey) => {
-                setSelectedOppKey(oppKey);
-                setActiveStep(3);
-              }}
+              onSelectOpp={setSelectedOppKey}
               onAction={handleActionKind}
               onBackToStep1={() => setActiveStep(1)}
+              onNavigateStep={(step, oppKey) => {
+                if (oppKey) setSelectedOppKey(oppKey);
+                setActiveStep(step);
+              }}
             />
           )}
 
@@ -463,6 +466,10 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               selectedOppKey={selectedOppKey}
               onSelectOpp={setSelectedOppKey}
               onAction={handleActionKind}
+              onNavigateStep={(step, oppKey) => {
+                if (oppKey) setSelectedOppKey(oppKey);
+                setActiveStep(step);
+              }}
             />
           )}
 
