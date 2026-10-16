@@ -1202,24 +1202,38 @@ model MicroOpportunityRecord {
   @@index([occupationId])
 }
 
-// 5. ห้องรวมกลุ่มสั่งผลิต/ทะลวงขั้นต่ำ (Step 06 เชื่อมดอท)
+// 5. ห้องรวมกลุ่มสั่งผลิต/ทะลวงขั้นต่ำ & ตู้เซฟมัดจำปลอดภัย (Phase 5: Real Group-Buy & Escrow)
 model GroupPoolingRoom {
-  id             String        @id @default(cuid())
-  productChainId String?
-  productChain   ProductChain? @relation(fields: [productChainId], references: [id], onDelete: Cascade)
+  id               String        @id @default(cuid())
+  productChainId   String?
+  productChain     ProductChain? @relation(fields: [productChainId], references: [id], onDelete: Cascade)
 
-  productName    String
-  modelName      String
-  mode           String        // เช่น "รวมกลุ่มสั่งผลิต OEM", "รวมออเดอร์ซื้อวัตถุดิบต้นน้ำ"
-  members        Int           @default(1)
-  targetMembers  Int           @default(10)
-  lotCost        Float         @default(30000)
-  status         String        @default("OPEN") // OPEN | FULL | COMPLETED
+  productName      String
+  modelName        String
+  mode             String        // เช่น "รวมกลุ่มสั่งผลิต OEM", "รวมออเดอร์ซื้อวัตถุดิบต้นน้ำ"
+  members          Int           @default(1)
+  targetMembers    Int           @default(5)
+  moqTotalUnits    Int           @default(1000)
+  unitLabel        String        @default("ชิ้น")
+  lotCost          Float         @default(30000)
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  // ระบบมัดจำปลอดภัย (Safe Escrow) & ใบสั่งซื้อโรงงาน (OEM PO)
+  depositPercent   Int           @default(30)     // มัดจำขั้นต่ำ เช่น 30%, 50%, 100%
+  escrowLockedThb  Float         @default(0)      // ยอดเงินที่ล็อกอยู่ในตู้เซฟคนกลางจริง (บาท)
+  factoryName      String?                        // โรงงาน OEM เป้าหมายที่รับใบสั่งซื้อ
+  purchaseOrderNo  String?                        // เลขที่ใบสั่งซื้ออัตโนมัติ เช่น PO-DOT-20261016-8821
+  poIssuedAt       DateTime?                      // เวลาที่ออกใบสั่งซื้อทันทีเมื่อคนครบ MOQ
+  linkedProjectId  String?                        // อ้างอิงโปรเจกต์บนหน้าบอร์ดประกาศ (/board)
+  participantsJson String        @default("[]")   // JSON รายชื่อสมาชิกที่วางมัดจำแล้ว
+
+  // OPEN | ESCROW_LOCKED_PO_SENT | PRODUCTION_IN_PROGRESS | COMPLETED
+  status           String        @default("OPEN")
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@index([productChainId])
+  @@index([status])
 }
 
 // 6. คำพ้องและความหมายใกล้เคียง (Phase 3: Semantic Search & Synonym Mapping)
