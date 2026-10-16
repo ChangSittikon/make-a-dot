@@ -104,11 +104,6 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
     }
   }, [initialChain, initialStep]);
 
-  useEffect(() => {
-    if (selectedChain?.taxonomy?.sector_id && onSelectIndustry) {
-      onSelectIndustry(mapSectorToIndustryId(selectedChain.taxonomy.sector_id));
-    }
-  }, [selectedChain, onSelectIndustry]);
 
   const handleSaveApiKey = () => {
     saveApiKey(apiKeyInput);

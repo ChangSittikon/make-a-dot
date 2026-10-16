@@ -79,14 +79,22 @@ export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ 
 
   return (
     <div className="space-y-1 mb-3 pt-2 relative">
-      {/* Nong Dot Guide Avatar Tag */}
-      <div className="flex items-center gap-2 mb-2 relative z-10">
-        <div className="w-7 h-7 rounded-full bg-red-50 dark:bg-red-950/40 flex items-center justify-center border border-red-200/60 dark:border-red-900/40 shadow-xs shrink-0">
-          <NongDot mood="greeting" size={13} />
-        </div>
-        <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500">
-          น้องดอทนำทาง
-        </span>
+      {/* Signature Breathing Red Dot with Cute Ground Wobble & Fresh Leap */}
+      <div className="h-14 flex items-end pb-1 mb-2 relative z-10">
+        <motion.div
+          layoutId="nong-dot"
+          transition={{
+            layout: {
+              type: "spring",
+              stiffness: 60,
+              damping: 11,
+              mass: 1.2
+            }
+          }}
+          className="inline-flex items-center justify-center"
+        >
+          <NongDot mood="greeting" size={15} />
+        </motion.div>
       </div>
 
       <div className="relative z-10 space-y-1">
@@ -115,7 +123,10 @@ const StepMilestone: React.FC<{
   title: string;
   onEdit: () => void;
 }> = ({ title, onEdit }) => (
-  <div className="bg-white dark:bg-[#181a20] rounded-2xl border border-gray-200/80 dark:border-gray-800 p-2.5 sm:p-3 shadow-2xs flex items-center justify-between gap-3 transition-all">
+  <div
+    onClick={onEdit}
+    className="bg-white dark:bg-[#181a20] rounded-2xl border border-gray-200/80 dark:border-gray-800 p-2.5 sm:p-3 shadow-2xs flex items-center justify-between gap-3 transition-all cursor-pointer hover:border-brand-red"
+  >
     <div className="flex items-center gap-2.5 min-w-0 flex-1">
       <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-2xs">
         <i className="fa-solid fa-check"></i>
@@ -125,7 +136,10 @@ const StepMilestone: React.FC<{
       </span>
     </div>
     <button
-      onClick={onEdit}
+      onClick={(e) => {
+        e.stopPropagation();
+        onEdit();
+      }}
       title="แก้ไข"
       className="w-7 h-7 rounded-xl text-gray-400 hover:text-brand-red bg-gray-50 hover:bg-red-50 dark:bg-gray-800/80 dark:hover:bg-red-950/40 shrink-0 transition-all flex items-center justify-center border border-gray-150 dark:border-gray-700/60 shadow-2xs"
     >

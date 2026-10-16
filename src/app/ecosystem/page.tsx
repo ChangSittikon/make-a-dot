@@ -43,7 +43,7 @@ function EcosystemContent() {
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
   /* Tab 2 State: Cap Table Simulation */
-  const [selectedIndustryId, setSelectedIndustryId] = useState('ind_01');
+  const [selectedIndustryId, setSelectedIndustryId] = useState('');
   const [selectedSubIndustryId, setSelectedSubIndustryId] = useState('');
   const [selectedSegmentId, setSelectedSegmentId] = useState('');
   const [capTableData, setCapTableData] = useState<CapTableItem[]>(INITIAL_CAP_TABLE);
