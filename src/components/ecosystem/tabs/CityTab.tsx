@@ -82,9 +82,7 @@ export const CityTab: React.FC<CityTabProps> = ({
             onNextStep={goToNext}
             nextButtonLabel="ถัดไป: เข้าสู่ขั้นตอนที่ 02 (ทำเมือง)"
             step1PromptLine1="เมื่อรัฐเคลื่อนตัวช้า และกฎหมายติดหล่ม"
-            step1PromptLine2='การขับเคลื่อนที่เปลี่ยนโครงสร้างคุณภาพชีวิตได้จริงมักเริ่มจาก "ความร่วมมือของผู้คน"  ซึ่งไม่ต้องรอแก้กฎหมายใหญ่ แต่ใช้สิทธิ์ทางแพ่ง กฎหมายสหกรณ์ หรือข้อตกลงร่วมของชุมชนสร้างระบบเศรษฐกิจใหม่ขึ้นมาเอง'
-            step1PromptLine2Align="center"
-            step1PromptLine2Size="large"
+            cityStoryMode={true}
           />
         ) : (
           /* Steps 02-12: Workspace Placeholder for City & Urban Pipeline */
