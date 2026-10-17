@@ -18,6 +18,7 @@ interface StepScopeViewProps {
   nextButtonLabel?: string;
   step1PromptLine1?: string;
   step1PromptLine2?: string;
+  promptAlign?: 'left' | 'center';
 }
 
 const TILE_LABELS: Record<string, string> = {
@@ -38,7 +39,12 @@ const TILE_LABELS: Record<string, string> = {
 const industryImg = (id: string) => `/images/industries/${id}.jpg`;
 
 /* Signature Make A Dot Typewriter Header with Breathing Dot */
-export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ line1, line2 }) => {
+export const TypewriterPrompt: React.FC<{
+  line1: string;
+  line2?: string;
+  align?: 'left' | 'center';
+}> = ({ line1, line2, align = 'left' }) => {
+  const isCenter = align === 'center';
   const [disp1, setDisp1] = useState('');
   const [disp2, setDisp2] = useState('');
   const [typing1, setTyping1] = useState(true);
@@ -61,28 +67,26 @@ export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ 
         if (line2) {
           setTyping2(true);
           let j = 0;
-          const charStep = line2.length > 80 ? 2 : 1;
-          const intervalMs = line2.length > 80 ? 15 : 30;
           const t2 = setInterval(() => {
             if (j < line2.length) {
-              j = Math.min(line2.length, j + charStep);
-              setDisp2(line2.slice(0, j));
+              setDisp2(line2.slice(0, j + 1));
+              j++;
             } else {
               clearInterval(t2);
               setTyping2(false);
             }
-          }, intervalMs);
+          }, 38);
         }
       }
-    }, 40);
+    }, 55);
 
     return () => clearInterval(t1);
   }, [line1, line2]);
 
   return (
-    <div className="space-y-1 mb-3 pt-2 relative">
+    <div className={`space-y-1.5 mb-4 pt-2 relative ${isCenter ? 'text-center' : 'text-left'}`}>
       {/* Signature Breathing Red Dot with Cute Ground Wobble & Fresh Leap */}
-      <div className="h-14 flex items-end pb-1 mb-2 relative z-10">
+      <div className={`h-14 flex items-end pb-1 mb-2 relative z-10 ${isCenter ? 'justify-center' : 'justify-start'}`}>
         <motion.div
           layoutId="nong-dot"
           transition={{
@@ -95,23 +99,23 @@ export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ 
           }}
           className="inline-flex items-center justify-center"
         >
-          <NongDot mood="greeting" size={15} />
+          <NongDot mood="greeting" size={17} />
         </motion.div>
       </div>
 
-      <div className="relative z-10 space-y-1">
-        <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+      <div className={`relative z-10 space-y-1.5 ${isCenter ? 'max-w-2xl mx-auto' : ''}`}>
+        <h2 className="text-[19px] sm:text-[22px] font-black text-gray-900 dark:text-white tracking-tight leading-snug">
           {disp1}
           {typing1 && (
-            <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+            <span className="inline-block w-1.5 h-4.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
           )}
         </h2>
 
         {Boolean(line2) && (disp2 || typing2 || !typing1) && (
-          <p className="text-xs sm:text-[13px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
+          <p className="text-[14.5px] sm:text-[16px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
             {disp2}
             {typing2 && (
-              <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+              <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
             )}
           </p>
         )}
@@ -161,6 +165,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
   nextButtonLabel,
   step1PromptLine1,
   step1PromptLine2,
+  promptAlign = 'left',
 }) => {
   const [isEditingL1, setIsEditingL1] = useState(false);
   const [isEditingL2, setIsEditingL2] = useState(false);
@@ -326,6 +331,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 <TypewriterPrompt
                   line1={step1PromptLine1 || "ให้เรารู้จักคุณหน่อย"}
                   line2={step1PromptLine2 !== undefined ? step1PromptLine2 : "โปรดเลือกวงการที่คุณจะทำ"}
+                  align={promptAlign}
                 />
 
                 <div className="grid grid-cols-3 gap-2">
@@ -388,6 +394,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 <div className="space-y-2.5">
                   <TypewriterPrompt
                     line1="เจาะลึกลงไป"
+                    align={promptAlign}
                   />
 
                   <div className="grid grid-cols-2 gap-2">
@@ -423,6 +430,7 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 <div className="space-y-2.5">
                   <TypewriterPrompt
                     line1="ขอชัดขึ้นอีกนิด"
+                    align={promptAlign}
                   />
 
                   <div className="grid grid-cols-2 gap-2">
