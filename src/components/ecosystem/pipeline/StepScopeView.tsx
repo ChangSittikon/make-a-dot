@@ -160,10 +160,8 @@ export const CityFadeStoryPrompt: React.FC<{
   const [typingS2, setTypingS2] = useState(false);
 
   // Shot 3 state
-  const [s3L1, setS3L1] = useState('');
-  const [s3L2, setS3L2] = useState('');
-  const [typingS3L1, setTypingS3L1] = useState(false);
-  const [typingS3L2, setTypingS3L2] = useState(false);
+  const [s3Text, setS3Text] = useState('');
+  const [typingS3, setTypingS3] = useState(false);
 
   // Step 1: Type Anchor Title (line1) first so only ONE cursor is active at a time
   useEffect(() => {
@@ -267,39 +265,20 @@ export const CityFadeStoryPrompt: React.FC<{
       }, 40);
       intervals.push(intM);
     } else if (shot === 3) {
-      const finalA = '"ทำเมืองผสม"';
-      const finalB = '"เขตทดลองนวัตกรรมทางสังคมและเศรษฐกิจผสม"';
-      setS3L1('');
-      setS3L2('');
-      setTypingS3L1(true);
-      setTypingS3L2(false);
+      const finalText = '"เมืองทดลองนวัตกรรมทางสังคมและเศรษฐกิจผสม"';
+      setS3Text('');
+      setTypingS3(true);
 
       let c = 0;
       const intC = setInterval(() => {
-        if (c < finalA.length) {
-          setS3L1(finalA.slice(0, c + 1));
+        if (c < finalText.length) {
+          setS3Text(finalText.slice(0, c + 1));
           c++;
         } else {
           clearInterval(intC);
-          setTypingS3L1(false);
-
-          const waitD = setTimeout(() => {
-            setTypingS3L2(true);
-            let d = 0;
-            const intD = setInterval(() => {
-              if (d < finalB.length) {
-                setS3L2(finalB.slice(0, d + 1));
-                d++;
-              } else {
-                clearInterval(intD);
-                setTypingS3L2(false);
-              }
-            }, 40);
-            intervals.push(intD);
-          }, 280);
-          timeouts.push(waitD);
+          setTypingS3(false);
         }
-      }, 48);
+      }, 42);
       intervals.push(intC);
     }
 
@@ -393,22 +372,14 @@ export const CityFadeStoryPrompt: React.FC<{
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.5 }}
                   onClick={() => setShot(1)}
-                  className="space-y-1 py-1 cursor-pointer select-none"
+                  className="py-1 cursor-pointer select-none"
                 >
-                  <p className="text-[16px] sm:text-[17px] font-black text-brand-red tracking-tight leading-snug">
-                    {s3L1}
-                    {typingS3L1 && (
-                      <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+                  <p className="text-[14.5px] sm:text-[15.5px] font-bold text-gray-800 dark:text-gray-100 leading-snug">
+                    {s3Text}
+                    {typingS3 && (
+                      <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
                     )}
                   </p>
-                  {(s3L2 || typingS3L2) && (
-                    <p className="text-[14px] sm:text-[15px] font-bold text-gray-700 dark:text-gray-200 leading-snug">
-                      {s3L2}
-                      {typingS3L2 && (
-                        <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
-                      )}
-                    </p>
-                  )}
                 </motion.div>
               )}
             </AnimatePresence>
