@@ -56,30 +56,29 @@ export const CityTab: React.FC<CityTabProps> = ({
                   ? 'border-brand-red bg-white dark:bg-[#12141a] text-brand-red font-bold shadow-2xs'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100/70 dark:hover:bg-[#1e2129] hover:text-gray-700 dark:hover:text-gray-300'
               }`}
-              title={isStep1 ? `${tab.code} หาตัวตน` : `ขั้นตอน ${tab.code}`}
+              title={isStep1 ? '01 คอนเซป' : `ขั้นตอน ${tab.code}`}
             >
               {isStep1 ? (
-                <>
+                <div className="flex flex-col items-center justify-center py-1">
                   <span
-                    className={`w-5 h-5 rounded-md flex items-center justify-center mb-0.5 text-[10px] transition-colors ${
+                    className={`font-mono text-xs sm:text-[12px] leading-tight transition-all ${
                       isActive
-                        ? 'bg-red-50 text-brand-red dark:bg-red-950/50'
-                        : 'bg-gray-200/60 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                        ? 'font-black text-brand-red scale-105'
+                        : 'font-bold text-gray-400 dark:text-gray-500'
                     }`}
                   >
-                    <i className={tab.icon}></i>
-                  </span>
-                  <span className="text-[8px] font-mono leading-none text-gray-400 dark:text-gray-500 mb-0.5">
-                    {tab.code}
+                    01
                   </span>
                   <span
-                    className={`text-[8px] sm:text-[8.5px] leading-[1.15] px-0.5 line-clamp-2 ${
-                      isActive ? 'text-brand-red font-bold' : ''
+                    className={`text-[9px] sm:text-[9.5px] leading-tight px-0.5 transition-colors ${
+                      isActive
+                        ? 'text-brand-red font-bold'
+                        : 'text-gray-500 dark:text-gray-400 font-medium'
                     }`}
                   >
-                    หาตัวตน
+                    คอนเซป
                   </span>
-                </>
+                </div>
               ) : (
                 /* Steps 02-12: Only show number without logo and name */
                 <span
@@ -131,7 +130,7 @@ export const CityTab: React.FC<CityTabProps> = ({
                 className="text-xs text-gray-500 hover:text-brand-red transition-colors flex items-center gap-1 font-medium"
               >
                 <i className="fa-solid fa-arrow-left text-[10px]"></i>
-                <span>กลับไป 01 หาตัวตน</span>
+                <span>กลับไป 01 คอนเซป</span>
               </button>
             </div>
 
