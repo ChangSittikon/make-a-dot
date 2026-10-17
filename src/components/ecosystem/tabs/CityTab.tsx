@@ -43,54 +43,27 @@ export const CityTab: React.FC<CityTabProps> = ({
       <div className="w-[56px] sm:w-[62px] shrink-0 bg-[#f8f9fa] dark:bg-[#16181f] overflow-y-auto pb-24 border-r border-gray-100 dark:border-gray-800/80 scrollbar-none flex flex-col">
         {PIPELINE_TABS.map((tab) => {
           const isActive = activeStep === tab.id;
-          const isStep1 = tab.id === 1;
 
           return (
             <button
               key={tab.id}
               onClick={() => setActiveStep(tab.id)}
-              className={`w-full flex flex-col items-center justify-center border-l-[2.5px] transition-all text-center relative ${
-                isStep1 ? 'py-2 px-0.5 min-h-[58px]' : 'py-3 px-0.5 min-h-[44px]'
-              } ${
+              className={`w-full flex flex-col items-center justify-center border-l-[2.5px] transition-all text-center relative py-3 px-0.5 min-h-[44px] ${
                 isActive
                   ? 'border-brand-red bg-white dark:bg-[#12141a] text-brand-red font-bold shadow-2xs'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100/70 dark:hover:bg-[#1e2129] hover:text-gray-700 dark:hover:text-gray-300'
               }`}
-              title={isStep1 ? '01 คอนเซป' : `ขั้นตอน ${tab.code}`}
+              title={`ขั้นตอน ${tab.code}`}
             >
-              {isStep1 ? (
-                <div className="flex flex-col items-center justify-center py-1">
-                  <span
-                    className={`font-mono text-xs sm:text-[12px] leading-tight transition-all ${
-                      isActive
-                        ? 'font-black text-brand-red scale-105'
-                        : 'font-bold text-gray-400 dark:text-gray-500'
-                    }`}
-                  >
-                    01
-                  </span>
-                  <span
-                    className={`text-[9px] sm:text-[9.5px] leading-tight px-0.5 transition-colors ${
-                      isActive
-                        ? 'text-brand-red font-bold'
-                        : 'text-gray-500 dark:text-gray-400 font-medium'
-                    }`}
-                  >
-                    คอนเซป
-                  </span>
-                </div>
-              ) : (
-                /* Steps 02-12: Only show number without logo and name */
-                <span
-                  className={`font-mono transition-all ${
-                    isActive
-                      ? 'text-xs sm:text-[13px] font-black text-brand-red scale-110'
-                      : 'text-xs sm:text-[11.5px] font-bold text-gray-400 dark:text-gray-500'
-                  }`}
-                >
-                  {tab.code}
-                </span>
-              )}
+              <span
+                className={`font-mono transition-all ${
+                  isActive
+                    ? 'text-xs sm:text-[13px] font-black text-brand-red scale-110'
+                    : 'text-xs sm:text-[11.5px] font-bold text-gray-400 dark:text-gray-500'
+                }`}
+              >
+                {tab.code}
+              </span>
             </button>
           );
         })}
@@ -130,7 +103,7 @@ export const CityTab: React.FC<CityTabProps> = ({
                 className="text-xs text-gray-500 hover:text-brand-red transition-colors flex items-center gap-1 font-medium"
               >
                 <i className="fa-solid fa-arrow-left text-[10px]"></i>
-                <span>กลับไป 01 คอนเซป</span>
+                <span>กลับไป 01</span>
               </button>
             </div>
 
