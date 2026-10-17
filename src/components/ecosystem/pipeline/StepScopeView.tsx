@@ -105,7 +105,7 @@ export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ 
           )}
         </h2>
 
-        {(disp2 || typing2 || (!typing1 && line2)) && (
+        {Boolean(line2) && (disp2 || typing2 || !typing1) && (
           <p className="text-xs sm:text-[13px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
             {disp2}
             {typing2 && (

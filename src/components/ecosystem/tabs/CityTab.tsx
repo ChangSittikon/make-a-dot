@@ -81,8 +81,8 @@ export const CityTab: React.FC<CityTabProps> = ({
             onSelectSegment={onSelectSegment}
             onNextStep={goToNext}
             nextButtonLabel="ถัดไป: เข้าสู่ขั้นตอนที่ 02 (ทำเมือง)"
-            step1PromptLine1="ต้นน้ำ-ปลายน้ำ คุณเป็นใครได้บ้าง ฉันจะแสดงให้คุณดู"
-            step1PromptLine2="โปรดเลือกวงการที่คุณจะทำ"
+            step1PromptLine1="เมื่อรัฐเคลื่อนตัวช้า และกฎหมายติดหล่ม"
+            step1PromptLine2=""
           />
         ) : (
           /* Steps 02-12: Workspace Placeholder for City & Urban Pipeline */
