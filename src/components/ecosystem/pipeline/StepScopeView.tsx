@@ -61,18 +61,20 @@ export const TypewriterPrompt: React.FC<{ line1: string; line2?: string }> = ({ 
         if (line2) {
           setTyping2(true);
           let j = 0;
+          const charStep = line2.length > 80 ? 2 : 1;
+          const intervalMs = line2.length > 80 ? 15 : 30;
           const t2 = setInterval(() => {
             if (j < line2.length) {
-              setDisp2(line2.slice(0, j + 1));
-              j++;
+              j = Math.min(line2.length, j + charStep);
+              setDisp2(line2.slice(0, j));
             } else {
               clearInterval(t2);
               setTyping2(false);
             }
-          }, 35);
+          }, intervalMs);
         }
       }
-    }, 45);
+    }, 40);
 
     return () => clearInterval(t1);
   }, [line1, line2]);
