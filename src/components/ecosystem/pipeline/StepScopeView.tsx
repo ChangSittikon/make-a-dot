@@ -18,7 +18,8 @@ interface StepScopeViewProps {
   nextButtonLabel?: string;
   step1PromptLine1?: string;
   step1PromptLine2?: string;
-  promptAlign?: 'left' | 'center';
+  step1PromptLine2Align?: 'left' | 'center';
+  step1PromptLine2Size?: 'normal' | 'large';
 }
 
 const TILE_LABELS: Record<string, string> = {
@@ -42,9 +43,16 @@ const industryImg = (id: string) => `/images/industries/${id}.jpg`;
 export const TypewriterPrompt: React.FC<{
   line1: string;
   line2?: string;
-  align?: 'left' | 'center';
-}> = ({ line1, line2, align = 'left' }) => {
-  const isCenter = align === 'center';
+  line2Align?: 'left' | 'center';
+  line2Size?: 'normal' | 'large';
+}> = ({
+  line1,
+  line2,
+  line2Align = 'left',
+  line2Size = 'normal',
+}) => {
+  const isLine2Center = line2Align === 'center';
+  const isLine2Large = line2Size === 'large';
   const [disp1, setDisp1] = useState('');
   const [disp2, setDisp2] = useState('');
   const [typing1, setTyping1] = useState(true);
@@ -78,15 +86,15 @@ export const TypewriterPrompt: React.FC<{
           }, 38);
         }
       }
-    }, 55);
+    }, 50);
 
     return () => clearInterval(t1);
   }, [line1, line2]);
 
   return (
-    <div className={`space-y-1.5 mb-4 pt-2 relative ${isCenter ? 'text-center' : 'text-left'}`}>
-      {/* Signature Breathing Red Dot with Cute Ground Wobble & Fresh Leap */}
-      <div className={`h-14 flex items-end pb-1 mb-2 relative z-10 ${isCenter ? 'justify-center' : 'justify-start'}`}>
+    <div className="space-y-1 mb-3 pt-2 relative">
+      {/* Signature Breathing Red Dot with Cute Ground Wobble & Fresh Leap - Original Left Position */}
+      <div className="h-14 flex items-end pb-1 mb-2 relative z-10">
         <motion.div
           layoutId="nong-dot"
           transition={{
@@ -99,23 +107,28 @@ export const TypewriterPrompt: React.FC<{
           }}
           className="inline-flex items-center justify-center"
         >
-          <NongDot mood="greeting" size={17} />
+          <NongDot mood="greeting" size={15} />
         </motion.div>
       </div>
 
-      <div className={`relative z-10 space-y-1.5 ${isCenter ? 'max-w-2xl mx-auto' : ''}`}>
-        <h2 className="text-[19px] sm:text-[22px] font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+      <div className="relative z-10 space-y-1">
+        {/* Line 1 Heading: Original size & left-aligned */}
+        <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">
           {disp1}
           {typing1 && (
-            <span className="inline-block w-1.5 h-4.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+            <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
           )}
         </h2>
 
         {Boolean(line2) && (disp2 || typing2 || !typing1) && (
-          <p className="text-[14.5px] sm:text-[16px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
+          <p
+            className={`font-medium leading-relaxed text-gray-600 dark:text-gray-400 ${
+              isLine2Large ? 'text-[14.5px] sm:text-[16px]' : 'text-xs sm:text-[13px]'
+            } ${isLine2Center ? 'text-center mx-auto max-w-2xl pt-1' : 'text-left'}`}
+          >
             {disp2}
             {typing2 && (
-              <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+              <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
             )}
           </p>
         )}
@@ -165,7 +178,8 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
   nextButtonLabel,
   step1PromptLine1,
   step1PromptLine2,
-  promptAlign = 'left',
+  step1PromptLine2Align = 'left',
+  step1PromptLine2Size = 'normal',
 }) => {
   const [isEditingL1, setIsEditingL1] = useState(false);
   const [isEditingL2, setIsEditingL2] = useState(false);
@@ -331,7 +345,8 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 <TypewriterPrompt
                   line1={step1PromptLine1 || "ให้เรารู้จักคุณหน่อย"}
                   line2={step1PromptLine2 !== undefined ? step1PromptLine2 : "โปรดเลือกวงการที่คุณจะทำ"}
-                  align={promptAlign}
+                  line2Align={step1PromptLine2Align}
+                  line2Size={step1PromptLine2Size}
                 />
 
                 <div className="grid grid-cols-3 gap-2">
@@ -394,7 +409,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 <div className="space-y-2.5">
                   <TypewriterPrompt
                     line1="เจาะลึกลงไป"
-                    align={promptAlign}
                   />
 
                   <div className="grid grid-cols-2 gap-2">
@@ -430,7 +444,6 @@ export const StepScopeView: React.FC<StepScopeViewProps> = ({
                 <div className="space-y-2.5">
                   <TypewriterPrompt
                     line1="ขอชัดขึ้นอีกนิด"
-                    align={promptAlign}
                   />
 
                   <div className="grid grid-cols-2 gap-2">
