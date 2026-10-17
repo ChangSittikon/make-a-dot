@@ -138,28 +138,41 @@ export const TypewriterPrompt: React.FC<{
   );
 };
 
-/* Signature City Tab Two-Stage Fade Story */
+/* Signature City Tab Mobile-First 3-Shot Kinetic Typography Story */
 export const CityFadeStoryPrompt: React.FC<{
   line1: string;
 }> = ({ line1 }) => {
-  const [stage, setStage] = useState<1 | 2>(1);
   const [disp1, setDisp1] = useState('');
   const [typing1, setTyping1] = useState(true);
+  const [line1Done, setLine1Done] = useState(false);
 
-  // Stage 1 typewriter text states
-  const [extreme1, setExtreme1] = useState('');
-  const [extreme2, setExtreme2] = useState('');
+  // 3 Shots: 1 = สองขั้วสุดโต่ง, 2 = ความร่วมมือของผู้คน, 3 = ทำเมืองผสม
+  const [shot, setShot] = useState<1 | 2 | 3>(1);
 
-  // Stage 2 manifesto typewriter
-  const manifesto = 'การขับเคลื่อนที่เปลี่ยนโครงสร้างคุณภาพชีวิตได้จริงมักเริ่มจาก "ความร่วมมือของผู้คน"  ซึ่งไม่ต้องรอแก้กฎหมายใหญ่ แต่ใช้สิทธิ์ทางแพ่ง กฎหมายสหกรณ์ หรือข้อตกลงร่วมของชุมชนสร้างระบบเศรษฐกิจใหม่ขึ้นมาเอง';
-  const [dispManifesto, setDispManifesto] = useState('');
-  const [typingManifesto, setTypingManifesto] = useState(false);
+  // Shot 1 state
+  const [s1L1, setS1L1] = useState('');
+  const [s1L2, setS1L2] = useState('');
+  const [typingS1L1, setTypingS1L1] = useState(false);
+  const [typingS1L2, setTypingS1L2] = useState(false);
 
-  // Type line 1 (Anchor title)
+  // Shot 2 state
+  const [s2Text, setS2Text] = useState('');
+  const [typingS2, setTypingS2] = useState(false);
+
+  // Shot 3 state
+  const [s3L1, setS3L1] = useState('');
+  const [s3L2, setS3L2] = useState('');
+  const [typingS3L1, setTypingS3L1] = useState(false);
+  const [typingS3L2, setTypingS3L2] = useState(false);
+
+  // Step 1: Type Anchor Title (line1) first so only ONE cursor is active at a time
   useEffect(() => {
     setDisp1('');
     setTyping1(true);
+    setLine1Done(false);
     let i = 0;
+    let pauseTimer: ReturnType<typeof setTimeout> | null = null;
+
     const t = setInterval(() => {
       if (i < line1.length) {
         setDisp1(line1.slice(0, i + 1));
@@ -167,74 +180,141 @@ export const CityFadeStoryPrompt: React.FC<{
       } else {
         clearInterval(t);
         setTyping1(false);
+        pauseTimer = setTimeout(() => {
+          setLine1Done(true);
+        }, 250);
       }
     }, 45);
-    return () => clearInterval(t);
+
+    return () => {
+      clearInterval(t);
+      if (pauseTimer) clearTimeout(pauseTimer);
+    };
   }, [line1]);
 
-  // Stage 1 typing & auto-advance timer
+  // Step 2: Run 3-Shot Mobile Story Sequence after line1 finishes
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (stage === 1) {
-      setExtreme1('');
-      setExtreme2('');
-      const text1 = '"ทุนนิยมสุดโต่ง" (เน้นกำไรจนลืมคน)';
-      const text2 = '"สังคมนิยมสุดโต่ง" (คุมทุกอย่างจนขาดนวัตกรรม)';
+    if (!line1Done) return;
 
-      let idx1 = 0;
-      let idx2 = 0;
-      const t1 = setInterval(() => {
-        if (idx1 < text1.length) {
-          setExtreme1(text1.slice(0, idx1 + 1));
-          idx1++;
+    const intervals: ReturnType<typeof setInterval>[] = [];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    const clearAll = () => {
+      intervals.forEach(clearInterval);
+      timeouts.forEach(clearTimeout);
+    };
+
+    if (shot === 1) {
+      const textA = '"ทุนนิยมสุดโต่ง" (เน้นกำไรจนลืมคน)';
+      const textB = '"สังคมนิยมสุดโต่ง" (คุมทุกอย่างจนขาดนวัตกรรม)';
+      setS1L1('');
+      setS1L2('');
+      setTypingS1L1(true);
+      setTypingS1L2(false);
+
+      let a = 0;
+      const intA = setInterval(() => {
+        if (a < textA.length) {
+          setS1L1(textA.slice(0, a + 1));
+          a++;
         } else {
-          clearInterval(t1);
-          const t2 = setInterval(() => {
-            if (idx2 < text2.length) {
-              setExtreme2(text2.slice(0, idx2 + 1));
-              idx2++;
-            } else {
-              clearInterval(t2);
-              // Auto fade to stage 2 after 3.2 seconds
-              timer = setTimeout(() => {
-                setStage(2);
-              }, 3200);
-            }
-          }, 30);
-        }
-      }, 30);
+          clearInterval(intA);
+          setTypingS1L1(false);
 
-      return () => {
-        clearInterval(t1);
-        if (timer) clearTimeout(timer);
-      };
-    } else {
-      // Stage 2 typing
-      setDispManifesto('');
-      setTypingManifesto(true);
+          const waitB = setTimeout(() => {
+            setTypingS1L2(true);
+            let b = 0;
+            const intB = setInterval(() => {
+              if (b < textB.length) {
+                setS1L2(textB.slice(0, b + 1));
+                b++;
+              } else {
+                clearInterval(intB);
+                setTypingS1L2(false);
+
+                const nextShot = setTimeout(() => {
+                  setShot(2);
+                }, 2200);
+                timeouts.push(nextShot);
+              }
+            }, 40);
+            intervals.push(intB);
+          }, 300);
+          timeouts.push(waitB);
+        }
+      }, 40);
+      intervals.push(intA);
+    } else if (shot === 2) {
+      const manifesto =
+        'การขับเคลื่อนที่เปลี่ยนโครงสร้างคุณภาพชีวิตได้จริงมักเริ่มจาก "ความร่วมมือของผู้คน" ซึ่งไม่ต้องรอแก้กฎหมายใหญ่ แต่ใช้สิทธิ์ทางแพ่ง กฎหมายสหกรณ์ หรือข้อตกลงร่วมของชุมชนสร้างระบบเศรษฐกิจใหม่ขึ้นมาเอง';
+      setS2Text('');
+      setTypingS2(true);
+
       let m = 0;
-      const tm = setInterval(() => {
+      const intM = setInterval(() => {
         if (m < manifesto.length) {
-          setDispManifesto(manifesto.slice(0, m + 1));
+          setS2Text(manifesto.slice(0, m + 1));
           m++;
         } else {
-          clearInterval(tm);
-          setTypingManifesto(false);
+          clearInterval(intM);
+          setTypingS2(false);
+
+          const nextShot = setTimeout(() => {
+            setShot(3);
+          }, 3000);
+          timeouts.push(nextShot);
         }
-      }, 35);
-      return () => clearInterval(tm);
+      }, 40);
+      intervals.push(intM);
+    } else if (shot === 3) {
+      const finalA = '"ทำเมืองผสม"';
+      const finalB = '"เขตทดลองนวัตกรรมทางสังคมและเศรษฐกิจผสม"';
+      setS3L1('');
+      setS3L2('');
+      setTypingS3L1(true);
+      setTypingS3L2(false);
+
+      let c = 0;
+      const intC = setInterval(() => {
+        if (c < finalA.length) {
+          setS3L1(finalA.slice(0, c + 1));
+          c++;
+        } else {
+          clearInterval(intC);
+          setTypingS3L1(false);
+
+          const waitD = setTimeout(() => {
+            setTypingS3L2(true);
+            let d = 0;
+            const intD = setInterval(() => {
+              if (d < finalB.length) {
+                setS3L2(finalB.slice(0, d + 1));
+                d++;
+              } else {
+                clearInterval(intD);
+                setTypingS3L2(false);
+              }
+            }, 40);
+            intervals.push(intD);
+          }, 280);
+          timeouts.push(waitD);
+        }
+      }, 48);
+      intervals.push(intC);
     }
-  }, [stage]);
+
+    return clearAll;
+  }, [line1Done, shot]);
 
   return (
-    <div className="space-y-1 mb-3 pt-2 relative">
-      {/* Signature Breathing Red Dot with Cute Ground Wobble & Fresh Leap - Original Left Position */}
+    <div className="space-y-1 mb-2.5 pt-2 relative">
+      {/* Signature Breathing Red Dot - Original Left Position */}
       <div className="h-14 flex items-end pb-1 mb-2 relative z-10">
         <motion.div
           layoutId="nong-dot"
           transition={{
             layout: {
-              type: "spring",
+              type: 'spring',
               stiffness: 60,
               damping: 11,
               mass: 1.2,
@@ -248,127 +328,109 @@ export const CityFadeStoryPrompt: React.FC<{
 
       <div className="relative z-10 space-y-2">
         {/* Line 1 Heading: Original size & left-aligned */}
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">
-            {disp1}
-            {typing1 && (
-              <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
-            )}
-          </h2>
+        <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+          {disp1}
+          {typing1 && (
+            <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+          )}
+        </h2>
 
-          {/* Minimal Stage Controls */}
-          <div className="flex items-center gap-1 shrink-0 bg-gray-100/90 dark:bg-gray-800/90 p-0.5 rounded-full border border-gray-200/60 dark:border-gray-700/60 text-[9.5px]">
-            <button
-              type="button"
-              onClick={() => setStage(1)}
-              className={`px-2 py-0.5 rounded-full font-bold transition-all ${
-                stage === 1
-                  ? 'bg-white dark:bg-gray-900 text-brand-red shadow-2xs'
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-              }`}
-              title="1. สองขั้วสุดโต่ง"
-            >
-              1. สองขั้ว
-            </button>
-            <button
-              type="button"
-              onClick={() => setStage(2)}
-              className={`px-2 py-0.5 rounded-full font-bold transition-all ${
-                stage === 2
-                  ? 'bg-brand-red text-white shadow-2xs'
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-              }`}
-              title="2. ทำเมืองผสม"
-            >
-              2. ทำเมืองผสม
-            </button>
-          </div>
-        </div>
-
-        {/* Dynamic Multi-Stage Narrative Card with Smooth Fade */}
-        <div className="relative min-h-[96px] rounded-2xl bg-gradient-to-br from-gray-50/95 via-white to-gray-50/60 dark:from-[#181a20] dark:via-[#16181e] dark:to-[#1a1c24] border border-gray-200/80 dark:border-gray-800 p-3 sm:p-3.5 shadow-2xs overflow-hidden flex flex-col justify-center">
-          <AnimatePresence mode="wait">
-            {stage === 1 ? (
-              <motion.div
-                key="stage-1"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.35 }}
-                className="space-y-2"
-              >
-                <div className="flex items-center justify-between text-[10px] text-gray-400 font-medium pb-0.5 border-b border-gray-150/60 dark:border-gray-800/80">
-                  <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold">
-                    <i className="fa-solid fa-scale-unbalanced text-[9.5px]"></i>
-                    <span>ทางแยกของสองขั้วสุดโต่ง</span>
-                  </span>
-                  <span className="text-[9px] text-gray-400 font-mono">1/2 • กำลังนำสู่ทางออก...</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {/* Extreme 1 */}
-                  <div className="p-2.5 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200/60 dark:border-red-900/40 flex items-start gap-2">
-                    <span className="w-4 h-4 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center text-[9px] font-black shrink-0 mt-0.5">
-                      ✕
-                    </span>
-                    <div className="min-w-0">
-                      <div className="font-bold text-red-700 dark:text-red-300 text-xs sm:text-[12.5px]">
-                        {extreme1 || '...'}
-                        {extreme1 && !extreme2 && (
-                          <span className="inline-block w-1 h-3 bg-red-500 ml-0.5 animate-[blink_1s_infinite] align-middle" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Extreme 2 */}
-                  <div className="p-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-900/40 border border-slate-200/70 dark:border-slate-800 flex items-start gap-2">
-                    <span className="w-4 h-4 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-400 flex items-center justify-center text-[9px] font-black shrink-0 mt-0.5">
-                      ✕
-                    </span>
-                    <div className="min-w-0">
-                      <div className="font-bold text-slate-700 dark:text-slate-300 text-xs sm:text-[12.5px]">
-                        {extreme2 || (extreme1 ? '...' : '')}
-                        {extreme2 && (
-                          <span className="inline-block w-1 h-3 bg-slate-500 ml-0.5 animate-[blink_1s_infinite] align-middle" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="stage-2"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.45 }}
-                className="space-y-2 text-center"
-              >
-                {/* Badges for ทำเมืองผสม and เขตทดลองนวัตกรรมทางสังคมและเศรษฐกิจผสม */}
-                <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 text-[11px] font-extrabold shadow-2xs">
-                    <span>🏙️</span>
-                    <span>&ldquo;ทำเมืองผสม&rdquo;</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-rose-50 to-amber-50 dark:from-rose-950/40 dark:to-amber-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/70 dark:border-rose-900/40 text-[10.5px] font-bold shadow-2xs">
-                    <span>⚡</span>
-                    <span>&ldquo;เขตทดลองนวัตกรรมทางสังคมและเศรษฐกิจผสม&rdquo;</span>
-                  </span>
-                </div>
-
-                {/* Manifesto Text */}
-                <p className="text-[14px] sm:text-[15.5px] text-gray-700 dark:text-gray-200 font-medium leading-relaxed max-w-2xl mx-auto pt-0.5">
-                  &ldquo;{dispManifesto}&rdquo;
-                  {typingManifesto && (
-                    <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+        {/* Centered Mobile-First Kinetic Typography Stage (No clunky boxes) */}
+        {line1Done && (
+          <div className="pt-1 pb-0.5 text-center">
+            <AnimatePresence mode="wait">
+              {shot === 1 && (
+                <motion.div
+                  key="shot-1"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4, filter: 'blur(2px)' }}
+                  transition={{ duration: 0.45 }}
+                  onClick={() => setShot(2)}
+                  className="space-y-1.5 py-1 cursor-pointer select-none"
+                >
+                  <p className="text-[14.5px] sm:text-[15.5px] font-semibold text-gray-600 dark:text-gray-300 leading-snug">
+                    {s1L1}
+                    {typingS1L1 && (
+                      <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+                    )}
+                  </p>
+                  {(s1L2 || typingS1L2) && (
+                    <p className="text-[14.5px] sm:text-[15.5px] font-semibold text-gray-600 dark:text-gray-300 leading-snug">
+                      {s1L2}
+                      {typingS1L2 && (
+                        <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+                      )}
+                    </p>
                   )}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                </motion.div>
+              )}
+
+              {shot === 2 && (
+                <motion.div
+                  key="shot-2"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4, filter: 'blur(2px)' }}
+                  transition={{ duration: 0.45 }}
+                  onClick={() => setShot(3)}
+                  className="py-1 cursor-pointer select-none"
+                >
+                  <p className="text-[14.5px] sm:text-[15.5px] font-medium text-gray-600 dark:text-gray-300 leading-relaxed max-w-xl mx-auto">
+                    {s2Text}
+                    {typingS2 && (
+                      <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+                    )}
+                  </p>
+                </motion.div>
+              )}
+
+              {shot === 3 && (
+                <motion.div
+                  key="shot-3"
+                  initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.5 }}
+                  onClick={() => setShot(1)}
+                  className="space-y-1 py-1 cursor-pointer select-none"
+                >
+                  <p className="text-[16px] sm:text-[17px] font-black text-brand-red tracking-tight leading-snug">
+                    {s3L1}
+                    {typingS3L1 && (
+                      <span className="inline-block w-1.5 h-4 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+                    )}
+                  </p>
+                  {(s3L2 || typingS3L2) && (
+                    <p className="text-[14px] sm:text-[15px] font-bold text-gray-700 dark:text-gray-200 leading-snug">
+                      {s3L2}
+                      {typingS3L2 && (
+                        <span className="inline-block w-1.5 h-3.5 bg-brand-red ml-1 animate-[blink_1s_infinite] align-middle" />
+                      )}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Minimal Mobile Story Dots */}
+            <div className="flex items-center justify-center gap-1.5 pt-1.5">
+              {([1, 2, 3] as const).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setShot(n)}
+                  aria-label={`จังหวะที่ ${n}`}
+                  className={`h-1 rounded-full transition-all duration-300 ${
+                    shot === n
+                      ? 'w-4 bg-brand-red'
+                      : 'w-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
