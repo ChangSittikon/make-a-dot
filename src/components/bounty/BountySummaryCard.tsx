@@ -343,11 +343,73 @@ ${targetUrl}`;
     try {
       setIsSavingImage(true);
 
-      const canvas = document.createElement('canvas');
       const width = 640;
-      const height = 820;
-      const scale = 2; // Retina 2x คมชัดสูง (1280x1640)
+      const scale = 2; // Retina 2x คมชัดสูง (1280x...)
 
+      // ข้อ 3: ขยายขนาดตัวอักษรตรงกลางให้ใหญ่ขึ้นอีก 1 ระดับ (The Hook & Reward)
+      const isShortHook = cleanProblemText.length <= 25;
+      const hookFontSize = isShortHook ? 46 : 36;
+      const hookFontWeight = '900';
+      const hookLineHeight = hookFontSize + 12;
+
+      const hookDisplay = `“${cleanProblemText}”`;
+
+      // ใช้ Canvas ชั่วคราวคำนวณการตัดบรรทัดและสัดส่วนความสูงกระชับ (h-auto)
+      const measureCanvas = document.createElement('canvas');
+      const mCtx = measureCanvas.getContext('2d');
+
+      let hookLines: string[] = [hookDisplay];
+      let expLines: string[] = [];
+      let conLines: string[] = [];
+
+      if (mCtx) {
+        mCtx.font = `${hookFontWeight} ${hookFontSize}px "Prompt", sans-serif`;
+        hookLines = wrapTextLines(mCtx, hookDisplay, width - 90);
+
+        mCtx.font = 'normal 14px "Prompt", sans-serif';
+        if (cleanExpectationText) {
+          expLines = wrapTextLines(mCtx, `🎯 สิ่งที่ต้องการ: ${cleanExpectationText}`, width - 100);
+        }
+        if (cleanConstraintText) {
+          conLines = wrapTextLines(mCtx, `⚠️ ข้อจำกัด: ${cleanConstraintText}`, width - 100);
+        }
+      }
+
+      // ---------------------------------------------------------------------
+      // คำนวณความสูงแบบกระชับ (h-auto) และกำหนดระยะห่างตามข้อ 1 & 2
+      // ---------------------------------------------------------------------
+      let estY = 114; // ตำแหน่งแท็กบนพาดหัว
+      estY += 46;     // ตำแหน่งเริ่มต้นพาดหัวปัญหา
+
+      estY += hookLines.length * hookLineHeight;
+      estY += 6;
+
+      if (expLines.length > 0) {
+        estY += expLines.length * 22;
+      }
+      if (conLines.length > 0) {
+        estY += conLines.length * 22;
+      }
+
+      estY += 16;
+      estY += 46; // ป้ายคนช่วยที่ต้องการ (Center Pill)
+
+      estY += 44; // รางวัลค่าตอบแทน Label
+      estY += 72; // ตัวเลขเงินรางวัลมหึมา (ขยายเป็น 68px 900 bold!)
+      estY += 22; // Escrow note
+
+      const escrowBottomY = estY;
+
+      // ข้อ 1: กำหนดระยะห่างระหว่างส่วนรางวัลกับแถบสีดำด้านล่างแค่ mt-8 หรือ 32px ห้ามเว้นที่ว่างสีขาวโล่งๆ ตรงกลางเด็ดขาด
+      const ctaGap = 32; // mt-8 = 32px
+      const ctaY = escrowBottomY + ctaGap;
+      const ctaH = 106;
+      const bottomPadding = 20;
+
+      // ข้อ 1 & 2: ความสูงการ์ดกระชับพอดีกับเนื้อหา (h-auto) สัดส่วนทรงจัตุรัส 1:1 หรือ 4:5
+      const height = Math.round(ctaY + ctaH + bottomPadding);
+
+      const canvas = document.createElement('canvas');
       canvas.width = width * scale;
       canvas.height = height * scale;
       const ctx = canvas.getContext('2d');
@@ -362,7 +424,7 @@ ${targetUrl}`;
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
 
-      // 2. ลวดลายจุด (Dot Pattern) อ่อนๆ สไตล์ Make a Dot
+      // 2. ลวดลายจุด (Dot Pattern) อ่อนๆ สไตล์ Make a Dot เต็มพื้นที่
       ctx.fillStyle = 'rgba(226, 232, 240, 0.6)';
       for (let dx = 22; dx < width - 18; dx += 22) {
         for (let dy = 22; dy < height - 18; dy += 22) {
@@ -438,7 +500,7 @@ ${targetUrl}`;
       ctx.stroke();
 
       // =====================================================================
-      // ข้อ 1: เน้น 'ปัญหา' ให้เป็นพาดหัวข่าวขนาดใหญ่ (The Hook) กึ่งกลางการ์ด
+      // ข้อ 1 & 3: เน้น 'ปัญหา' ให้เป็นพาดหัวข่าวขนาดใหญ่ขึ้นอีก 1 ระดับ (The Hook)
       // =====================================================================
       let curY = 114;
 
@@ -458,40 +520,30 @@ ${targetUrl}`;
 
       curY += 46;
 
-      // พาดหัวปัญหาขนาดใหญ่ที่สุด (The Hook - Bold & Centered)
-      const isShortHook = cleanProblemText.length <= 30;
-      const hookFontSize = isShortHook ? 32 : 28;
-      ctx.font = `bold ${hookFontSize}px "Prompt", sans-serif`;
+      // พาดหัวปัญหาขนาดใหญ่และหนาขึ้นอีก (The Hook - 46px/36px 900 Bold)
+      ctx.font = `${hookFontWeight} ${hookFontSize}px "Prompt", sans-serif`;
       ctx.fillStyle = '#0F172A';
 
-      const hookDisplay = `“${cleanProblemText}”`;
-      const hookLines = wrapTextLines(ctx, hookDisplay, width - 90);
       hookLines.forEach((line) => {
         ctx.fillText(line, width / 2, curY);
-        curY += (hookFontSize + 10);
+        curY += hookLineHeight;
       });
 
       curY += 6;
 
       // ส่วนข้อจำกัด หรือสิ่งที่ต้องการ (ตัวเล็กกว่า Text-sm สีเทา จัดกึ่งกลาง)
-      ctx.font = 'normal 13px "Prompt", sans-serif';
+      ctx.font = 'normal 14px "Prompt", sans-serif';
       ctx.fillStyle = '#64748B';
 
-      if (cleanExpectationText) {
-        const expLines = wrapTextLines(ctx, `🎯 สิ่งที่ต้องการ: ${cleanExpectationText}`, width - 100);
-        expLines.forEach((line) => {
-          ctx.fillText(line, width / 2, curY);
-          curY += 20;
-        });
-      }
+      expLines.forEach((line) => {
+        ctx.fillText(line, width / 2, curY);
+        curY += 22;
+      });
 
-      if (cleanConstraintText) {
-        const conLines = wrapTextLines(ctx, `⚠️ ข้อจำกัด: ${cleanConstraintText}`, width - 100);
-        conLines.forEach((line) => {
-          ctx.fillText(line, width / 2, curY);
-          curY += 20;
-        });
-      }
+      conLines.forEach((line) => {
+        ctx.fillText(line, width / 2, curY);
+        curY += 22;
+      });
 
       curY += 16;
 
@@ -513,34 +565,31 @@ ${targetUrl}`;
       ctx.fillStyle = '#334155';
       ctx.fillText(specText, width / 2, curY + 4);
 
-      curY += 46;
+      curY += 44;
 
       // =====================================================================
-      // ข้อ 2: ตัวเลขค่าตอบแทน ขยายใหญ่และเด่นมากที่สุด (Massive Reward)
+      // ข้อ 2 & 3: ตัวเลขค่าตอบแทน ขยายใหญ่และหนาขึ้นอีก 1 ระดับ (68px 900 Bold)
       // =====================================================================
       ctx.fillStyle = '#94A3B8';
       ctx.font = 'bold 12px "Prompt", sans-serif';
       ctx.fillText('รางวัลค่าตอบแทน (BOUNTY REWARD)', width / 2, curY);
 
-      curY += 48;
+      curY += 56;
 
-      // ตัวเลขเงินรางวัลมหึมา เด่นชัด ดึงดูดสายตาทันที
+      // ตัวเลขเงินรางวัลมหึมา เด่นชัด ดึงดูดสายตาทันที (ขยายเป็น 68px 900)
       const prizeStr = rewardText || 'ตามตกลง';
-      ctx.font = '900 52px "Prompt", sans-serif';
+      ctx.font = '900 68px "Prompt", sans-serif';
       ctx.fillStyle = '#E11D48'; // สีแดงแบรนด์กระตุ้นความสนใจสูงสุด
       ctx.fillText(prizeStr, width / 2, curY);
 
-      curY += 20;
+      curY += 22;
       ctx.fillStyle = '#64748B';
       ctx.font = 'normal 11px "Prompt", sans-serif';
       ctx.fillText('🛡️ ปลอดภัยด้วยสัญญา Escrow • รับเงินเมื่อตรวจรับงานเสร็จ 100%', width / 2, curY);
 
       // =====================================================================
-      // ข้อ 3: แถบ Call-to-Action (CTA) และกล่อง QR Code ด้านล่างการ์ด
+      // ข้อ 1: แถบ Call-to-Action (CTA) อยู่ห่างจากส่วนรางวัลแค่ mt-8 (32px)
       // =====================================================================
-      const ctaY = height - 138;
-      const ctaH = 106;
-
       // กล่องสีดำเข้มแบบโมเดิร์น
       ctx.fillStyle = '#0F172A';
       if (ctx.roundRect) {
