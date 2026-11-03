@@ -10,7 +10,10 @@ import {
   CheckCircle2,
   Loader2,
   ExternalLink,
+  Compass,
+  Search,
 } from 'lucide-react';
+import { SixAxisCompass } from '../production/SixAxisCompass';
 import {
   ProductChain,
   SupplyChainNode,
@@ -83,6 +86,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
   const [chainSource, setChainSource] = useState<ChainSource>('SEED');
   const [selectedOppKey, setSelectedOppKey] = useState<string>('');
   const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
+  const [showTopCompass, setShowTopCompass] = useState<boolean>(false);
   const [scannedLifeCapital, setScannedLifeCapital] = useState<{
     totalValuationThb: number;
     sweatThb: number;
@@ -398,14 +402,126 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
             </button>
           );
         })}
+
+        {/* Quick Launchers for v7.5 Monetization Engine */}
+        <div className="pt-2 mt-auto border-t border-gray-200 dark:border-zinc-800 space-y-1.5 px-1 pb-4 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowScannerModal(true)}
+            className="w-full py-1.5 px-0.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white hover:opacity-90 flex flex-col items-center justify-center text-center transition-all shadow-2xs active:scale-95 cursor-pointer"
+            title="สแกนหาทุนชีวิตแฝง (0 บาท)"
+          >
+            <span className="text-[12px]">🔍</span>
+            <span className="text-[7.5px] font-bold leading-tight mt-0.5">ทุนแฝง</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowTopCompass((v) => !v)}
+            className="w-full py-1.5 px-0.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:opacity-90 flex flex-col items-center justify-center text-center transition-all shadow-2xs active:scale-95 cursor-pointer"
+            title="สมการทำเงิน 6 แกน"
+          >
+            <span className="text-[12px]">🧭</span>
+            <span className="text-[7.5px] font-bold leading-tight mt-0.5">6 แกน</span>
+          </button>
+        </div>
       </div>
 
       {/* Right Content Area: Active Step Deep-Dive */}
       <div className="flex-1 min-w-0 overflow-y-auto pb-24 bg-white dark:bg-[#12141a]">
-        <div className="p-3 max-w-5xl mx-auto">
+        <div className="p-3 max-w-5xl mx-auto space-y-3">
+          {/* ========================================================= */}
+          {/* ⚡ v7.5 Monetization Engine & Life Capital Quick Action Bar */}
+          {/* ========================================================= */}
+          <div className="rounded-2xl bg-gradient-to-r from-zinc-900 via-gray-900 to-zinc-800 text-white p-3 sm:p-3.5 shadow-md border border-zinc-700/80 flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center text-white shrink-0 shadow-sm">
+                <Sparkles className="w-4 h-4 animate-pulse" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-extrabold tracking-tight truncate">
+                    เครื่องยนต์สร้างกระแสเงินสด (Monetization Engine v7.5)
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/30 text-red-200 border border-red-500/40 font-bold shrink-0">
+                    ใหม่ล่าสุด
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-300 truncate">
+                  {scannedLifeCapital
+                    ? `✨ มีมูลค่าทุนชีวิตแฝงสะสม: ฿${scannedLifeCapital.totalValuationThb.toLocaleString()} บาท (พร้อมแปลงเป็นหุ้น)`
+                    : 'สแกนหาทุนชีวิตแฝง (0 บาท) หรือปลดล็อกช่องทางทำเงินครบทั้ง 6 แกน'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setShowScannerModal(true)}
+                className="flex-1 sm:flex-none py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>🔍 สแกนทุนชีวิต (0 บ.)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowTopCompass((v) => !v)}
+                className={`flex-1 sm:flex-none py-1.5 px-3 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer ${
+                  showTopCompass
+                    ? 'bg-white text-zinc-900 shadow-sm'
+                    : 'bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5 text-brand-red" />
+                <span>🧭 {showTopCompass ? 'ซ่อน 6 แกนทำเงิน ▲' : 'สมการทำเงิน 6 แกน ▼'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Top Level 6-Axis Compass Expanded View */}
+          {showTopCompass && (
+            <div className="animate-fadeIn">
+              <SixAxisCompass
+                opp={
+                  selectedChain.supply_chain_nodes[0]?.micro_opportunities[0] || {
+                    strategy_type: 'DISINTERMEDIATION',
+                    model_name: `ผู้เชี่ยวชาญ & ตัวกลางสายการผลิต (${selectedChain.product.product_name})`,
+                    target_persona_tags: ['บุคคลทั่วไป', 'งบ 0 บาท'],
+                    how_to_start: 'ใช้เครือข่ายและทักษะจับคู่ผู้ซื้อกับผู้ผลิต',
+                    capital_required_thb: '0 - 5,000',
+                    expected_margin_percent: '25% - 40%',
+                    feasibility_score: {
+                      low_capital: 5,
+                      profit_margin: 4,
+                      ease_of_entry: 4,
+                      aggregability: 4,
+                      total_score: 17,
+                    },
+                    required_weapons: {
+                      tools_and_equipment: 'สมาร์ทโฟน, LINE Official',
+                      skills_needed: 'การเจรจาต่อรอง, การตลาดท้องถิ่น',
+                      legal_and_permits: 'ทะเบียนพาณิชย์ (เมื่อเริ่มมีรายได้ประจำ)',
+                    },
+                    action_links: {
+                      go_to_capital_tab: 'ตั้งตารางหุ้น 0 บาทด้วย Sweat Equity',
+                      go_to_local_tab: 'จับคู่โรงงานแปรรูปใกล้บ้าน',
+                    },
+                  }
+                }
+                node={selectedChain.supply_chain_nodes[0]}
+                sectorId={selectedChain.taxonomy.sector_id}
+                onAction={handleActionKind}
+                onOpenScanner={() => setShowScannerModal(true)}
+              />
+            </div>
+          )}
+
           {activeStep === 1 && (
             <StepIdentity
               onPick={(name, ctx) => handleSelectProduct(name, ctx.sectorId, ctx.subName)}
+              onOpenScanner={() => setShowScannerModal(true)}
+              onOpenCompass={() => setShowTopCompass((v) => !v)}
             />
           )}
 

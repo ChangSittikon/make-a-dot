@@ -27,6 +27,8 @@ export interface PickContext {
 
 interface Props {
   onPick: (name: string, ctx: PickContext) => void;
+  onOpenScanner?: () => void;
+  onOpenCompass?: () => void;
 }
 
 const TILE_LABELS: Record<string, string> = {
@@ -55,7 +57,7 @@ const chunk = <T,>(arr: T[], n: number): T[][] => {
   return out;
 };
 
-export const StepIdentity: React.FC<Props> = ({ onPick }) => {
+export const StepIdentity: React.FC<Props> = ({ onPick, onOpenScanner, onOpenCompass }) => {
   const [query, setQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [budget, setBudget] = useState<BudgetFilter>('ALL');
@@ -218,6 +220,49 @@ export const StepIdentity: React.FC<Props> = ({ onPick }) => {
         line1="ต้นน้ำ-ปลายน้ำ คุณเป็นใครได้บ้าง ฉันจะแสดงให้คุณดู"
         line2="คุณสนใจทำสินค้าในกลุ่มวงการไหน?"
       />
+
+      {/* ⚡ v7.5 Monetization Engine & Life Capital Hook Banner */}
+      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-rose-950/30 border-2 border-amber-400/80 dark:border-amber-600/60 flex flex-wrap items-center justify-between gap-2.5 shadow-xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+            ✨
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-200">
+                ยังไม่มีไอเดียสินค้า หรือไม่มีเงินทุนเริ่มต้น?
+              </span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500 text-white font-bold">
+                0 บาทก็เริ่มได้
+              </span>
+            </div>
+            <p className="text-[10.5px] text-gray-600 dark:text-gray-300 line-clamp-1">
+              สแกน &quot;ทุนชีวิตแฝง&quot; (ทำเล, คนรู้จัก, เครื่องมือ, เวลาว่าง, ความอึด) เพื่อแปลงเป็นสัดส่วนหุ้นบริษัททันที
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {onOpenScanner && (
+            <button
+              type="button"
+              onClick={onOpenScanner}
+              className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+            >
+              <span>🔍 สแกนทุนชีวิต (0 บ.)</span>
+            </button>
+          )}
+          {onOpenCompass && (
+            <button
+              type="button"
+              onClick={onOpenCompass}
+              className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:opacity-90 text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+            >
+              <span>🧭 ดู 6 แกนทำเงิน</span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* ---------- Smart Search ---------- */}
       <div className="space-y-2">

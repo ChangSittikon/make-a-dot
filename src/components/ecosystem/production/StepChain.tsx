@@ -11,6 +11,7 @@ import {
 } from './types';
 import { baht, flattenOpps } from './schema';
 import { ActionKind } from './OppCard';
+import { SixAxisCompass } from './SixAxisCompass';
 import {
   Briefcase,
   Tags,
@@ -46,6 +47,7 @@ export const StepChain: React.FC<Props> = ({
   onNavigateStep,
 }) => {
   const [selectedNodeDrawer, setSelectedNodeDrawer] = useState<number | null>(null);
+  const [expandedCompassKey, setExpandedCompassKey] = useState<string | null>(null);
   const p = chain.product;
   const spread = p.total_value_spread;
   const nodes = chain.supply_chain_nodes;
@@ -378,8 +380,32 @@ export const StepChain: React.FC<Props> = ({
                     >
                       🔍 สแกนทุนแฝง
                     </button>
+                    <span>·</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedCompassKey(
+                          expandedCompassKey === item.key ? null : item.key
+                        )
+                      }
+                      className="text-brand-red font-bold hover:underline"
+                    >
+                      🧭 {expandedCompassKey === item.key ? 'ซ่อน 6 แกน ▲' : '6 แกนทำเงิน ▼'}
+                    </button>
                   </div>
                 </div>
+
+                {expandedCompassKey === item.key && (
+                  <div className="pt-2 animate-fadeIn">
+                    <SixAxisCompass
+                      opp={item.opp}
+                      node={item.node}
+                      sectorId={chain.taxonomy.sector_id}
+                      onAction={onAction}
+                      onOpenScanner={() => onAction('SCANNER', item.opp, item.node)}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
