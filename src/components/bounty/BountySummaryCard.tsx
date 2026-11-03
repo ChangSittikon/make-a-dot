@@ -77,6 +77,30 @@ export function parseProblemSections(text?: string | null) {
   return sections.length > 0 ? sections : null;
 }
 
+/**
+ * ฟังก์ชันช่วยตัดข้อความภาษาไทยลง Canvas โดยไม่ล้นขอบ
+ */
+function wrapTextLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const characters = Array.from(text);
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (let i = 0; i < characters.length; i++) {
+    const testLine = currentLine + characters[i];
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && i > 0) {
+      lines.push(currentLine);
+      currentLine = characters[i];
+    } else {
+      currentLine = testLine;
+    }
+  }
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  return lines;
+}
+
 export function BountySummaryCard({
   bountyId,
   statusLabel = "พร้อมส่งตัว",
@@ -97,12 +121,14 @@ export function BountySummaryCard({
   onConfirm,
   profileUrl,
 }: BountySummaryCardProps) {
-  // สถานะการยืนยันข้อมูล (ถ้าส่ง isConfirmed=true มาจากหน้า Quest Detail จะแสดงสถานะยืนยันแล้วทันที)
+  // สถานะการยืนยันข้อมูล
   const [confirmedState, setConfirmedState] = useState<boolean>(isConfirmed);
   // สถานะ Accordion สำหรับดูรายละเอียดเพิ่มเติม (พับเก็บไว้เป็นค่าเริ่มต้น)
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
-  // สถานะการคัดลอกลิงก์
-  const [copiedShare, setCopiedShare] = useState<boolean>(false);
+  // ข้อความแจ้งเตือน Toast/Alert
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // สถานะกำลังเซฟรูปภาพ
+  const [isSavingImage, setIsSavingImage] = useState<boolean>(false);
 
   const displayBountyId = bountyId
     ? `#${bountyId.slice(-6).toUpperCase()}`
@@ -145,21 +171,236 @@ export function BountySummaryCard({
     return `${origin}/profile/bounty/${bountyId || 'preview'}`;
   };
 
-  const handleCopyShare = () => {
+  const getShareMessage = () => {
     const targetUrl = getShareUrl();
-    const shareMessage = `🎯 [MAKE A DOT: การ์ดสรุปปัญหา ${displayBountyId}]\n💡 ปัญหา: ${(rawDescription || 'ตามระบุในการ์ด').slice(0, 90)}...\n💰 ค่าตอบแทน: ${rewardText}\n🔗 ดูรายละเอียดและรับงาน: ${targetUrl}`;
+    return `🎯 [MAKE A DOT: การ์ดสรุปปัญหา ${displayBountyId}]\n💡 ปัญหา: ${(rawDescription || 'ตามระบุในการ์ด').slice(0, 90)}...\n💰 ค่าตอบแทน: ${rewardText}\n🔗 ดูรายละเอียดและรับงาน: ${targetUrl}`;
+  };
 
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage((current) => (current === message ? null : current));
+    }, 5000);
+  };
+
+  // 1. กดคัดลอกข้อความ
+  const handleCopyShare = () => {
+    const shareMessage = getShareMessage();
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(shareMessage).then(() => {
-        setCopiedShare(true);
-        setTimeout(() => setCopiedShare(false), 3000);
-      }).catch(() => {
-        setCopiedShare(true);
-        setTimeout(() => setCopiedShare(false), 3000);
+      navigator.clipboard.writeText(shareMessage);
+    }
+    showToast('✓ คัดลอกข้อความการ์ดภารกิจแล้ว! กดวาง (Ctrl+V) ในช่องโพสต์ได้เลย');
+  };
+
+  // 2. กดปุ่มแชร์ Facebook (คัดลอกลง Clipboard อัตโนมัติ + แจ้งเตือน + เปิดหน้าต่างแชร์)
+  const handleShareFacebook = () => {
+    const targetUrl = getShareUrl();
+    const shareMessage = getShareMessage();
+
+    // คัดลอกข้อความสรุปภารกิจลง Clipboard อัตโนมัติ
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(shareMessage);
+    }
+
+    // แสดงข้อความแจ้งเตือน
+    showToast('คัดลอกข้อความการ์ดภารกิจแล้ว! กดวาง (Ctrl+V) ในช่องโพสต์ได้เลย');
+
+    // เปิดหน้าต่างแชร์ Facebook
+    setTimeout(() => {
+      window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(targetUrl)}`,
+        '_blank'
+      );
+    }, 350);
+  };
+
+  // 3. กดปุ่มแชร์ LINE (คัดลอกลง Clipboard อัตโนมัติ + แจ้งเตือน + เปิดหน้าต่างแชร์)
+  const handleShareLine = () => {
+    const targetUrl = getShareUrl();
+    const shareMessage = getShareMessage();
+
+    // คัดลอกข้อความสรุปภารกิจลง Clipboard อัตโนมัติ
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(shareMessage);
+    }
+
+    // แสดงข้อความแจ้งเตือน
+    showToast('คัดลอกข้อความการ์ดภารกิจแล้ว! กดวาง (Ctrl+V) ในช่องโพสต์ได้เลย');
+
+    // เปิดหน้าต่างแชร์ LINE
+    setTimeout(() => {
+      window.open(
+        `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareMessage)}`,
+        '_blank'
+      );
+    }, 350);
+  };
+
+  // 4. บันทึกเฉพาะส่วนกรอบ 'การ์ดสรุปปัญหา' เป็นไฟล์รูปภาพ PNG คุณภาพสูง
+  const handleSaveCardImage = () => {
+    try {
+      setIsSavingImage(true);
+
+      const canvas = document.createElement('canvas');
+      const width = 640;
+      const height = 760;
+      const scale = 2; // Retina 2x คมชัดสูง
+
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setIsSavingImage(false);
+        return;
+      }
+
+      ctx.scale(scale, scale);
+
+      // พื้นหลังการ์ดสีขาว
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+
+      // กรอบการ์ดสีดำคมชัด
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(18, 18, width - 36, height - 36);
+
+      // หัวการ์ด: น้องดอทสีแดง
+      ctx.fillStyle = '#E11D48';
+      ctx.beginPath();
+      ctx.arc(52, 54, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // แสงสะท้อนสีขาวบนตัวน้องดอท
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(47, 49, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ชื่อการ์ด: การ์ดสรุปปัญหา
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 20px "Prompt", sans-serif';
+      ctx.fillText('การ์ดสรุปปัญหา', 80, 52);
+
+      // สัญลักษณ์ MAKE A DOT
+      ctx.fillStyle = '#E11D48';
+      ctx.font = 'bold 11px "Prompt", sans-serif';
+      ctx.fillText('MAKE A DOT', 80, 68);
+
+      // ป้ายรหัสการ์ด
+      ctx.fillStyle = '#F3F4F6';
+      ctx.fillRect(width - 200, 38, 94, 28);
+      ctx.strokeStyle = '#D1D5DB';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(width - 200, 38, 94, 28);
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText(displayBountyId, width - 188, 56);
+
+      // ป้ายระดับปัญหา
+      ctx.fillStyle = '#FEF2F2';
+      ctx.fillRect(width - 98, 38, 64, 28);
+      ctx.strokeStyle = '#E11D48';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(width - 98, 38, 64, 28);
+      ctx.fillStyle = '#E11D48';
+      ctx.font = 'bold 11px "Prompt", sans-serif';
+      ctx.fillText(scaleConfig.label, width - 88, 56);
+
+      // เส้นแบ่งหัวการ์ด
+      ctx.strokeStyle = '#E5E7EB';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(34, 86);
+      ctx.lineTo(width - 34, 86);
+      ctx.stroke();
+
+      let curY = 106;
+
+      // ส่วนที่ (1): ปัญหาและสิ่งที่คาดหวัง
+      ctx.fillStyle = '#F9FAFB';
+      ctx.fillRect(34, curY, width - 68, 200);
+      ctx.strokeStyle = '#E5E7EB';
+      ctx.strokeRect(34, curY, width - 68, 200);
+
+      ctx.fillStyle = '#E11D48';
+      ctx.font = 'bold 13px "Prompt", sans-serif';
+      ctx.fillText('• ปัญหา & สิ่งที่คาดหวัง:', 50, curY + 28);
+
+      ctx.fillStyle = '#1F2937';
+      ctx.font = 'normal 13px "Prompt", sans-serif';
+
+      const rawText = rawDescription?.trim() || 'ไม่มีรายละเอียดปัญหา';
+      const lines = wrapTextLines(ctx, rawText, width - 110);
+      lines.slice(0, 7).forEach((line, idx) => {
+        ctx.fillText(line, 50, curY + 54 + (idx * 20));
       });
-    } else {
-      setCopiedShare(true);
-      setTimeout(() => setCopiedShare(false), 3000);
+
+      curY += 218;
+
+      // ส่วนที่ (2): ผู้เชี่ยวชาญที่ต้องการ
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(34, curY, width - 68, 120);
+      ctx.strokeStyle = '#E5E7EB';
+      ctx.strokeRect(34, curY, width - 68, 120);
+
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 13px "Prompt", sans-serif';
+      ctx.fillText('🎯 ผู้เชี่ยวชาญที่ต้องการ:', 50, curY + 30);
+
+      let tagX = 50;
+      const tagY = curY + 48;
+      const occs = targetOccupations.length > 0 ? targetOccupations : [{ name: 'เปิดรับผู้เชี่ยวชาญทุกด้าน' }];
+      occs.slice(0, 3).forEach((occ) => {
+        const textWidth = ctx.measureText(occ.name).width;
+        ctx.fillStyle = '#FEF2F2';
+        ctx.fillRect(tagX, tagY, textWidth + 24, 28);
+        ctx.strokeStyle = '#FECDD3';
+        ctx.strokeRect(tagX, tagY, textWidth + 24, 28);
+        ctx.fillStyle = '#E11D48';
+        ctx.font = 'bold 12px "Prompt", sans-serif';
+        ctx.fillText(occ.name, tagX + 12, tagY + 19);
+        tagX += textWidth + 34;
+      });
+
+      curY += 138;
+
+      // ส่วนที่ (3): ค่าตอบแทน / สิ่งแลกเปลี่ยน
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(34, curY, width - 68, 64);
+      ctx.strokeStyle = '#E5E7EB';
+      ctx.strokeRect(34, curY, width - 68, 64);
+
+      ctx.fillStyle = '#4B5563';
+      ctx.font = 'bold 13px "Prompt", sans-serif';
+      ctx.fillText('ค่าตอบแทน / สิ่งแลกเปลี่ยน:', 50, curY + 38);
+
+      ctx.fillStyle = '#E11D48';
+      ctx.font = 'bold 19px "Prompt", sans-serif';
+      const prizeStr = rewardText || 'ตามตกลง';
+      const rewardWidth = ctx.measureText(prizeStr).width;
+      ctx.fillText(prizeStr, width - 50 - rewardWidth, curY + 40);
+
+      curY += 86;
+
+      // ท้ายการ์ด: โลโก้และคำกำกับ
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '11px "Prompt", sans-serif';
+      ctx.fillText('MAKE A DOT • ชุมชนจับคู่คนแก้ปัญหาและโอกาสสร้างรายได้', 50, curY + 20);
+
+      // ดาวน์โหลดไฟล์รูปภาพ PNG
+      const imageUri = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `make-a-dot-card-${displayBountyId.replace('#', '')}.png`;
+      downloadLink.href = imageUri;
+      downloadLink.click();
+
+      showToast('✓ บันทึกรูปการ์ดสรุปปัญหาเรียบร้อย! พร้อมนำไปโพสต์ได้ทันที');
+    } catch (err) {
+      console.error('Failed to export card image:', err);
+      showToast('ไม่สามารถเซฟรูปภาพได้ในขณะนี้');
+    } finally {
+      setIsSavingImage(false);
     }
   };
 
@@ -276,7 +517,7 @@ export function BountySummaryCard({
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. กล่อง ACCORDION นอกการ์ด: ดูรายละเอียดเพิ่มเติม (พับเก็บไว้เป็นค่าเริ่มต้น) */}
+      {/* 2. กล่อง ACCORDION นอกการ์ด: ดูรายละเอียดเพิ่มเติม (ข้อ 1 ตามคำสั่ง)        */}
       {/* ========================================================================= */}
       <div className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
         <button
@@ -284,9 +525,10 @@ export function BountySummaryCard({
           onClick={() => setIsDetailOpen(!isDetailOpen)}
           className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-gray-800 bg-gray-50/70 hover:bg-gray-100 transition-colors cursor-pointer select-none"
         >
-          <span className="flex items-center gap-1.5">
+          {/* ข้อความและไอคอนสะอาดตา ไม่มีวงเล็บ [ ] และไม่มีไอคอนกระดาษซ้ำ */}
+          <span className="flex items-center gap-2">
             <i className="fa-regular fa-file-lines text-brand-red text-xs" />
-            <span>[📄 ดูรายละเอียดเพิ่มเติมของงานนี้ (แตะเพื่อเปิด)]</span>
+            <span>ดูรายละเอียดเพิ่มเติมของงานนี้</span>
           </span>
           <i
             className={`fa-solid fa-chevron-down text-gray-400 text-[11px] transition-transform duration-200 ${
@@ -364,7 +606,7 @@ export function BountySummaryCard({
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. ส่วนปุ่มดำเนินการ: จัดการปุ่มตามสถานะการยืนยัน (Requirement 4)           */}
+      {/* 3. ส่วนปุ่มดำเนินการ: จัดการปุ่มตามสถานะการยืนยัน & แถบแชร์โซเชียล         */}
       {/* ========================================================================= */}
       <div className="pt-1">
         {!confirmedState ? (
@@ -396,49 +638,75 @@ export function BountySummaryCard({
             )}
           </div>
         ) : (
-          /* ---------------- สถานะยืนยันสำเร็จแล้ว: แสดงแถบปุ่มแชร์โทน ขาว-แดง-ดำ ---------------- */
+          /* ---------------- สถานะยืนยันสำเร็จแล้ว: แถบแชร์ Facebook/LINE + บันทึกรูป ---------------- */
           <div className="space-y-2.5 animate-fade-in">
             {/* แถบปุ่มแชร์โซเชียล โทนสี ขาว-แดง-ดำ สะอาดตา */}
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2.5">
               <div className="text-[11px] font-bold text-gray-700 flex items-center justify-between">
                 <span>แชร์การ์ดนี้เพื่อหาคนช่วย:</span>
                 <span className="text-[10px] font-mono text-brand-red font-bold">MAKE A DOT SHARE</span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
+              {/* 4 ปุ่มหลัก: Facebook | LINE | คัดลอก | บันทึกรูป */}
+              <div className="grid grid-cols-4 gap-2">
+                {/* 1. ปุ่ม Facebook */}
+                <button
+                  type="button"
+                  onClick={handleShareFacebook}
+                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 >
-                  <i className="fa-brands fa-facebook text-gray-900 text-xs" />
+                  <i className="fa-brands fa-facebook text-blue-600 text-sm" />
                   <span>Facebook</span>
-                </a>
+                </button>
 
-                <a
-                  href={`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(getShareUrl())}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
+                {/* 2. ปุ่ม LINE */}
+                <button
+                  type="button"
+                  onClick={handleShareLine}
+                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 >
-                  <i className="fa-brands fa-line text-gray-900 text-xs" />
+                  <i className="fa-brands fa-line text-emerald-500 text-sm" />
                   <span>LINE</span>
-                </a>
+                </button>
 
+                {/* 3. ปุ่มคัดลอกข้อความ */}
                 <button
                   type="button"
                   onClick={handleCopyShare}
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2 px-2 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 >
-                  <i className="fa-regular fa-copy text-gray-900 text-xs" />
+                  <i className="fa-regular fa-copy text-gray-700 text-xs" />
                   <span>คัดลอก</span>
+                </button>
+
+                {/* 4. ปุ่มบันทึกรูปการ์ด */}
+                <button
+                  type="button"
+                  onClick={handleSaveCardImage}
+                  disabled={isSavingImage}
+                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <i className="fa-regular fa-image text-brand-red text-xs" />
+                  <span>{isSavingImage ? "กำลังเซฟ..." : "บันทึกรูป"}</span>
                 </button>
               </div>
 
-              {copiedShare && (
-                <div className="text-center text-[11px] font-bold text-brand-red bg-red-50 border border-red-200 py-1.5 rounded-lg animate-fade-in">
-                  ✓ คัดลอกข้อความและลิงก์เรียบร้อย พร้อมแชร์หาคนช่วยได้ทันที
+              {/* ปุ่มบันทึกรูปการ์ดแบบเต็มแถว เพื่อให้แตะง่ายบนมือถือ */}
+              <button
+                type="button"
+                onClick={handleSaveCardImage}
+                disabled={isSavingImage}
+                className="w-full bg-white hover:bg-red-50 text-brand-red border border-red-200 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs"
+              >
+                <i className="fa-regular fa-image text-xs" />
+                <span>บันทึกรูปการ์ดสรุปปัญหา (นำไปโพสต์ได้ทันที)</span>
+              </button>
+
+              {/* ข้อความแจ้งเตือน Toast / Alert ตามโจทย์ */}
+              {toastMessage && (
+                <div className="text-center text-xs font-bold text-brand-red bg-red-50 border border-red-200 py-2.5 px-3 rounded-xl animate-fade-in flex items-center justify-center gap-2 shadow-sm">
+                  <i className="fa-solid fa-circle-check text-brand-red text-sm shrink-0" />
+                  <span>{toastMessage}</span>
                 </div>
               )}
             </div>
