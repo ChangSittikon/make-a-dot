@@ -33,6 +33,8 @@ import { StepSimulator } from '../production/StepSimulator';
 import { StepWeapons } from '../production/StepWeapons';
 import { StepConnect } from '../production/StepConnect';
 import { StepRoadmap } from '../production/StepRoadmap';
+import { HiddenNodesScannerModal } from '../production/HiddenNodesScannerModal';
+import { AxisPlanData, MonetizationAxisId } from '@/lib/career-core';
 
 interface ProductionTabProps {
   selectedIndustryId?: string;
@@ -80,6 +82,15 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
   );
   const [chainSource, setChainSource] = useState<ChainSource>('SEED');
   const [selectedOppKey, setSelectedOppKey] = useState<string>('');
+  const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
+  const [scannedLifeCapital, setScannedLifeCapital] = useState<{
+    totalValuationThb: number;
+    sweatThb: number;
+    equipThb: number;
+    venueThb: number;
+    ipThb: number;
+    selectedNodeIds: string[];
+  } | null>(null);
 
   // AI Generation Loading State
   const [isGenerating, setIsGenerating] = useState(false);
@@ -149,10 +160,24 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
     targetTab: 'CAPITAL' | 'LOCAL',
     oppOverride?: MicroOpportunity,
     nodeOverride?: SupplyChainNode,
-    customCashThb?: number
+    customCashThb?: number,
+    bridgeOverrides?: {
+      scannerData?: {
+        totalValuationThb: number;
+        sweatThb: number;
+        equipThb: number;
+        venueThb: number;
+        ipThb: number;
+        selectedNodeIds: string[];
+      } | null;
+      selectedAxisId?: MonetizationAxisId;
+      selectedAxisTitle?: string;
+    }
   ) => {
     const { node, opp, key } = resolveContextNodeAndOpp(oppOverride, nodeOverride);
     setSelectedOppKey(key);
+
+    const capData = bridgeOverrides?.scannerData !== undefined ? bridgeOverrides.scannerData : scannedLifeCapital;
 
     if (onCrossTabAction) {
       onCrossTabAction({
@@ -163,6 +188,13 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
         opp,
         oppKey: key,
         customCashThb,
+        hiddenNodesValuationThb: capData?.totalValuationThb,
+        hiddenNodesSweatThb: capData?.sweatThb,
+        hiddenNodesEquipThb: capData?.equipThb,
+        hiddenNodesVenueThb: capData?.venueThb,
+        selectedNodeIds: capData?.selectedNodeIds,
+        selectedAxisId: bridgeOverrides?.selectedAxisId,
+        selectedAxisTitle: bridgeOverrides?.selectedAxisTitle,
       });
     } else {
       onNavigateMainTab?.(targetTab);
@@ -288,6 +320,10 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
     node?: SupplyChainNode,
     customCashThb?: number
   ) => {
+    if (k === 'SCANNER') {
+      setShowScannerModal(true);
+      return;
+    }
     if (k === 'CAPITAL') triggerCrossTab('CAPITAL', opp, node, customCashThb);
     else if (k === 'LOCAL') triggerCrossTab('LOCAL', opp, node, customCashThb);
     else if (k === 'CONNECT') setActiveStep(6);

@@ -66,6 +66,9 @@ export const CapitalTab: React.FC<CapitalTabProps> = (props) => {
       setActiveStep(3);
       const calc = computeCapTableFromProduction(productionBridge);
       setCustomCashInput(String(calc.recommendedCashThb));
+      if (onSetAllCapItems) {
+        onSetAllCapItems(calc.items);
+      }
     }
   }, [productionBridge?.timestamp]);
 
@@ -246,6 +249,33 @@ export const CapitalTab: React.FC<CapitalTabProps> = (props) => {
                   />
                 </div>
               </div>
+
+              {/* Scanned Hidden Nodes & Life Capital Valuation Highlight (v7.5) */}
+              {productionBridge.hiddenNodesValuationThb && productionBridge.hiddenNodesValuationThb > 0 ? (
+                <div className="p-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 border border-amber-300 dark:border-amber-700/60 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">✨</span>
+                    <div>
+                      <div className="text-[11px] font-extrabold text-amber-900 dark:text-amber-200">
+                        ได้รับข้อมูลทุนชีวิตแฝงจากการสแกน: +฿{productionBridge.hiddenNodesValuationThb.toLocaleString()} บาท
+                      </div>
+                      <div className="text-[9.5px] text-amber-800/80 dark:text-amber-300/80">
+                        เพิ่มมูลค่า Sweat & Equip Equity ในตารางหุ้นอัตโนมัติ ช่วยดันสัดส่วนหุ้นผู้ก่อตั้งสูงขึ้นโดยไม่ต้องใช้เงินสด!
+                      </div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-mono text-[10px] font-black shrink-0 shadow-xs">
+                    + Founder Equity
+                  </span>
+                </div>
+              ) : null}
+
+              {productionBridge.selectedAxisTitle && (
+                <div className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1.5 pt-0.5">
+                  <span>🧭 แกนทำเงินที่เลือก:</span>
+                  <span className="font-bold text-[#E53935]">{productionBridge.selectedAxisTitle}</span>
+                </div>
+              )}
             </div>
 
             {/* Quick Capital Target Presets & Custom Input */}

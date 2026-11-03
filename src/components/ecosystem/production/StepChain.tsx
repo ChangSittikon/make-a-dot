@@ -370,6 +370,14 @@ export const StepChain: React.FC<Props> = ({
                     >
                       🤝 รวมล็อต
                     </button>
+                    <span>·</span>
+                    <button
+                      type="button"
+                      onClick={() => onAction('SCANNER', item.opp, item.node)}
+                      className="text-amber-600 dark:text-amber-400 font-bold hover:underline"
+                    >
+                      🔍 สแกนทุนแฝง
+                    </button>
                   </div>
                 </div>
               </div>

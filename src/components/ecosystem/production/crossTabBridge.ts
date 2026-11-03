@@ -21,6 +21,14 @@ export interface CrossTabBridgePayload {
   simulatedUnitCost?: number;
   simulatedSellingPrice?: number;
   simulatedMonthlyVolume?: number;
+  /** V7.5 Monetization & Hidden Nodes Extensions */
+  hiddenNodesValuationThb?: number;
+  hiddenNodesSweatThb?: number;
+  hiddenNodesEquipThb?: number;
+  hiddenNodesVenueThb?: number;
+  selectedAxisId?: string;
+  selectedAxisTitle?: string;
+  selectedNodeIds?: string[];
 }
 
 export interface CapTableComputationResult {
@@ -220,6 +228,17 @@ export function computeCapTableFromProduction(
       break;
   }
 
+  // Inject additional life capital valuation from Hidden Nodes Scanner
+  if (payload.hiddenNodesSweatThb) {
+    sweatVal += payload.hiddenNodesSweatThb;
+  }
+  if (payload.hiddenNodesEquipThb) {
+    equipVal += payload.hiddenNodesEquipThb;
+  }
+  if (payload.hiddenNodesVenueThb) {
+    venueVal += payload.hiddenNodesVenueThb;
+  }
+
   const items: CapTableItem[] = [
     { id: 'cash', name: 'เงินสดตั้งต้น (Cash)', value: cashVal, color: '#56b6f7' },
     { id: 'sweat', name: 'หยาดเหงื่อแรงงาน (Sweat)', value: sweatVal, color: '#9d9ff7' },
@@ -235,9 +254,21 @@ export function computeCapTableFromProduction(
 
   const breakdownNotes = {
     cash: `เงินทุนตั้งต้นสำหรับ: ${opp.action_links.go_to_capital_tab || opp.model_name} (ช่วงทุนอ้างอิง ${opp.capital_required_thb} บาท)`,
-    sweat: `ทักษะและการลงมือทำ: ${opp.required_weapons.skills_needed} (รอบเวลาทำจริง ${node.five_w_two_h.when_cycle_time})`,
-    equip: `เครื่องมือและอุปกรณ์: ${opp.required_weapons.tools_and_equipment}`,
-    venue: `สถานที่ปฏิบัติงาน: ${node.five_w_two_h.where}`,
+    sweat: `ทักษะและการลงมือทำ: ${opp.required_weapons.skills_needed} (รอบเวลาทำจริง ${node.five_w_two_h.when_cycle_time})${
+      payload.hiddenNodesSweatThb
+        ? ` [+ ทุนชีวิตแฝงที่สแกนพบ: ${payload.hiddenNodesSweatThb.toLocaleString()} บาท]`
+        : ''
+    }`,
+    equip: `เครื่องมือและอุปกรณ์: ${opp.required_weapons.tools_and_equipment}${
+      payload.hiddenNodesEquipThb
+        ? ` [+ เครื่องมือแฝงที่นำมาสมทบ: ${payload.hiddenNodesEquipThb.toLocaleString()} บาท]`
+        : ''
+    }`,
+    venue: `สถานที่ปฏิบัติงาน: ${node.five_w_two_h.where}${
+      payload.hiddenNodesVenueThb
+        ? ` [+ สิทธิ์ใช้ทำเลแฝง: ${payload.hiddenNodesVenueThb.toLocaleString()} บาท]`
+        : ''
+    }`,
     ip: `ทรัพย์สินทางปัญญาและใบอนุญาต: ${opp.required_weapons.legal_and_permits}`,
   };
 

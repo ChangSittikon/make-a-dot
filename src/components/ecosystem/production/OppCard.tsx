@@ -7,8 +7,16 @@ import {
   STRATEGY_META,
   STAGE_META,
 } from './types';
+import { SixAxisCompass } from './SixAxisCompass';
+import { MonetizationAxisId, AxisPlanData } from '@/lib/career-core';
 
-export type ActionKind = 'CAPITAL' | 'LOCAL' | 'CONNECT' | 'SIMULATE' | 'WEAPONS';
+export type ActionKind =
+  | 'CAPITAL'
+  | 'LOCAL'
+  | 'CONNECT'
+  | 'SIMULATE'
+  | 'WEAPONS'
+  | 'SCANNER';
 
 interface Props {
   opp: MicroOpportunity;
@@ -20,6 +28,8 @@ interface Props {
     opp: MicroOpportunity,
     node?: SupplyChainNode
   ) => void;
+  onOpenScanner?: () => void;
+  onSelectAxisForBridge?: (axisId: MonetizationAxisId, plan: AxisPlanData) => void;
 }
 
 export const OppCard: React.FC<Props> = ({
@@ -28,8 +38,11 @@ export const OppCard: React.FC<Props> = ({
   selected,
   onSelect,
   onAction,
+  onOpenScanner,
+  onSelectAxisForBridge,
 }) => {
   const [showDetail, setShowDetail] = useState(false);
+  const [showCompass, setShowCompass] = useState(false);
   const sm = STRATEGY_META[opp.strategy_type];
   const fs = opp.feasibility_score;
 
@@ -152,6 +165,41 @@ export const OppCard: React.FC<Props> = ({
               <span>📍 ปักหมุดหาคู่ค้า</span>
             </button>
           </div>
+
+          {/* 6-Axis Monetization & Hidden Nodes CTAs (v7.5 Engine) */}
+          <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+            <button
+              type="button"
+              onClick={() => setShowCompass(!showCompass)}
+              className={`py-1.5 px-2.5 rounded-xl text-[10.5px] font-bold flex items-center justify-center gap-1 transition-all ${
+                showCompass
+                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
+                  : 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/40 dark:to-orange-950/40 border border-red-200 dark:border-red-800 text-brand-red dark:text-red-300 hover:opacity-90'
+              }`}
+            >
+              <span>🧭 {showCompass ? 'ซ่อน 6 แกนทำเงิน ▲' : 'สมการทำเงิน 6 แกน ▼'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => (onOpenScanner ? onOpenScanner() : onAction?.('SCANNER', opp, node))}
+              className="py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-[10px] font-bold flex items-center justify-center gap-1 hover:opacity-90 transition-all"
+            >
+              <span>🔍 สแกนทุนชีวิต (0 บ.)</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Six Axis Compass Inline Accordion */}
+      {showCompass && (
+        <div className="pt-2 animate-fadeIn">
+          <SixAxisCompass
+            opp={opp}
+            node={node}
+            onAction={onAction}
+            onOpenScanner={onOpenScanner ? onOpenScanner : () => onAction?.('SCANNER', opp, node)}
+            onSelectAxisForBridge={onSelectAxisForBridge}
+          />
         </div>
       )}
 
