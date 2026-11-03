@@ -237,6 +237,8 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               rewardText={rewardText}
               impactScale={bountyImpactScale || "LOCAL"}
               isRequester={isRequester}
+              isConfirmed={true}
+              profileUrl="/profile"
             />
 
             {/* Requester Inbox Section (Dual Tabs: ผู้เสนอตัวรับงาน & ข้อเสนออัปเกรด) */}

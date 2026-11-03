@@ -919,26 +919,9 @@ export function BountyFlowApp() {
                       }
                       impactScale={aiImpactScale}
                       isRequester={true}
-                      actions={
-                        <div className="flex items-center gap-2">
-                          <button 
-                            type="button"
-                            onClick={handleEdit}
-                            className="inline-flex items-center justify-center gap-1.5 bg-gray-100 text-gray-700 text-[13px] font-bold px-4 py-3.5 rounded-2xl hover:bg-gray-200 transition-all active:scale-95 cursor-pointer shrink-0"
-                          >
-                            <i className="fa-solid fa-pen-to-square text-[11px] text-gray-500" />
-                            <span>แก้ไข</span>
-                          </button>
-
-                          <Link 
-                            href={createdBountyId ? `/profile/bounty/${createdBountyId}` : "/profile/bounty/manage"} 
-                            className="inline-flex items-center justify-center gap-1.5 bg-brand-red text-white text-[13px] font-bold px-4 py-3.5 rounded-2xl hover:bg-red-600 transition-all flex-1 shadow-lg shadow-red-500/25 active:scale-95 cursor-pointer text-center whitespace-nowrap"
-                          >
-                            <span>ยืนยันข้อมูลเข้าระบบ</span>
-                            <i className="fa-solid fa-arrow-right text-[11px]" />
-                          </Link>
-                        </div>
-                      }
+                      isConfirmed={false}
+                      onEdit={handleEdit}
+                      profileUrl={createdBountyId ? `/profile/bounty/${createdBountyId}` : "/profile"}
                     />
                   </motion.div>
                 )}
