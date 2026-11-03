@@ -101,6 +101,81 @@ function wrapTextLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: nu
   return lines;
 }
 
+/**
+ * วาดรูป QR Code จำลองความละเอียดสูง พร้อมสัญลักษณ์ Make-a-dot
+ */
+function drawSimulatedQRCode(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, text: string) {
+  // พื้นหลังกล่องสีขาวมน
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, size, size, 10);
+  } else {
+    ctx.rect(x, y, size, size);
+  }
+  ctx.fill();
+
+  const padding = 7;
+  const qrSize = size - padding * 2;
+  const modules = 21;
+  const moduleSize = qrSize / modules;
+  const startX = x + padding;
+  const startY = y + padding;
+
+  // วาดสี่เหลี่ยมตรวจจับตำแหน่ง 3 มุม (Position Detection Patterns)
+  const drawCorner = (cx: number, cy: number) => {
+    ctx.fillStyle = '#0F172A';
+    ctx.fillRect(startX + cx * moduleSize, startY + cy * moduleSize, 7 * moduleSize, 7 * moduleSize);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(startX + (cx + 1) * moduleSize, startY + (cy + 1) * moduleSize, 5 * moduleSize, 5 * moduleSize);
+    ctx.fillStyle = '#0F172A';
+    ctx.fillRect(startX + (cx + 2) * moduleSize, startY + (cy + 2) * moduleSize, 3 * moduleSize, 3 * moduleSize);
+  };
+
+  drawCorner(0, 0);   // บนซ้าย
+  drawCorner(14, 0);  // บนขวา
+  drawCorner(0, 14);  // ล่างซ้าย
+
+  // เส้น Timing Bars
+  ctx.fillStyle = '#0F172A';
+  for (let i = 8; i < 13; i += 2) {
+    ctx.fillRect(startX + i * moduleSize, startY + 6 * moduleSize, moduleSize, moduleSize);
+    ctx.fillRect(startX + 6 * moduleSize, startY + i * moduleSize, moduleSize, moduleSize);
+  }
+
+  // เติมข้อมูลพิกเซลจุดแบบสุ่มคงที่ตามข้อความ (Deterministic Hash)
+  let seed = 0;
+  for (let i = 0; i < text.length; i++) {
+    seed = (seed * 31 + text.charCodeAt(i)) & 0xffffffff;
+  }
+  const nextPseudo = () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+
+  for (let r = 0; r < modules; r++) {
+    for (let c = 0; c < modules; c++) {
+      if (
+        (r < 8 && c < 8) ||
+        (r < 8 && c > 12) ||
+        (r > 12 && c < 8) ||
+        (r === 6 || c === 6)
+      ) {
+        continue;
+      }
+      if (nextPseudo() > 0.46) {
+        ctx.fillRect(startX + c * moduleSize, startY + r * moduleSize, moduleSize, moduleSize);
+      }
+    }
+  }
+
+  // กิมมิคน้องดอทแดงตรงกลาง QR Code
+  ctx.fillStyle = '#E11D48';
+  ctx.beginPath();
+  ctx.arc(startX + 10.5 * moduleSize, startY + 10.5 * moduleSize, moduleSize * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 export function BountySummaryCard({
   bountyId,
   statusLabel = "พร้อมส่งตัว",
@@ -147,12 +222,31 @@ export function BountySummaryCard({
 
   // แยกส่วนข้อมูลปัญหาและข้อจำกัด
   const allSections = parseProblemSections(rawDescription);
-  // ส่วนที่แสดงในการ์ดหลัก: ปัญหา และ สิ่งที่คาดหวัง
-  const mainCardSections = allSections
-    ? allSections.filter((s) => s.key === "problem" || s.key === "expectation")
-    : null;
-  // ส่วนที่แยกไปแสดงใน Accordion: ข้อจำกัด
+  const problemSec = allSections?.find((s) => s.key === "problem");
+  const expectationSec = allSections?.find((s) => s.key === "expectation");
   const constraintSection = allSections?.find((s) => s.key === "constraint");
+
+  // สกัดข้อความปัญหาแบบไม่มีคำนำหน้า "ปัญหา: " ซ้ำซ้อน
+  let cleanProblemText = problemSec?.content?.trim();
+  let cleanExpectationText = expectationSec?.content?.trim();
+  let cleanConstraintText = constraintSection?.content?.trim();
+
+  if (!cleanProblemText) {
+    const text = rawDescription || "มีภารกิจด่วนต้องการคนช่วย";
+    if (text.includes("สิ่งที่คาดหวัง:")) {
+      const parts = text.split(/สิ่งที่คาดหวัง\s*:/i);
+      cleanProblemText = parts[0].replace(/^ปัญหา\s*:\s*/i, "").trim();
+      if (!cleanExpectationText && parts[1]) {
+        const subParts = parts[1].split(/ข้อจำกัด\s*:/i);
+        cleanExpectationText = subParts[0].trim();
+        if (subParts[1] && !cleanConstraintText) {
+          cleanConstraintText = subParts[1].trim();
+        }
+      }
+    } else {
+      cleanProblemText = text.replace(/^ปัญหา\s*:\s*/i, "").trim();
+    }
+  }
 
   // จัดการเมื่อกดยืนยันข้อมูลเข้าระบบ
   const handleConfirmAction = () => {
@@ -175,38 +269,14 @@ export function BountySummaryCard({
 
   const getShareMessage = () => {
     const targetUrl = getShareUrl();
-
-    // ดึงข้อความปัญหา (แก้ไขบั๊กคำซ้ำ: ตัดคำว่า 'ปัญหา:' ที่อาจซ้ำซ้อนออก)
-    const problemSec = allSections?.find((s) => s.key === "problem");
-    const expectationSec = allSections?.find((s) => s.key === "expectation");
-
-    let extractedProblem = problemSec?.content?.trim();
-    let extractedExpectation = expectationSec?.content?.trim();
-
-    if (!extractedProblem) {
-      const text = rawDescription || "ตามระบุในระบบ";
-      if (text.includes("สิ่งที่คาดหวัง:")) {
-        const parts = text.split(/สิ่งที่คาดหวัง\s*:/i);
-        extractedProblem = parts[0].replace(/^ปัญหา\s*:\s*/i, "").trim();
-        if (!extractedExpectation && parts[1]) {
-          extractedExpectation = parts[1].split(/ข้อจำกัด\s*:/i)[0].trim();
-        }
-      } else {
-        extractedProblem = text.replace(/^ปัญหา\s*:\s*/i, "").trim();
-      }
-    }
-
-    if (!extractedExpectation) {
-      extractedExpectation = "ช่วยแก้ปัญหาให้สำเร็จตามตกลง";
-    }
-
     const prizeText = rewardText || "ตามตกลง";
+    const expectationText = cleanExpectationText || "ช่วยแก้ปัญหาให้สำเร็จตามตกลง";
 
     // โครงสร้างข้อความ Copywriting สำหรับแชร์โซเชียลตามรูปแบบที่กำหนด
     return `🚨 ภารกิจด่วนจาก MAKE A DOT [${displayBountyId}]
 ใครแก้ปัญหานี้ได้ รับรางวัลไปเลย!
-🎯 ปัญหาคือ: ${extractedProblem}
-✨ สิ่งที่ต้องการ: ${extractedExpectation}
+🎯 ปัญหาคือ: ${cleanProblemText}
+✨ สิ่งที่ต้องการ: ${expectationText}
 💰 ค่าตอบแทน/สิ่งแลกเปลี่ยน: ${prizeText}
 👉 ใครทำได้หรือมีไอเดียดีๆ กดลิงก์เข้ามารับงานหรือเสนอตัวช่วยกันเลยที่:
 ${targetUrl}`;
@@ -233,15 +303,12 @@ ${targetUrl}`;
     const targetUrl = getShareUrl();
     const shareMessage = getShareMessage();
 
-    // คัดลอกข้อความสรุปภารกิจลง Clipboard อัตโนมัติ
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(shareMessage);
     }
 
-    // แสดงข้อความแจ้งเตือน
     showToast('คัดลอกข้อความการ์ดภารกิจแล้ว! กดวาง (Ctrl+V) ในช่องโพสต์ได้เลย');
 
-    // เปิดหน้าต่างแชร์ Facebook
     setTimeout(() => {
       window.open(
         `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(targetUrl)}`,
@@ -255,15 +322,12 @@ ${targetUrl}`;
     const targetUrl = getShareUrl();
     const shareMessage = getShareMessage();
 
-    // คัดลอกข้อความสรุปภารกิจลง Clipboard อัตโนมัติ
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(shareMessage);
     }
 
-    // แสดงข้อความแจ้งเตือน
     showToast('คัดลอกข้อความการ์ดภารกิจแล้ว! กดวาง (Ctrl+V) ในช่องโพสต์ได้เลย');
 
-    // เปิดหน้าต่างแชร์ LINE
     setTimeout(() => {
       window.open(
         `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareMessage)}`,
@@ -272,15 +336,17 @@ ${targetUrl}`;
     }, 350);
   };
 
-  // 4. บันทึกเฉพาะส่วนกรอบ 'การ์ดสรุปปัญหา' เป็นไฟล์รูปภาพ PNG คุณภาพสูง
+  // =========================================================================
+  // 4. บันทึกรูปการ์ดภารกิจฉบับ VIRAL POSTER (สไตล์ Bounty Wanted Poster)
+  // =========================================================================
   const handleSaveCardImage = () => {
     try {
       setIsSavingImage(true);
 
       const canvas = document.createElement('canvas');
       const width = 640;
-      const height = 760;
-      const scale = 2; // Retina 2x คมชัดสูง
+      const height = 820;
+      const scale = 2; // Retina 2x คมชัดสูง (1280x1640)
 
       canvas.width = width * scale;
       canvas.height = height * scale;
@@ -292,146 +358,228 @@ ${targetUrl}`;
 
       ctx.scale(scale, scale);
 
-      // พื้นหลังการ์ดสีขาว
+      // 1. พื้นหลังสีขาวสะอาดตา
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
 
-      // กรอบการ์ดสีดำคมชัด
-      ctx.strokeStyle = '#111827';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(18, 18, width - 36, height - 36);
+      // 2. ลวดลายจุด (Dot Pattern) อ่อนๆ สไตล์ Make a Dot
+      ctx.fillStyle = 'rgba(226, 232, 240, 0.6)';
+      for (let dx = 22; dx < width - 18; dx += 22) {
+        for (let dy = 22; dy < height - 18; dy += 22) {
+          ctx.beginPath();
+          ctx.arc(dx, dy, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
 
-      // หัวการ์ด: น้องดอทสีแดง
+      // 3. ขอบการ์ดมนนุ่มนวล (Soft SaaS Border - ไม่มีกรอบดำหนาเตอะ)
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1.5;
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(14, 14, width - 28, height - 28, 24);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(14, 14, width - 28, height - 28);
+      }
+
+      // 4. หัวการ์ด: น้องดอท 3D + MAKE A DOT QUEST
       ctx.fillStyle = '#E11D48';
       ctx.beginPath();
-      ctx.arc(52, 54, 16, 0, Math.PI * 2);
+      ctx.arc(48, 50, 16, 0, Math.PI * 2);
       ctx.fill();
 
-      // แสงสะท้อนสีขาวบนตัวน้องดอท
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
-      ctx.arc(47, 49, 4, 0, Math.PI * 2);
+      ctx.arc(44, 45, 3.8, 0, Math.PI * 2);
       ctx.fill();
 
-      // ชื่อการ์ด: การ์ดสรุปปัญหา
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 20px "Prompt", sans-serif';
-      ctx.fillText('การ์ดสรุปปัญหา', 80, 52);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold 16px "Prompt", sans-serif';
+      ctx.fillText('MAKE A DOT', 74, 48);
 
-      // สัญลักษณ์ MAKE A DOT
       ctx.fillStyle = '#E11D48';
-      ctx.font = 'bold 11px "Prompt", sans-serif';
-      ctx.fillText('MAKE A DOT', 80, 68);
+      ctx.font = 'bold 10px "Prompt", sans-serif';
+      ctx.fillText('BOUNTY POSTER • ภารกิจหาคนช่วย', 74, 63);
 
-      // ป้ายรหัสการ์ด
-      ctx.fillStyle = '#F3F4F6';
-      ctx.fillRect(width - 200, 38, 94, 28);
-      ctx.strokeStyle = '#D1D5DB';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(width - 200, 38, 94, 28);
-      ctx.fillStyle = '#111827';
+      // ป้ายรหัสเควสต์ (Badge ขวาบน)
+      ctx.fillStyle = '#F1F5F9';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(width - 200, 36, 92, 28, 8);
+        ctx.fill();
+        ctx.strokeStyle = '#CBD5E1';
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#0F172A';
       ctx.font = 'bold 12px monospace';
-      ctx.fillText(displayBountyId, width - 188, 56);
+      ctx.fillText(displayBountyId, width - 188, 55);
 
       // ป้ายระดับปัญหา
-      ctx.fillStyle = '#FEF2F2';
-      ctx.fillRect(width - 98, 38, 64, 28);
-      ctx.strokeStyle = '#E11D48';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(width - 98, 38, 64, 28);
+      ctx.fillStyle = '#FFF1F2';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(width - 98, 36, 64, 28, 8);
+        ctx.fill();
+        ctx.strokeStyle = '#FECDD3';
+        ctx.stroke();
+      }
       ctx.fillStyle = '#E11D48';
       ctx.font = 'bold 11px "Prompt", sans-serif';
-      ctx.fillText(scaleConfig.label, width - 88, 56);
+      ctx.fillText(scaleConfig.label, width - 88, 55);
 
-      // เส้นแบ่งหัวการ์ด
-      ctx.strokeStyle = '#E5E7EB';
+      // เส้นแบ่งบางเบา
+      ctx.strokeStyle = '#F1F5F9';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(34, 86);
-      ctx.lineTo(width - 34, 86);
+      ctx.moveTo(30, 80);
+      ctx.lineTo(width - 30, 80);
       ctx.stroke();
 
-      let curY = 106;
+      // =====================================================================
+      // ข้อ 1: เน้น 'ปัญหา' ให้เป็นพาดหัวข่าวขนาดใหญ่ (The Hook) กึ่งกลางการ์ด
+      // =====================================================================
+      let curY = 114;
 
-      // ส่วนที่ (1): ปัญหาและสิ่งที่คาดหวัง
-      ctx.fillStyle = '#F9FAFB';
-      ctx.fillRect(34, curY, width - 68, 200);
-      ctx.strokeStyle = '#E5E7EB';
-      ctx.strokeRect(34, curY, width - 68, 200);
-
+      // ป้ายแท็กบนพาดหัว
+      ctx.textAlign = 'center';
+      const tagText = '🚨 ภารกิจเร่งด่วน • ใครช่วยได้บ้าง?';
+      ctx.font = 'bold 11px "Prompt", sans-serif';
+      const tagW = ctx.measureText(tagText).width + 26;
+      ctx.fillStyle = '#FFF1F2';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect((width - tagW) / 2, curY - 14, tagW, 24, 12);
+        ctx.fill();
+      }
       ctx.fillStyle = '#E11D48';
-      ctx.font = 'bold 13px "Prompt", sans-serif';
-      ctx.fillText('• ปัญหา & สิ่งที่คาดหวัง:', 50, curY + 28);
+      ctx.fillText(tagText, width / 2, curY + 2);
 
-      ctx.fillStyle = '#1F2937';
+      curY += 46;
+
+      // พาดหัวปัญหาขนาดใหญ่ที่สุด (The Hook - Bold & Centered)
+      const isShortHook = cleanProblemText.length <= 30;
+      const hookFontSize = isShortHook ? 32 : 28;
+      ctx.font = `bold ${hookFontSize}px "Prompt", sans-serif`;
+      ctx.fillStyle = '#0F172A';
+
+      const hookDisplay = `“${cleanProblemText}”`;
+      const hookLines = wrapTextLines(ctx, hookDisplay, width - 90);
+      hookLines.forEach((line) => {
+        ctx.fillText(line, width / 2, curY);
+        curY += (hookFontSize + 10);
+      });
+
+      curY += 6;
+
+      // ส่วนข้อจำกัด หรือสิ่งที่ต้องการ (ตัวเล็กกว่า Text-sm สีเทา จัดกึ่งกลาง)
       ctx.font = 'normal 13px "Prompt", sans-serif';
+      ctx.fillStyle = '#64748B';
 
-      const rawText = rawDescription?.trim() || 'ไม่มีรายละเอียดปัญหา';
-      const lines = wrapTextLines(ctx, rawText, width - 110);
-      lines.slice(0, 7).forEach((line, idx) => {
-        ctx.fillText(line, 50, curY + 54 + (idx * 20));
-      });
+      if (cleanExpectationText) {
+        const expLines = wrapTextLines(ctx, `🎯 สิ่งที่ต้องการ: ${cleanExpectationText}`, width - 100);
+        expLines.forEach((line) => {
+          ctx.fillText(line, width / 2, curY);
+          curY += 20;
+        });
+      }
 
-      curY += 218;
+      if (cleanConstraintText) {
+        const conLines = wrapTextLines(ctx, `⚠️ ข้อจำกัด: ${cleanConstraintText}`, width - 100);
+        conLines.forEach((line) => {
+          ctx.fillText(line, width / 2, curY);
+          curY += 20;
+        });
+      }
 
-      // ส่วนที่ (2): ผู้เชี่ยวชาญที่ต้องการ
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(34, curY, width - 68, 120);
-      ctx.strokeStyle = '#E5E7EB';
-      ctx.strokeRect(34, curY, width - 68, 120);
+      curY += 16;
 
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 13px "Prompt", sans-serif';
-      ctx.fillText('🎯 ผู้เชี่ยวชาญที่ต้องการ:', 50, curY + 30);
+      // ป้ายคนช่วยที่ต้องการ (Center Pill)
+      const occName = (targetOccupations.length > 0 && targetOccupations[0]?.name)
+        ? targetOccupations[0].name
+        : 'เปิดรับผู้เชี่ยวชาญทุกด้าน';
+      const specText = `🛠️ ผู้เชี่ยวชาญที่ต้องการ: ${occName}`;
+      ctx.font = 'bold 12px "Prompt", sans-serif';
+      const specW = ctx.measureText(specText).width + 30;
+      ctx.fillStyle = '#F8FAFC';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect((width - specW) / 2, curY - 14, specW, 28, 14);
+        ctx.fill();
+        ctx.strokeStyle = '#E2E8F0';
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#334155';
+      ctx.fillText(specText, width / 2, curY + 4);
 
-      let tagX = 50;
-      const tagY = curY + 48;
-      const occs = targetOccupations.length > 0 ? targetOccupations : [{ name: 'เปิดรับผู้เชี่ยวชาญทุกด้าน' }];
-      occs.slice(0, 3).forEach((occ) => {
-        const textWidth = ctx.measureText(occ.name).width;
-        ctx.fillStyle = '#FEF2F2';
-        ctx.fillRect(tagX, tagY, textWidth + 24, 28);
-        ctx.strokeStyle = '#FECDD3';
-        ctx.strokeRect(tagX, tagY, textWidth + 24, 28);
-        ctx.fillStyle = '#E11D48';
-        ctx.font = 'bold 12px "Prompt", sans-serif';
-        ctx.fillText(occ.name, tagX + 12, tagY + 19);
-        tagX += textWidth + 34;
-      });
+      curY += 46;
 
-      curY += 138;
+      // =====================================================================
+      // ข้อ 2: ตัวเลขค่าตอบแทน ขยายใหญ่และเด่นมากที่สุด (Massive Reward)
+      // =====================================================================
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 12px "Prompt", sans-serif';
+      ctx.fillText('รางวัลค่าตอบแทน (BOUNTY REWARD)', width / 2, curY);
 
-      // ส่วนที่ (3): ค่าตอบแทน / สิ่งแลกเปลี่ยน
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(34, curY, width - 68, 64);
-      ctx.strokeStyle = '#E5E7EB';
-      ctx.strokeRect(34, curY, width - 68, 64);
+      curY += 48;
 
-      ctx.fillStyle = '#4B5563';
-      ctx.font = 'bold 13px "Prompt", sans-serif';
-      ctx.fillText('ค่าตอบแทน / สิ่งแลกเปลี่ยน:', 50, curY + 38);
-
-      ctx.fillStyle = '#E11D48';
-      ctx.font = 'bold 19px "Prompt", sans-serif';
+      // ตัวเลขเงินรางวัลมหึมา เด่นชัด ดึงดูดสายตาทันที
       const prizeStr = rewardText || 'ตามตกลง';
-      const rewardWidth = ctx.measureText(prizeStr).width;
-      ctx.fillText(prizeStr, width - 50 - rewardWidth, curY + 40);
+      ctx.font = '900 52px "Prompt", sans-serif';
+      ctx.fillStyle = '#E11D48'; // สีแดงแบรนด์กระตุ้นความสนใจสูงสุด
+      ctx.fillText(prizeStr, width / 2, curY);
 
-      curY += 86;
+      curY += 20;
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'normal 11px "Prompt", sans-serif';
+      ctx.fillText('🛡️ ปลอดภัยด้วยสัญญา Escrow • รับเงินเมื่อตรวจรับงานเสร็จ 100%', width / 2, curY);
 
-      // ท้ายการ์ด: โลโก้และคำกำกับ
-      ctx.fillStyle = '#9CA3AF';
-      ctx.font = '11px "Prompt", sans-serif';
-      ctx.fillText('MAKE A DOT • ชุมชนจับคู่คนแก้ปัญหาและโอกาสสร้างรายได้', 50, curY + 20);
+      // =====================================================================
+      // ข้อ 3: แถบ Call-to-Action (CTA) และกล่อง QR Code ด้านล่างการ์ด
+      // =====================================================================
+      const ctaY = height - 138;
+      const ctaH = 106;
 
-      // ดาวน์โหลดไฟล์รูปภาพ PNG
+      // กล่องสีดำเข้มแบบโมเดิร์น
+      ctx.fillStyle = '#0F172A';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(24, ctaY, width - 48, ctaH, 18);
+        ctx.fill();
+      } else {
+        ctx.fillRect(24, ctaY, width - 48, ctaH);
+      }
+
+      // ข้อความกระตุ้น CTA ด้านซ้าย
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 13px "Prompt", sans-serif';
+      ctx.fillText('🔥 สแกนเพื่อรับงานนี้ หรือพิมพ์ค้นหา', 46, ctaY + 36);
+
+      ctx.fillStyle = '#FB7185';
+      ctx.font = 'bold 14px "Prompt", sans-serif';
+      ctx.fillText(`รหัส [${displayBountyId}] ที่ make-a-dot.com`, 46, ctaY + 60);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'normal 10px "Prompt", sans-serif';
+      ctx.fillText('👉 รับเงินจริงทันทีที่ส่งมอบงานสำเร็จ • ชุมชน MAKE A DOT', 46, ctaY + 84);
+
+      // วาดกล่อง QR Code จำลองความละเอียดสูงด้านขวา
+      const targetUrl = getShareUrl();
+      const qrSize = 80;
+      const qrX = width - 24 - qrSize - 16;
+      const qrY = ctaY + 13;
+      drawSimulatedQRCode(ctx, qrX, qrY, qrSize, targetUrl);
+
+      // ดาวน์โหลดไฟล์รูปภาพ PNG คุณภาพสูง
       const imageUri = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
       downloadLink.download = `make-a-dot-card-${displayBountyId.replace('#', '')}.png`;
       downloadLink.href = imageUri;
       downloadLink.click();
 
-      showToast('✓ บันทึกรูปการ์ดสรุปปัญหาเรียบร้อย! พร้อมนำไปโพสต์ได้ทันที');
+      showToast('✓ บันทึกรูปการ์ดภารกิจฉบับโปสเตอร์เรียบร้อย! พร้อมนำไปโพสต์ได้ทันที');
     } catch (err) {
       console.error('Failed to export card image:', err);
       showToast('ไม่สามารถเซฟรูปภาพได้ในขณะนี้');
@@ -443,15 +591,14 @@ ${targetUrl}`;
   return (
     <div className={`w-full text-left font-prompt space-y-3.5 ${className}`}>
       {/* ========================================================================= */}
-      {/* 1. กรอบการ์ดสรุปปัญหา (THEME: ขาว-แดง-ดำ + กิมมิคน้องดอท)                   */}
+      {/* 1. กรอบการ์ดสรุปปัญหาบนหน้าจอ (THEME: ขาว-แดง-ดำ + กิมมิคน้องดอท)         */}
       {/* ========================================================================= */}
-      <div className="bg-white border-2 border-gray-900 rounded-[22px] p-4 sm:p-5 shadow-lg relative overflow-hidden">
-        {/* ลายน้ำบางๆ มุมการ์ด */}
-        <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full border border-gray-100 pointer-events-none" />
+      <div className="bg-white border-2 border-gray-900 rounded-[24px] p-4 sm:p-5 shadow-lg relative overflow-hidden">
+        {/* ลายจุดอ่อนๆ สไตล์ Make-a-dot */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
         {/* ---------------- หัวการ์ด: กิมมิคน้องดอท + การ์ดสรุปปัญหา + รหัสและป้ายระดับปัญหา ---------------- */}
-        <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-          {/* ซ้าย: น้องดอท + ชื่อการ์ดสรุปปัญหา */}
+        <div className="flex items-center justify-between pb-3 border-b border-gray-200 relative z-10">
           <div className="flex items-center gap-2.5">
             <div className="shrink-0 flex items-center justify-center">
               <NongDot mood="greeting" size={28} color="red" />
@@ -468,7 +615,6 @@ ${targetUrl}`;
             </div>
           </div>
 
-          {/* ขวา: (4) รหัสการ์ดและป้ายระดับปัญหา */}
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-900 rounded">
               {displayBountyId}
@@ -479,36 +625,25 @@ ${targetUrl}`;
           </div>
         </div>
 
-        {/* ---------------- ข้อมูลสั้นๆ 4 ส่วนในกรอบการ์ดสีขาว (อ่านจบในแป๊บเดียว) ---------------- */}
-        <div className="space-y-3 pt-3">
-          {/* (1) ปัญหาและสิ่งที่คาดหวัง */}
-          <div className="bg-gray-50/90 rounded-xl p-3 border border-gray-200/90">
-            {mainCardSections && mainCardSections.length > 0 ? (
-              <div className="space-y-1.5">
-                {mainCardSections.map((sec, idx) => (
-                  <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1.5 text-xs">
-                    <span className="font-bold text-gray-900 shrink-0 inline-flex items-center gap-1 select-none">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-red inline-block shrink-0" />
-                      {sec.label}:
-                    </span>
-                    <span className="text-gray-800 leading-snug break-words flex-1 font-normal">
-                      {sec.content || "-"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs text-gray-800 leading-snug font-normal whitespace-pre-line break-words">
-                {rawDescription && rawDescription.trim() ? (
-                  rawDescription.trim()
-                ) : (
-                  <span className="text-gray-400 italic">ไม่มีรายละเอียดปัญหา</span>
-                )}
-              </div>
+        {/* ---------------- ข้อมูลการ์ดภารกิจบนหน้าจอ ---------------- */}
+        <div className="space-y-3 pt-3 relative z-10">
+          {/* พาดหัวปัญหาแบบชัดเจน */}
+          <div className="bg-gray-50/90 rounded-xl p-3.5 border border-gray-200/90 space-y-1.5">
+            <div className="text-[11px] font-bold text-brand-red uppercase flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-red inline-block" />
+              <span>ปัญหาที่ต้องการคนช่วย:</span>
+            </div>
+            <p className="text-sm font-bold text-gray-900 leading-snug break-words">
+              {cleanProblemText}
+            </p>
+            {cleanExpectationText && (
+              <p className="text-xs text-gray-600 pt-1 leading-snug">
+                <span className="font-semibold text-gray-800">สิ่งที่ต้องการ:</span> {cleanExpectationText}
+              </p>
             )}
           </div>
 
-          {/* (2) ผู้เชี่ยวชาญที่ต้องการ */}
+          {/* ผู้เชี่ยวชาญที่ต้องการ */}
           <div className="bg-white rounded-xl p-3 border border-gray-200">
             <div className="text-[10px] font-bold text-gray-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <i className="fa-solid fa-bullseye text-[10px] text-brand-red" />
@@ -540,7 +675,7 @@ ${targetUrl}`;
             </div>
           </div>
 
-          {/* (3) ค่าตอบแทน / สิ่งแลกเปลี่ยน */}
+          {/* ค่าตอบแทน / สิ่งแลกเปลี่ยน */}
           <div className="bg-white rounded-xl px-3.5 py-2.5 border border-gray-200 flex items-center justify-between">
             <span className="text-xs font-bold text-gray-600">
               ค่าตอบแทน / สิ่งแลกเปลี่ยน
@@ -553,7 +688,7 @@ ${targetUrl}`;
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. กล่อง ACCORDION นอกการ์ด: ดูรายละเอียดเพิ่มเติม (ข้อ 1 ตามคำสั่ง)        */}
+      {/* 2. กล่อง ACCORDION นอกการ์ด: ดูรายละเอียดเพิ่มเติม                        */}
       {/* ========================================================================= */}
       <div className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
         <button
@@ -561,7 +696,6 @@ ${targetUrl}`;
           onClick={() => setIsDetailOpen(!isDetailOpen)}
           className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-gray-800 bg-gray-50/70 hover:bg-gray-100 transition-colors cursor-pointer select-none"
         >
-          {/* ข้อความและไอคอนสะอาดตา ไม่มีวงเล็บ [ ] และไม่มีไอคอนกระดาษซ้ำ */}
           <span className="flex items-center gap-2">
             <i className="fa-regular fa-file-lines text-brand-red text-xs" />
             <span>ดูรายละเอียดเพิ่มเติมของงานนี้</span>
@@ -603,13 +737,13 @@ ${targetUrl}`;
             </div>
 
             {/* ข้อจำกัดของงาน (ถ้ามี) */}
-            {constraintSection && (
+            {cleanConstraintText && (
               <div className="space-y-1">
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   ข้อจำกัดของงาน
                 </div>
                 <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-200/80 text-gray-800">
-                  {constraintSection.content || "-"}
+                  {cleanConstraintText}
                 </div>
               </div>
             )}
@@ -680,7 +814,7 @@ ${targetUrl}`;
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2.5">
               <div className="text-[11px] font-bold text-gray-700 flex items-center justify-between">
                 <span>แชร์การ์ดนี้เพื่อหาคนช่วย:</span>
-                <span className="text-[10px] font-mono text-brand-red font-bold">MAKE A DOT SHARE</span>
+                <span className="text-[10px] font-mono text-brand-red font-bold">MAKE A DOT POSTER</span>
               </div>
 
               {/* 4 ปุ่มหลัก: Facebook | LINE | คัดลอก | บันทึกรูป */}
@@ -727,15 +861,15 @@ ${targetUrl}`;
                 </button>
               </div>
 
-              {/* ปุ่มบันทึกรูปการ์ดแบบเต็มแถว เพื่อให้แตะง่ายบนมือถือ */}
+              {/* ปุ่มบันทึกรูปการ์ดโปสเตอร์แบบเต็มแถว เพื่อให้แตะง่ายบนมือถือ */}
               <button
                 type="button"
                 onClick={handleSaveCardImage}
                 disabled={isSavingImage}
-                className="w-full bg-white hover:bg-red-50 text-brand-red border border-red-200 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-2xs"
+                className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
               >
-                <i className="fa-regular fa-image text-xs" />
-                <span>บันทึกรูปการ์ดสรุปปัญหา (นำไปโพสต์ได้ทันที)</span>
+                <i className="fa-regular fa-image text-sm" />
+                <span>🖼️ บันทึกรูปการ์ดภารกิจ (Bounty Poster) พร้อมโพสต์ทันที</span>
               </button>
 
               {/* ข้อความแจ้งเตือน Toast / Alert ตามโจทย์ */}
