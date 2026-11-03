@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { INDUSTRIES_LIST } from '../constants';
 import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
+import { HiddenNodesScannerModal } from '../production/HiddenNodesScannerModal';
 
 interface ProcessingTabProps {
   promptInput?: string;
@@ -31,6 +32,7 @@ export const ProcessingTab: React.FC<ProcessingTabProps> = ({
   const [localPrompt, setLocalPrompt] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
 
   // 14 Tabs: 1 รวม + 12 หมวดอุตสาหกรรม + 1 ดอทปริศนา
   const TABS_14: ProcessTabItem[] = [
@@ -309,9 +311,18 @@ export const ProcessingTab: React.FC<ProcessingTabProps> = ({
 
             {/* Processing Input Card */}
             <div className="bg-white dark:bg-[#181a1f] rounded-2xl border border-gray-100 dark:border-[#262930] p-4 shadow-xs space-y-3">
-              <span className="text-xs font-bold text-gray-800 dark:text-gray-200 block">
-                ระบุโจทย์ปัญหาหรือไอเดียเพื่อประมวลผล:
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                  ระบุโจทย์ปัญหาหรือไอเดียเพื่อประมวลผล:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowScannerModal(true)}
+                  className="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[10.5px] font-bold flex items-center gap-1 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                >
+                  <span>🔍 สแกนทุนชีวิตแฝง (0 บ.)</span>
+                </button>
+              </div>
               <textarea
                 value={localPrompt}
                 onChange={(e) => setLocalPrompt(e.target.value)}
@@ -433,6 +444,15 @@ export const ProcessingTab: React.FC<ProcessingTabProps> = ({
           </div>
         )}
       </div>
+      <HiddenNodesScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        onApplyToCapTable={(valData) => {
+          const appendText = `[ข้อมูลทุนชีวิตแฝงที่สแกนพบ]: มูลค่าประเมินรวม ฿${valData.totalValuationThb.toLocaleString()} บาท (หยาดเหงื่อ: ฿${valData.sweatThb.toLocaleString()} / เครื่องมือ: ฿${valData.equipThb.toLocaleString()} / ทำเล: ฿${valData.venueThb.toLocaleString()})`;
+          setLocalPrompt(prev => prev ? `${prev}
+${appendText}` : appendText);
+        }}
+      />
     </div>
   );
 };

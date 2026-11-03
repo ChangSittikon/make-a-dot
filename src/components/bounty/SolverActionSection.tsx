@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import NegotiationModal from "./NegotiationModal";
 import UpgradeBountyButton from "@/app/profile/bounty/[id]/UpgradeBountyButton";
+import { AIWhisperWidget } from "./AIWhisperWidget";
 
 interface SolverActionSectionProps {
   bountyId: string;
@@ -24,6 +25,8 @@ export default function SolverActionSection({
 }: SolverActionSectionProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [prefilledKPI, setPrefilledKPI] = useState("");
+  const [prefilledPrice, setPrefilledPrice] = useState<number | undefined>(undefined);
 
   const isCompleted = bountyStatus === "COMPLETED";
   const isActive = bountyStatus === "ACTIVE";
@@ -69,11 +72,28 @@ export default function SolverActionSection({
         </div>
       )}
 
+      {/* ⚡ AI Whisper Widget (6-Axis Monetization Hint before Accept) */}
+      {!isCompleted && !isActive && (
+        <AIWhisperWidget
+          initialPrizeTHB={initialPrizeTHB}
+          onApplyToNegotiation={(script, price) => {
+            setPrefilledKPI(script);
+            setPrefilledPrice(price);
+            setIsModalOpen(true);
+          }}
+          onOpenNegotiationModal={() => setIsModalOpen(true)}
+        />
+      )}
+
       {/* Primary Action Button: รับงาน (เจรจา) */}
       {!isCompleted && !isActive && (
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setPrefilledKPI("");
+            setPrefilledPrice(undefined);
+            setIsModalOpen(true);
+          }}
           className="w-full py-3.5 px-6 bg-brand-red text-white text-sm font-bold rounded-2xl hover:bg-red-600 transition shadow-sm hover:shadow active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
         >
           <span>รับงาน (เจรจา)</span>
@@ -109,6 +129,8 @@ export default function SolverActionSection({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         currentUserRole={currentUserRole}
+        initialProposedKPI={prefilledKPI}
+        initialOfferPriceTHB={prefilledPrice}
         onSuccess={() => {
           router.refresh();
         }}

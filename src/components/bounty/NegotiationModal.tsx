@@ -11,6 +11,8 @@ interface NegotiationModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   currentUserRole?: string;
+  initialProposedKPI?: string;
+  initialOfferPriceTHB?: number;
 }
 
 export default function NegotiationModal({
@@ -20,17 +22,30 @@ export default function NegotiationModal({
   onClose,
   onSuccess,
   currentUserRole = "USER",
+  initialProposedKPI = "",
+  initialOfferPriceTHB,
 }: NegotiationModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [proposedKPI, setProposedKPI] = useState("");
+  const [proposedKPI, setProposedKPI] = useState(initialProposedKPI);
   const [timeframeDays, setTimeframeDays] = useState<number>(7);
-  const [priceTHB, setPriceTHB] = useState<number>(initialPrizeTHB || 0);
+  const [priceTHB, setPriceTHB] = useState<number>(
+    initialOfferPriceTHB || initialPrizeTHB || 0
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (initialProposedKPI) {
+      setProposedKPI(initialProposedKPI);
+    }
+    if (initialOfferPriceTHB) {
+      setPriceTHB(initialOfferPriceTHB);
+    }
+  }, [initialProposedKPI, initialOfferPriceTHB]);
 
   // Handle escape key and clicks outside mobile frame
   useEffect(() => {

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import UniversalProfileCard from '@/components/profile/UniversalProfileCard';
+import { LifeCapitalProfileCard } from '@/components/profile/LifeCapitalProfileCard';
 import AuthButton from '@/components/AuthButton';
 import SignOutButton from '@/components/profile/SignOutButton';
 import { BottomTabBar } from '@/components/shared/BottomTabBar';
@@ -62,6 +63,9 @@ export default async function ProfilePage() {
           ) : (
             <UniversalProfileCard user={user} stats={stats} />
           )}
+
+          {/* ⚡ v7.5 Life Capital & 6-Axis Monetization Portfolio */}
+          <LifeCapitalProfileCard userName={user.name} />
 
           {/* Quick Access Dashboard */}
           <div className="mt-8">

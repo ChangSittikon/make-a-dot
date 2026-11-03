@@ -44,6 +44,105 @@ interface LocalTabProps {
   onSendFactoryMoqToCapital?: (payload: CrossTabBridgePayload) => void;
 }
 
+export interface HyperLocalBountyPin {
+  id: string;
+  title: string;
+  category: 'URGENT_24H' | 'LOCAL_BYPRODUCT' | 'EARLY_BIRD' | 'COMMUNITY_BROKER';
+  categoryLabel: string;
+  axisNumber: 4 | 5 | 6;
+  axisLabel: string;
+  distanceKm: number;
+  driveMinutes: number;
+  locationArea: string;
+  bountyRewardThb: number;
+  earningModel: string;
+  radarX: number;
+  radarY: number;
+  urgentLevel: 'CRITICAL_24H' | 'HIGH' | 'MEDIUM';
+  description: string;
+  suggestedAction: string;
+  script: string;
+}
+
+const HYPER_LOCAL_BOUNTIES: HyperLocalBountyPin[] = [
+  {
+    id: 'bounty_site_scrap',
+    title: 'รับเหมาขนเศษไม้ล้มและซากวัสดุก่อสร้างรีไซเคิล',
+    category: 'LOCAL_BYPRODUCT',
+    categoryLabel: 'แปลงเศษวัสดุเป็นเงินสด',
+    axisNumber: 4,
+    axisLabel: 'แกนที่ 4: ทำเลทอง & ทรัพยากรท้องถิ่น',
+    distanceKm: 1.8,
+    driveMinutes: 6,
+    locationArea: 'ไซท์งานก่อสร้าง ซอยสุขุมวิท 101',
+    bountyRewardThb: 3500,
+    earningModel: 'เหมาฟรี + รับเงินสดขายต่อโรงรีไซเคิล',
+    radarX: -28,
+    radarY: 22,
+    urgentLevel: 'HIGH',
+    description: 'ผู้รับเหมาต้องการเคลียร์พื้นที่ด่วนเพื่อส่งมอบงวดงาน มีเศษเหล็ก ไม้พาเลท และซากปูนกองขวางทาง',
+    suggestedAction: 'เอารถกระบะเข้าไปช่วยยกขนเคลียร์พื้นที่ให้สะอาดฟรี แลกกับสิทธิ์นำเศษเหล็กและไม้ไปขายต่อโรงรับซื้อของเก่า',
+    script: 'พี่ครับ ถ้าจ้างรถขยะมาขนพี่ต้องเสียเงินหลายพัน แต่วันนี้ผมเอากระบะมาช่วยยกเคลียร์พื้นที่ให้สะอาดเอี่ยมเลยครับ แถมจ่ายเงินสดให้พี่อีก 800 บาทครับ',
+  },
+  {
+    id: 'bounty_night_plumbing',
+    title: 'ซ่อมระบบท่อและไฟฟ้าฉุกเฉินกะดึก (หอพัก/คอนโด)',
+    category: 'URGENT_24H',
+    categoryLabel: 'รับจบงานฉุกเฉิน 24 ชม.',
+    axisNumber: 6,
+    axisLabel: 'แกนที่ 6: กะดึก 24 ชม. & รับจบงานลำบาก',
+    distanceKm: 2.3,
+    driveMinutes: 8,
+    locationArea: 'หอพักนักศึกษา ย่านรามคำแหง',
+    bountyRewardThb: 2500,
+    earningModel: 'ชาร์จเรทด่วนพิเศษกะดึก 2-3 เท่า',
+    radarX: 35,
+    radarY: -30,
+    urgentLevel: 'CRITICAL_24H',
+    description: 'ท่อน้ำแตกเวลาตี 1 ไหลท่วมทางเดิน ช่างประจำตึกปิดเครื่องติดต่อไม่ได้ ต้องการคนรับจบด่วน',
+    suggestedAction: 'สแตนด์บายเครื่องมือและอะไหล่ช่าง ออกไปจัดการแก้ขัดและเปลี่ยนข้อต่อให้จบภายใน 45 นาที',
+    script: 'เวลานี้ (ตี 1) ช่างทั่วไปหลับหมดแล้วครับ ถ้าต้องการให้ผมออกไปแก้ไขหน้างานทันที เรทฉุกเฉินพร้อมประกันงานอยู่ที่ 2,500 บาท สตาร์ทรถออกไปใน 15 นาทีครับ',
+  },
+  {
+    id: 'bounty_market_delivery',
+    title: 'รับฝากซื้อวัตถุดิบตลาดเช้ามืดตี 4 ส่งร้านอาหาร',
+    category: 'EARLY_BIRD',
+    categoryLabel: 'ช่องว่างเวลาเช้ามืด',
+    axisNumber: 4,
+    axisLabel: 'แกนที่ 4: ทำเลทอง & ช่องว่างเวลา',
+    distanceKm: 3.5,
+    driveMinutes: 12,
+    locationArea: 'ตลาดสดยิ่งเจริญ / คลองเตย',
+    bountyRewardThb: 800,
+    earningModel: 'ค่าบริการเที่ยวละ ฿100 x 8 ร้าน = ฿800/เช้า',
+    radarX: -42,
+    radarY: -35,
+    urgentLevel: 'MEDIUM',
+    description: 'ร้านกาแฟและร้านอาหารเช้า 5 ร้าน ต้องการผักสด ผลไม้ และนมสดราคาส่งแต่ไม่อยากตื่นไปเบียดเอง',
+    suggestedAction: 'รวมลิสต์ซื้อของตอนตี 4 ในราคาขายส่งตลาดใหญ่ แล้วกระจายส่งตามร้านก่อน 06:30 น.',
+    script: 'บ้านผมอยู่หน้าตลาดสด ใครต้องการให้วิ่งไปรับของสดตอนตี 4 ส่งรายการมาได้เลยครับ คิดค่าบริการเที่ยวละ 100 บาทเท่านั้นครับ',
+  },
+  {
+    id: 'bounty_community_broker',
+    title: 'นายหน้าจับคู่ช่างแอร์/ล้างท่อกับลูกบ้าน 500 หลังคาเรือน',
+    category: 'COMMUNITY_BROKER',
+    categoryLabel: 'สินทรัพย์ดิจิทัล & ทุนสังคม',
+    axisNumber: 5,
+    axisLabel: 'แกนที่ 5: สินทรัพย์ดิจิทัล & ทุนสังคม',
+    distanceKm: 4.2,
+    driveMinutes: 15,
+    locationArea: 'กลุ่มไลน์หมู่บ้านจัดสรร 3 โครงการ',
+    bountyRewardThb: 1500,
+    earningModel: 'ค่าปักหมุดโพสต์ + ค่าหัวคิวจับคู่ ฿100/เคส',
+    radarX: 48,
+    radarY: 28,
+    urgentLevel: 'MEDIUM',
+    description: 'มีลูกบ้านถามหาช่างล้างแอร์ ซ่อมปั๊มน้ำทุกสัปดาห์ แต่ไม่มีใครเป็นตัวกลางคัดกรองช่างที่ไว้ใจได้',
+    suggestedAction: 'คัดกรองช่างฝีมือดี 2-3 เจ้ามาแนะนำในกลุ่ม พร้อมรับประกันความเรียบร้อย หักส่วนแบ่ง 10-15%',
+    script: 'ในกลุ่มไลน์ลูกบ้านมีคนถามหาช่างแอร์ทุกวัน ช่างคนไหนสนใจรับงานเหมา คิดค่าหัวคิว 100 บาทต่อเคส ทักมาได้เลยครับ',
+  },
+];
+
 export const LocalTab: React.FC<LocalTabProps> = ({
   selectedIndustryId,
   selectedSubIndustryId,
@@ -63,6 +162,9 @@ export const LocalTab: React.FC<LocalTabProps> = ({
   const [activePinId, setActivePinId] = useState<string>('');
   const [pinnedIds, setPinnedIds] = useState<Record<string, boolean>>({});
   const [customPins, setCustomPins] = useState<NearbyFactoryPin[]>([]);
+  const [radarMode, setRadarMode] = useState<'FACTORIES' | 'BOUNTIES'>('FACTORIES');
+  const [activeBountyId, setActiveBountyId] = useState<string>('bounty_night_plumbing');
+  const [bountyScriptCopied, setBountyScriptCopied] = useState<boolean>(false);
 
   // Modal states
   const [rfqTarget, setRfqTarget] = useState<NearbyFactoryPin | null>(null);
@@ -383,23 +485,41 @@ export const LocalTab: React.FC<LocalTabProps> = ({
             {/* Interactive Geo-Radar Pin Map                                   */}
             {/* =============================================================== */}
             <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-[#0f172a] text-white overflow-hidden shadow-lg relative">
-              {/* Map Top Overlay Bar */}
-              <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span className="font-bold text-slate-200">
-                    เรดาร์พิกัดโรงงานและซัพพลายเออร์รอบบ้าน ({filteredPins.length} แห่งในรัศมี {maxRadiusKm} กม.)
-                  </span>
+              {/* Map Top Overlay Bar with Mode Switcher */}
+              <div className="px-4 py-2.5 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                {/* Radar Mode Switcher */}
+                <div className="flex items-center gap-1 bg-slate-800/90 p-1 rounded-xl border border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setRadarMode('FACTORIES')}
+                    className={`px-3 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
+                      radarMode === 'FACTORIES'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🏭 โรงงาน OEM & ซัพพลาย
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRadarMode('BOUNTIES')}
+                    className={`px-3 py-1 rounded-lg text-[10.5px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      radarMode === 'BOUNTIES'
+                        ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-xs'
+                        : 'text-amber-400 hover:text-white'
+                    }`}
+                  >
+                    <span>⚡ เควสต์ด่วนล่าเงินสด (Hyper-Local)</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />
+                  </button>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#E53935] inline-block" />{' '}
-                    ตรงกับโหนดที่เลือก
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block" />{' '}
-                    โหนดข้างเคียงในสายพาน
-                  </span>
+
+                <div className="flex items-center gap-2 text-[10px] text-slate-300">
+                  {radarMode === 'FACTORIES' ? (
+                    <span>📍 พิกัดรอบบ้าน {filteredPins.length} แห่ง (≤ {maxRadiusKm} กม.)</span>
+                  ) : (
+                    <span className="text-amber-300 font-bold">🎯 {HYPER_LOCAL_BOUNTIES.length} เควสต์ด่วนสร้างเงินสดในรัศมีใกล้บ้าน</span>
+                  )}
                 </div>
               </div>
 
@@ -430,8 +550,43 @@ export const LocalTab: React.FC<LocalTabProps> = ({
                   </span>
                 </div>
 
-                {/* Factory Pins on Radar */}
-                {filteredPins.map((pin) => {
+                {/* Bounties on Radar when in BOUNTIES mode */}
+                {radarMode === 'BOUNTIES' &&
+                  HYPER_LOCAL_BOUNTIES.map((bounty) => {
+                    const isSelected = activeBountyId === bounty.id;
+                    return (
+                      <button
+                        key={bounty.id}
+                        type="button"
+                        onClick={() => setActiveBountyId(bounty.id)}
+                        style={{
+                          left: `calc(50% + ${bounty.radarX * 1.35}px)`,
+                          top: `calc(50% + ${bounty.radarY * 1.15}px)`,
+                        }}
+                        className={` -translate-x-1/2 -translate-y-1/2 absolute transition-all duration-200 group ${
+                          isSelected ? 'z-30 scale-115' : 'z-10 hover:scale-110'
+                        }`}
+                      >
+                        <span className="w-9 h-9 rounded-full bg-amber-500/40 animate-ping absolute -inset-1 pointer-events-none" />
+                        <div
+                          className={`relative flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-bold shadow-lg whitespace-nowrap ${
+                            isSelected
+                              ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-white border-white ring-2 ring-amber-400'
+                              : 'bg-amber-950/95 text-amber-200 border-amber-500/60'
+                          }`}
+                        >
+                          <span>⚡</span>
+                          <span className="max-w-[130px] truncate">
+                            {bounty.title.split(' ')[0]} • +฿{bounty.bountyRewardThb.toLocaleString()}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                {/* Factory Pins on Radar when in FACTORIES mode */}
+                {radarMode === 'FACTORIES' &&
+                  filteredPins.map((pin) => {
                   const isSelected = selectedPin?.id === pin.id;
                   const isPinned = !!pinnedIds[pin.id];
                   return (
@@ -469,8 +624,70 @@ export const LocalTab: React.FC<LocalTabProps> = ({
                 })}
               </div>
 
-              {/* Selected Pin Quick Spotlight Footer inside Map */}
-              {selectedPin && (
+              {/* Hyper-Local Bounty Spotlight Footer when in BOUNTIES mode */}
+              {radarMode === 'BOUNTIES' && (() => {
+                const activeBounty = HYPER_LOCAL_BOUNTIES.find(b => b.id === activeBountyId) || HYPER_LOCAL_BOUNTIES[0];
+                return (
+                  <div className="px-4 py-3 bg-gradient-to-r from-slate-900 via-zinc-900 to-slate-900 border-t border-amber-500/40 flex flex-col gap-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[9.5px] font-bold">
+                          {activeBounty.axisLabel}
+                        </span>
+                        <span className="text-[10px] text-amber-300 font-bold">
+                          ห่าง {activeBounty.distanceKm} กม. ({activeBounty.locationArea})
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] text-slate-400 block">ประมาณการรายได้เงินสด</span>
+                        <span className="text-xs sm:text-sm font-black font-mono text-emerald-400">
+                          +฿{activeBounty.bountyRewardThb.toLocaleString()} บาท ({activeBounty.earningModel.split('+')[0]})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-1.5">
+                        <span>⚡ {activeBounty.title}</span>
+                      </h4>
+                      <p className="text-[10.5px] text-slate-300 mt-0.5 leading-snug">
+                        {activeBounty.description}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-[10.5px] text-slate-200">
+                      <span className="text-amber-400 font-bold">💬 สคริปต์เปิดดีลรับจบ: </span>
+                      <span className="italic select-all">&ldquo;{activeBounty.script}&rdquo;</span>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                            navigator.clipboard.writeText(activeBounty.script);
+                            setBountyScriptCopied(true);
+                            setTimeout(() => setBountyScriptCopied(false), 2000);
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10.5px] font-bold transition-colors cursor-pointer"
+                      >
+                        {bountyScriptCopied ? '✓ คัดลอกสคริปต์แล้ว' : '📋 คัดลอกสคริปต์'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => alert(`คุณได้เลือกรับเควสต์: "${activeBounty.title}" พิกัด: ${activeBounty.locationArea}`)}
+                        className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:opacity-95 text-white text-[10.5px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+                      >
+                        🚀 รับเควสต์ & เริ่มปฏิบัติการ
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Selected Pin Quick Spotlight Footer inside Map (Factories Mode) */}
+              {radarMode === 'FACTORIES' && selectedPin && (
                 <div className="px-4 py-3 bg-slate-900/95 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[10px] text-amber-400 font-bold">

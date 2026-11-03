@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { HiddenNodesScannerModal } from "@/components/ecosystem/production/HiddenNodesScannerModal";
 
 // Reward type values — must match ProblemNode.bountyType in schema.prisma
 export type RewardType = "CASH" | "RESOURCE_SWAP" | "REV_SHARE" | "HYBRID";
@@ -34,6 +35,7 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
       : ""
   );
   const [descText, setDescText] = useState<string>(value?.bountyDescription ?? "");
+  const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
 
   const activeConfig = activeType ? REWARD_TYPES.find(r => r.type === activeType) : null;
 
@@ -71,7 +73,24 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
   };
 
   return (
-    <div className="w-full flex flex-col gap-5">
+    <div className="w-full flex flex-col gap-4 font-prompt">
+      {/* ⚡ Hidden Asset Scanner Bar for 0-Baht Users */}
+      <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300/80 flex items-center justify-between gap-2 shadow-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-base shrink-0">✨</span>
+          <div className="text-[11px] text-amber-900 leading-snug">
+            <span className="font-extrabold">งบเงินสดจำกัด?</span> ใช้ <b>&quot;ทุนชีวิตแฝง&quot;</b> (ทำเล, เครื่องมือ, รถ, ทักษะ) มาตั้งเป็นรางวัลแทนเงินสด
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowScannerModal(true)}
+          className="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[10.5px] font-bold shrink-0 transition-all shadow-xs active:scale-95 cursor-pointer"
+        >
+          🔍 สแกนทุนชีวิต
+        </button>
+      </div>
+
       {/* Reward Type Tabs (Segmented Control style) */}
       <div className="flex p-1 bg-[#F5F5F7] rounded-[24px]">
         {REWARD_TYPES.map(rt => (
@@ -152,6 +171,16 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
           )}
         </div>
       )}
+      <HiddenNodesScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        onApplyToCapTable={(valData) => {
+          setActiveType("RESOURCE_SWAP");
+          const customDesc = `[แลกเปลี่ยนด้วยทุนชีวิตแฝง]: รวมมูลค่าประเมิน ฿${valData.totalValuationThb.toLocaleString()} บาท (หยาดเหงื่อ: ฿${valData.sweatThb.toLocaleString()} / อุปกรณ์: ฿${valData.equipThb.toLocaleString()} / ทำเล: ฿${valData.venueThb.toLocaleString()}) ยินดีแบ่งปันทรัพยากรเหล่านี้แก่ผู้ที่เข้ามาช่วยแก้ปัญหา`;
+          setDescText(customDesc);
+          emit("RESOURCE_SWAP", "0", customDesc);
+        }}
+      />
     </div>
   );
 }
