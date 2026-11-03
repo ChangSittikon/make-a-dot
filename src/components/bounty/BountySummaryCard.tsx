@@ -309,17 +309,139 @@ ${targetUrl}`;
   };
 
   // =========================================================================
-  // ข้อ 1: เรนเดอร์ Canvas โปสเตอร์ความละเอียดสูง บังคับขนาดตายตัว 1080x1350 (4:5 แนวตั้ง)
-  // จัดการ Text Overflow & Wrapping + Responsive Font Clamping ป้องกันตัวหนังสือล้นขอบ 100%
+  // ข้อ 1 & 2 & 3: เรนเดอร์ Canvas โปสเตอร์ความละเอียดสูง (Flex Space-Between & Max-Height Control)
+  // 1. Flex Column with Space-Between: จัดระยะห่าง Header <-> Body <-> Footer ให้สมมาตร ไม่มี Dead Space
+  // 2. Max-Height Control: ปรับความสูงไดนามิกตามเนื้อหาจริง (min 860px, max 1350px) ไม่ยืดทิ้งพื้นที่ว่าง
+  // 3. Tighten Multi-Line Reward Line-Height: บีบระยะบรรทัดรางวัลให้ชิดเป็นกลุ่มก้อนเดียวกัน
   // =========================================================================
   const exportPosterImage = () => {
-    const canvas = document.createElement('canvas');
     const width = 1080;
-    const height = 1350; // บังคับสัดส่วน 4:5 แนวตั้งตายตัว (1080x1350) ตามโจทย์
-    canvas.width = width;
-    canvas.height = height;
+    const maxContentW = 880;
+
+    // เตรียม canvas ชั่วคราวสำหรับคำนวณและวัดขนาดฟอนต์/บรรทัดจริงก่อนวาด
+    const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // -------------------------------------------------------------------------
+    // 1. คำนวณเนื้อหาและวัดความสูงส่วน Hook (The Hook / ปัญหาหลัก)
+    // -------------------------------------------------------------------------
+    const hookLen = cleanProblemText.length;
+    let hookFontSize = 56;
+    let hookLineH = 68;
+    if (hookLen > 40) {
+      hookFontSize = 40;
+      hookLineH = 50;
+    } else if (hookLen > 20) {
+      hookFontSize = 48;
+      hookLineH = 58;
+    }
+    ctx.font = `900 ${hookFontSize}px "Prompt", sans-serif`;
+    const hookDisplay = `“${cleanProblemText}”`;
+    const hookLines = wrapTextLines(ctx, hookDisplay, maxContentW);
+    const hookHeight = hookLines.length * hookLineH;
+
+    // -------------------------------------------------------------------------
+    // 2. คำนวณเนื้อหาและวัดความสูงส่วน สิ่งที่ต้องการ & ข้อจำกัด (ถ้ามี)
+    // -------------------------------------------------------------------------
+    ctx.font = 'normal 21px "Prompt", sans-serif';
+    const expLines = cleanExpectationText
+      ? wrapTextLines(ctx, `🎯 สิ่งที่ต้องการ: ${cleanExpectationText}`, maxContentW)
+      : [];
+    const conLines = cleanConstraintText
+      ? wrapTextLines(ctx, `⚠️ ข้อจำกัด: ${cleanConstraintText}`, maxContentW)
+      : [];
+    const detailsLineCount = expLines.length + conLines.length;
+    const detailsHeight = detailsLineCount * 30;
+
+    // -------------------------------------------------------------------------
+    // 3. ป้ายผู้เชี่ยวชาญที่ต้องการ
+    // -------------------------------------------------------------------------
+    const occName = (targetOccupations.length > 0 && targetOccupations[0]?.name)
+      ? targetOccupations[0].name
+      : 'เปิดรับผู้เชี่ยวชาญทุกด้าน';
+    const specText = `🛠️ ผู้เชี่ยวชาญที่ต้องการ: ${occName}`;
+    const specHeight = 44;
+
+    // -------------------------------------------------------------------------
+    // 4. คำนวณเนื้อหาและวัดความสูงส่วน รางวัล (Reward)
+    // ข้อ 3: บีบระยะห่างบรรทัดรางวัล (Tighten Multi-Line Reward Line-Height)
+    // -------------------------------------------------------------------------
+    const prizeStr = rewardText || 'ตามตกลง';
+    const prizeLen = prizeStr.length;
+    let prizeFontSize = 68;
+    if (prizeLen > 55) {
+      prizeFontSize = 32;
+    } else if (prizeLen > 25) {
+      prizeFontSize = 40;
+    } else if (prizeLen > 10) {
+      prizeFontSize = 52;
+    }
+    // ปรับ line-height ให้ชิดเป็นกลุ่มก้อนเดียวกัน ไม่แยกห่างจนดูเหมือนคนละประโยค
+    const prizeLineH = Math.round(prizeFontSize * 1.15);
+    ctx.font = `900 ${prizeFontSize}px "Prompt", sans-serif`;
+    const prizeLines = wrapTextLines(ctx, prizeStr, maxContentW);
+    const prizeHeight = prizeLines.length * prizeLineH;
+
+    // ความสูงของส่วนประกอบย่อยใน Body
+    const tagHeight = 36;
+    const rewardTitleH = 24;
+    const escrowNoteH = 22;
+
+    // ระยะช่องว่าง (Gaps) ภายใน Body Content
+    const gapTagToHook = 28;
+    const gapHookToDetails = detailsLineCount > 0 ? 14 : 0;
+    const gapDetailsToSpec = 24;
+    const gapSpecToReward = 32;
+    const gapRewardTitleToPrize = 18;
+    const gapPrizeToEscrow = 14;
+
+    const bodyHeight =
+      tagHeight +
+      gapTagToHook +
+      hookHeight +
+      gapHookToDetails +
+      detailsHeight +
+      gapDetailsToSpec +
+      specHeight +
+      gapSpecToReward +
+      rewardTitleH +
+      gapRewardTitleToPrize +
+      prizeHeight +
+      gapPrizeToEscrow +
+      escrowNoteH;
+
+    // -------------------------------------------------------------------------
+    // ข้อ 2: คุมความสูงการ์ดให้กระชับ สมส่วน (Max-Height Control)
+    // สำหรับเนื้อหาสั้น/ปานกลาง ให้ปรับ Padding & Gap ให้กระชับ ไม่ต้องยืดถึง 1,350px
+    // หากมีหลายบรรทัด ให้ขยายตามจริงได้ สูงสุดไม่เกิน Max-height 1,350px
+    // -------------------------------------------------------------------------
+    const headerH = 150;      // จากขอบบนถึงเส้นคั่น Header (Y = 148)
+    const ctaH = 156;         // ความสูงแถบดำ CTA
+    const bottomPadding = 44; // ระยะห่างจากขอบล่าง
+    const footerH = ctaH + bottomPadding; // 200px
+
+    const minHeight = 860;
+    const maxHeight = 1350;
+    const targetGap = 52;     // ระยะห่างมาตรฐานระหว่าง Header <-> Body และ Body <-> Footer
+    const naturalHeight = headerH + targetGap + bodyHeight + targetGap + footerH;
+    const height = Math.min(maxHeight, Math.max(minHeight, Math.round(naturalHeight)));
+
+    // กำหนดขนาดจริงของ Canvas (จะรีเซ็ต State ของ Context เพื่อเริ่มวาดจริง)
+    canvas.width = width;
+    canvas.height = height;
+
+    // -------------------------------------------------------------------------
+    // ข้อ 1: ปรับ Layout การ์ดให้เป็น Flex Column with Space-Between
+    // แบ่งพื้นที่ออกเป็น 3 ส่วน: Header, Body Content, Footer (แถบสีดำ QR Code)
+    // คำนวณระยะห่างคั่นกลางให้เท่ากันแบบสมดุล ไม่มี Dead Space ลอยตรงกลาง
+    // -------------------------------------------------------------------------
+    const availableSpace = height - headerH - footerH;
+    const remainingSpace = Math.max(0, availableSpace - bodyHeight);
+    const flexSpace = Math.round(remainingSpace / 2);
+
+    let curY = headerH + flexSpace;
+    const ctaY = height - bottomPadding - ctaH;
 
     // 1. พื้นหลังสีขาวสะอาดตา
     ctx.fillStyle = '#FFFFFF';
@@ -335,7 +457,7 @@ ${targetUrl}`;
       }
     }
 
-    // 3. ขอบการ์ดมนนุ่มนวล (Soft SaaS Border 4:5)
+    // 3. ขอบการ์ดมนนุ่มนวล (Soft SaaS Border)
     ctx.strokeStyle = '#E2E8F0';
     ctx.lineWidth = 3;
     if (ctx.roundRect) {
@@ -346,7 +468,8 @@ ${targetUrl}`;
       ctx.strokeRect(36, 36, width - 72, height - 72);
     }
 
-    // 4. หัวการ์ด: น้องดอท 3D + MAKE A DOT QUEST
+    // 4. ส่วน Header: โลโก้น้องดอท 3D + MAKE A DOT + รหัสเควสต์
+    ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#E11D48';
     ctx.beginPath();
     ctx.arc(88, 96, 26, 0, Math.PI * 2);
@@ -394,7 +517,7 @@ ${targetUrl}`;
     ctx.font = 'bold 18px "Prompt", sans-serif';
     ctx.fillText(scaleConfig.label, width - 152, 102);
 
-    // เส้นแบ่งบางเบา
+    // เส้นแบ่งขอบ Header
     ctx.strokeStyle = '#F1F5F9';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -402,147 +525,88 @@ ${targetUrl}`;
     ctx.lineTo(width - 50, 148);
     ctx.stroke();
 
-    const maxContentW = 880;
-
     // -------------------------------------------------------------------------
-    // แท็กแจ้งเตือนด่วน
+    // วาดส่วน Body Content (จัดกึ่งกลางระหว่าง Header และ Footer แบบ Flex Space-Between)
     // -------------------------------------------------------------------------
-    let curY = 205;
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 4.1 แท็กแจ้งเตือนด่วน
     const tagText = '🚨 ภารกิจเร่งด่วน • ใครช่วยได้บ้าง?';
     ctx.font = 'bold 18px "Prompt", sans-serif';
     const tagW = ctx.measureText(tagText).width + 36;
     ctx.fillStyle = '#FFF1F2';
     if (ctx.roundRect) {
       ctx.beginPath();
-      ctx.roundRect((width - tagW) / 2, curY - 20, tagW, 36, 18);
+      ctx.roundRect((width - tagW) / 2, curY, tagW, tagHeight, 18);
       ctx.fill();
     }
     ctx.fillStyle = '#E11D48';
-    ctx.fillText(tagText, width / 2, curY + 5);
+    ctx.fillText(tagText, width / 2, curY + tagHeight / 2);
+    curY += tagHeight + gapTagToHook;
 
-    curY += 65;
-
-    // -------------------------------------------------------------------------
-    // ข้อ 1: The Hook (ปัญหา) - Responsive Font & Word Wrap ห้ามล้นขอบเด็ดขาด
-    // -------------------------------------------------------------------------
-    const hookLen = cleanProblemText.length;
-    let hookFontSize = 60;
-    let hookLineH = 74;
-    if (hookLen > 30) {
-      hookFontSize = 42;
-      hookLineH = 54;
-    } else if (hookLen > 15) {
-      hookFontSize = 50;
-      hookLineH = 64;
-    }
-
+    // 4.2 The Hook (ปัญหาหลัก)
     ctx.font = `900 ${hookFontSize}px "Prompt", sans-serif`;
     ctx.fillStyle = '#0F172A';
-
-    const hookDisplay = `“${cleanProblemText}”`;
-    const hookLines = wrapTextLines(ctx, hookDisplay, maxContentW);
     hookLines.forEach((line) => {
-      ctx.fillText(line, width / 2, curY);
+      ctx.fillText(line, width / 2, curY + hookLineH / 2);
       curY += hookLineH;
     });
+    curY += gapHookToDetails;
 
-    curY += 10;
-
-    // -------------------------------------------------------------------------
-    // สิ่งที่ต้องการ & ข้อจำกัด (ถ้ามี)
-    // -------------------------------------------------------------------------
-    ctx.font = 'normal 21px "Prompt", sans-serif';
-    ctx.fillStyle = '#64748B';
-
-    if (cleanExpectationText) {
-      const expLines = wrapTextLines(ctx, `🎯 สิ่งที่ต้องการ: ${cleanExpectationText}`, maxContentW);
+    // 4.3 สิ่งที่ต้องการ & ข้อจำกัด
+    if (detailsLineCount > 0) {
+      ctx.font = 'normal 21px "Prompt", sans-serif';
+      ctx.fillStyle = '#64748B';
       expLines.forEach((line) => {
-        ctx.fillText(line, width / 2, curY);
-        curY += 32;
+        ctx.fillText(line, width / 2, curY + 15);
+        curY += 30;
       });
-    }
-
-    if (cleanConstraintText) {
-      const conLines = wrapTextLines(ctx, `⚠️ ข้อจำกัด: ${cleanConstraintText}`, maxContentW);
       conLines.forEach((line) => {
-        ctx.fillText(line, width / 2, curY);
-        curY += 32;
+        ctx.fillText(line, width / 2, curY + 15);
+        curY += 30;
       });
     }
+    curY += gapDetailsToSpec;
 
-    curY += 24;
-
-    // -------------------------------------------------------------------------
-    // ป้ายคนช่วยที่ต้องการ (Center Pill)
-    // -------------------------------------------------------------------------
-    const occName = (targetOccupations.length > 0 && targetOccupations[0]?.name)
-      ? targetOccupations[0].name
-      : 'เปิดรับผู้เชี่ยวชาญทุกด้าน';
-    const specText = `🛠️ ผู้เชี่ยวชาญที่ต้องการ: ${occName}`;
+    // 4.4 ผู้เชี่ยวชาญที่ต้องการ (Center Pill)
     ctx.font = 'bold 20px "Prompt", sans-serif';
     const specW = ctx.measureText(specText).width + 44;
     ctx.fillStyle = '#F8FAFC';
     if (ctx.roundRect) {
       ctx.beginPath();
-      ctx.roundRect((width - specW) / 2, curY - 22, specW, 44, 22);
+      ctx.roundRect((width - specW) / 2, curY, specW, specHeight, 22);
       ctx.fill();
       ctx.strokeStyle = '#E2E8F0';
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
     ctx.fillStyle = '#334155';
-    ctx.fillText(specText, width / 2, curY + 8);
+    ctx.fillText(specText, width / 2, curY + specHeight / 2);
+    curY += specHeight + gapSpecToReward;
 
-    curY += 65;
-
-    // -------------------------------------------------------------------------
-    // ข้อ 1: ช่อง 'ค่าตอบแทน / สิ่งแลกเปลี่ยน' (BOUNTY REWARD)
-    // Responsive Font & Word Wrap ห้ามทะลุออกนอกกรอบการ์ดเด็ดขาด
-    // -------------------------------------------------------------------------
+    // 4.5 รางวัลค่าตอบแทน (BOUNTY REWARD)
     ctx.fillStyle = '#94A3B8';
     ctx.font = 'bold 19px "Prompt", sans-serif';
-    ctx.fillText('รางวัลค่าตอบแทน (BOUNTY REWARD)', width / 2, curY);
-
-    curY += 45;
-
-    const prizeStr = rewardText || 'ตามตกลง';
-    const prizeLen = prizeStr.length;
-
-    let prizeFontSize = 76;
-    let prizeLineH = 88;
-    if (prizeLen > 55) {
-      prizeFontSize = 32;
-      prizeLineH = 44;
-    } else if (prizeLen > 25) {
-      prizeFontSize = 42;
-      prizeLineH = 56;
-    } else if (prizeLen > 10) {
-      prizeFontSize = 56;
-      prizeLineH = 70;
-    }
+    ctx.fillText('รางวัลค่าตอบแทน (BOUNTY REWARD)', width / 2, curY + rewardTitleH / 2);
+    curY += rewardTitleH + gapRewardTitleToPrize;
 
     ctx.font = `900 ${prizeFontSize}px "Prompt", sans-serif`;
     ctx.fillStyle = '#E11D48';
-
-    // ตัดคำภาษาไทยและคำว่า ' + ' ไม่ให้ล้นกรอบ maxContentW
-    const prizeLines = wrapTextLines(ctx, prizeStr, maxContentW);
     prizeLines.forEach((line) => {
-      ctx.fillText(line, width / 2, curY);
+      ctx.fillText(line, width / 2, curY + prizeLineH / 2);
       curY += prizeLineH;
     });
+    curY += gapPrizeToEscrow;
 
-    curY += 15;
+    // ข้อความ Escrow
     ctx.fillStyle = '#64748B';
     ctx.font = 'normal 17px "Prompt", sans-serif';
-    ctx.fillText('🛡️ ปลอดภัยด้วยสัญญา Escrow • รับเงินเมื่อตรวจรับงานเสร็จ 100%', width / 2, curY);
+    ctx.fillText('🛡️ ปลอดภัยด้วยสัญญา Escrow • รับเงินเมื่อตรวจรับงานเสร็จ 100%', width / 2, curY + escrowNoteH / 2);
 
     // -------------------------------------------------------------------------
-    // แถบ CTA สีดำเข้มและ QR Code ด้านล่างการ์ด (Fixed Bottom ในสัดส่วน 4:5)
+    // 5. ส่วน Footer: แถบ CTA สีดำเข้มและ QR Code (วางล่างสุดเสมอ)
     // -------------------------------------------------------------------------
-    const ctaH = 156;
-    const ctaY = height - 52 - ctaH; // ~1142px
-
     ctx.fillStyle = '#0F172A';
     if (ctx.roundRect) {
       ctx.beginPath();
@@ -554,6 +618,7 @@ ${targetUrl}`;
 
     // ข้อความกระตุ้น CTA ด้านซ้าย
     ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 21px "Prompt", sans-serif';
     ctx.fillText('🔥 สแกนเพื่อรับงานนี้ หรือพิมพ์ค้นหา', 80, ctaY + 48);
@@ -570,7 +635,7 @@ ${targetUrl}`;
     const targetUrl = getShareUrl();
     const qrSize = 116;
     const qrX = width - 48 - qrSize - 24;
-    const qrY = ctaY + 20;
+    const qrY = ctaY + (ctaH - qrSize) / 2;
     drawSimulatedQRCode(ctx, qrX, qrY, qrSize, targetUrl);
 
     // ดาวน์โหลดรูปภาพ .png ลงเครื่อง
