@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { QuickFixCardModal } from '@/components/profile/QuickFixCardModal';
 
 type TabFilter = 'ALL' | 'OPEN' | 'NEGOTIATING' | 'ACTIVE' | 'COMPLETED';
 
@@ -9,6 +10,8 @@ export default function MyQuestsManagementPage() {
   const [bounties, setBounties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabFilter>('ALL');
+  const [selectedQuickFixBounty, setSelectedQuickFixBounty] = useState<any | null>(null);
+  const [isQuickFixModalOpen, setIsQuickFixModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchMyBounties() {
@@ -163,13 +166,32 @@ export default function MyQuestsManagementPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
-                      <button className="flex-1 bg-white border border-gray-200 text-gray-700 font-bold py-2.5 rounded-full text-[12px] hover:bg-gray-50 transition-colors shadow-sm">
-                        ดูรายละเอียด
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedQuickFixBounty(bounty);
+                          setIsQuickFixModalOpen(true);
+                        }}
+                        className="w-full bg-red-50 hover:bg-red-100 text-brand-red border border-red-200 font-bold py-2.5 px-3 rounded-full text-[12px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <span>💡 เปิดดูการ์ดแก้ไขเบื้องต้น</span>
                       </button>
-                      <button className="flex-1 bg-brand-red text-white font-bold py-2.5 rounded-full text-[12px] hover:bg-red-700 transition-colors shadow-sm shadow-red-500/20">
-                        อัปเดตสถานะ
-                      </button>
+
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/profile/bounty/${bounty.id}`}
+                          className="flex-1 bg-white border border-gray-200 text-gray-700 font-bold py-2.5 rounded-full text-[12px] hover:bg-gray-50 transition-colors shadow-sm text-center flex items-center justify-center"
+                        >
+                          ดูรายละเอียด
+                        </Link>
+                        <Link
+                          href={`/profile/bounty/${bounty.id}`}
+                          className="flex-1 bg-brand-red text-white font-bold py-2.5 rounded-full text-[12px] hover:bg-red-700 transition-colors shadow-sm shadow-red-500/20 text-center flex items-center justify-center"
+                        >
+                          อัปเดตสถานะ
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
@@ -177,6 +199,16 @@ export default function MyQuestsManagementPage() {
             </div>
           )}
         </main>
+
+        {/* Modal การ์ดแก้ไขเบื้องต้น */}
+        <QuickFixCardModal
+          isOpen={isQuickFixModalOpen}
+          onClose={() => {
+            setIsQuickFixModalOpen(false);
+            setSelectedQuickFixBounty(null);
+          }}
+          bounty={selectedQuickFixBounty}
+        />
       </div>
     </div>
   );

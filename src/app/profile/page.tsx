@@ -9,6 +9,7 @@ import SignOutButton from '@/components/profile/SignOutButton';
 import { BottomTabBar } from '@/components/shared/BottomTabBar';
 
 import AdminTierPreview from '@/components/profile/AdminTierPreview';
+import RecentActivitySection from '@/components/profile/RecentActivitySection';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,16 @@ export default async function ProfilePage() {
   if (!user) {
     redirect('/');
   }
+
+  // Fetch recent problem nodes for user
+  const recentBounties = await prisma.problemNode.findMany({
+    where: { requesterId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+    include: {
+      occupation: true,
+    },
+  });
 
   // Calculate stats based on real data
   const stats = {
@@ -86,16 +97,8 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          {/* Mock Activity List */}
-          <div className="mt-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">กิจกรรมล่าสุด</h3>
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <div className="text-center py-8 text-gray-400">
-                <i className="fa-solid fa-timeline text-3xl mb-3 text-gray-300"></i>
-                <p className="text-sm">ยังไม่มีกิจกรรม</p>
-              </div>
-            </div>
-          </div>
+          {/* Recent Activity & Quick Fix Cards */}
+          <RecentActivitySection initialBounties={recentBounties} />
 
           <SignOutButton />
         </main>
