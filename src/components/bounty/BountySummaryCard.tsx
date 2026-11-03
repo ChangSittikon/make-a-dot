@@ -167,13 +167,49 @@ export function BountySummaryCard({
 
   // จัดการแชร์การ์ด
   const getShareUrl = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://makeadot.app';
+    const origin = typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'http://localhost:3000';
     return `${origin}/profile/bounty/${bountyId || 'preview'}`;
   };
 
   const getShareMessage = () => {
     const targetUrl = getShareUrl();
-    return `🎯 [MAKE A DOT: การ์ดสรุปปัญหา ${displayBountyId}]\n💡 ปัญหา: ${(rawDescription || 'ตามระบุในการ์ด').slice(0, 90)}...\n💰 ค่าตอบแทน: ${rewardText}\n🔗 ดูรายละเอียดและรับงาน: ${targetUrl}`;
+
+    // ดึงข้อความปัญหา (แก้ไขบั๊กคำซ้ำ: ตัดคำว่า 'ปัญหา:' ที่อาจซ้ำซ้อนออก)
+    const problemSec = allSections?.find((s) => s.key === "problem");
+    const expectationSec = allSections?.find((s) => s.key === "expectation");
+
+    let extractedProblem = problemSec?.content?.trim();
+    let extractedExpectation = expectationSec?.content?.trim();
+
+    if (!extractedProblem) {
+      const text = rawDescription || "ตามระบุในระบบ";
+      if (text.includes("สิ่งที่คาดหวัง:")) {
+        const parts = text.split(/สิ่งที่คาดหวัง\s*:/i);
+        extractedProblem = parts[0].replace(/^ปัญหา\s*:\s*/i, "").trim();
+        if (!extractedExpectation && parts[1]) {
+          extractedExpectation = parts[1].split(/ข้อจำกัด\s*:/i)[0].trim();
+        }
+      } else {
+        extractedProblem = text.replace(/^ปัญหา\s*:\s*/i, "").trim();
+      }
+    }
+
+    if (!extractedExpectation) {
+      extractedExpectation = "ช่วยแก้ปัญหาให้สำเร็จตามตกลง";
+    }
+
+    const prizeText = rewardText || "ตามตกลง";
+
+    // โครงสร้างข้อความ Copywriting สำหรับแชร์โซเชียลตามรูปแบบที่กำหนด
+    return `🚨 ภารกิจด่วนจาก MAKE A DOT [${displayBountyId}]
+ใครแก้ปัญหานี้ได้ รับรางวัลไปเลย!
+🎯 ปัญหาคือ: ${extractedProblem}
+✨ สิ่งที่ต้องการ: ${extractedExpectation}
+💰 ค่าตอบแทน/สิ่งแลกเปลี่ยน: ${prizeText}
+👉 ใครทำได้หรือมีไอเดียดีๆ กดลิงก์เข้ามารับงานหรือเสนอตัวช่วยกันเลยที่:
+${targetUrl}`;
   };
 
   const showToast = (message: string) => {
