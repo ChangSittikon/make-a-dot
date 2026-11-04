@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth-mock';
 import { prisma } from '@/lib/prisma';
 import BountySummaryCard from '@/components/bounty/BountySummaryCard';
-import SolverActionSection from '@/components/bounty/SolverActionSection';
 import StickySolverBar from '@/components/bounty/StickySolverBar';
 
 export default async function BountyDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -238,18 +237,6 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               isRequester={isRequester}
               isConfirmed={true}
               profileUrl="/profile"
-            />
-
-            {/* Solver Action Section (ปุ่มรับงานเจรจา + Negotiation Modal) */}
-            <SolverActionSection
-              bountyId={bounty.id}
-              initialPrizeTHB={bounty.bountyPrizeSatang / 100}
-              currentUserRole={user?.role || "USER"}
-              isRequester={!isAdmin && isBountyOwner}
-              bountyStatus={bounty.status}
-              myNegotiationStatus={
-                bounty.negotiations?.find((n) => n.solverId === user?.id)?.status || null
-              }
             />
           </div>
         </main>
