@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import NegotiationModal from "./NegotiationModal";
 import UpgradeBountyButton from "@/app/profile/bounty/[id]/UpgradeBountyButton";
-import { AIWhisperWidget } from "./AIWhisperWidget";
 
 interface SolverActionSectionProps {
   bountyId: string;
@@ -70,19 +69,6 @@ export default function SolverActionSection({
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span className="font-bold">ข้อเสนอของคุณได้รับการตอบรับแล้ว! เริ่มดำเนินการได้ทันที</span>
         </div>
-      )}
-
-      {/* ⚡ AI Whisper Widget (6-Axis Monetization Hint before Accept) */}
-      {!isCompleted && !isActive && (
-        <AIWhisperWidget
-          initialPrizeTHB={initialPrizeTHB}
-          onApplyToNegotiation={(script, price) => {
-            setPrefilledKPI(script);
-            setPrefilledPrice(price);
-            setIsModalOpen(true);
-          }}
-          onOpenNegotiationModal={() => setIsModalOpen(true)}
-        />
       )}
 
       {/* Primary Action Button: รับงาน (เจรจา) */}

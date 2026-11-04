@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import MarketPulseWidget from "./MarketPulseWidget";
+import { AIWhisperWidget } from "./AIWhisperWidget";
 
 interface NegotiationModalProps {
   bountyId: string;
@@ -183,6 +184,15 @@ export default function NegotiationModal({
                 สถานะ: ได้รับสิทธิ์เสนอ KPI
               </span>
             </div>
+
+            {/* ⚡ AI Whisper Widget (6-Axis Monetization Advisor) */}
+            <AIWhisperWidget
+              initialPrizeTHB={initialPrizeTHB}
+              onApplyToNegotiation={(script, price) => {
+                setProposedKPI(script);
+                setPriceTHB(price);
+              }}
+            />
 
             {/* Field 1: สิ่งที่จะส่งมอบ (KPI / Deliverables) */}
             <div>
