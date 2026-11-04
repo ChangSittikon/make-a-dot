@@ -646,6 +646,38 @@ ${targetUrl}`;
     downloadLink.click();
   };
 
+  // Helper คัดลอกข้อความลง Clipboard พร้อมระบบ Fallback 100%
+  const copyToClipboard = async (text: string): Promise<boolean> => {
+    let success = false;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        success = true;
+      }
+    } catch {
+      // fallback to execCommand if navigator.clipboard fails
+    }
+
+    if (!success && typeof document !== 'undefined') {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch (e) {
+        console.error('execCommand copy fallback error:', e);
+      }
+    }
+    return success;
+  };
+
   // =========================================================================
   // ข้อ 2: ระบบ Auto-Download Image + Auto-Copy Caption (Step A -> Step B -> Step C)
   // =========================================================================
@@ -653,21 +685,21 @@ ${targetUrl}`;
     try {
       setIsSavingImage(true);
 
-      // Step A: คัดลอกข้อความแคปชันทั้งหมดลง Clipboard ของเครื่องทันทีโดยอัตโนมัติ
+      // Step A: คัดลอกข้อความแคปชันทั้งหมดลง Clipboard ของเครื่องทันทีโดยอัตโนมัติ (พร้อม Fallback)
       const shareMessage = getShareMessage();
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(shareMessage);
-        } catch (clipErr) {
-          console.warn('Clipboard write warning:', clipErr);
-        }
-      }
+      await copyToClipboard(shareMessage);
 
       // Step B: ทำการดาวน์โหลดไฟล์รูปภาพโปสเตอร์ .png ลงเครื่องผู้ใช้อัตโนมัติทันที
       exportPosterImage();
 
-      // Step C: แสดงกล่องแจ้งเตือน Toast ชัดเจนกลางจอตามโจทย์เป๊ะๆ
-      showToast('✅ คัดลอกข้อความและบันทึกรูปภาพเรียบร้อยแล้ว! เปิด Facebook/LINE แล้วกดวาง (Paste) โพสต์ได้ทันที');
+      // Step C: แสดงกล่องแจ้งเตือน Toast ชัดเจนกลางจอ
+      if (platform === 'facebook') {
+        showToast('📋 คัดลอกข้อความและบันทึกรูปแล้ว! กดวาง (Ctrl+V) ในช่องโพสต์ Facebook ได้ทันที');
+      } else if (platform === 'line') {
+        showToast('✅ คัดลอกข้อความและบันทึกรูปแล้ว! เปิด LINE พร้อมแชร์ทันที');
+      } else {
+        showToast('✅ คัดลอกข้อความแคปชันและบันทึกรูปโปสเตอร์เรียบร้อยแล้ว!');
+      }
 
       // ถ้าผู้ใช้กดปุ่ม Facebook หรือ LINE: เปิดหน้าต่างแชร์ให้อัตโนมัติหลังเซฟ
       if (platform === 'facebook') {
@@ -677,7 +709,7 @@ ${targetUrl}`;
             `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(targetUrl)}`,
             '_blank'
           );
-        }, 500);
+        }, 200);
       } else if (platform === 'line') {
         const targetUrl = getShareUrl();
         setTimeout(() => {
@@ -685,7 +717,7 @@ ${targetUrl}`;
             `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareMessage)}`,
             '_blank'
           );
-        }, 500);
+        }, 200);
       }
     } catch (err) {
       console.error('Failed auto share flow:', err);
