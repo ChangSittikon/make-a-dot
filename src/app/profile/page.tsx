@@ -35,15 +35,30 @@ export default async function ProfilePage() {
     redirect('/');
   }
 
-  // Fetch recent problem nodes for user
+  // Fetch recent problem nodes for user with negotiations and proposals
   const recentBounties = await prisma.problemNode.findMany({
     where: { requesterId: session.user.id },
     orderBy: { createdAt: 'desc' },
     take: 5,
     include: {
       occupation: true,
+      negotiations: {
+        include: { solver: true },
+        orderBy: { createdAt: 'desc' },
+      },
+      upgradeProposals: {
+        include: { proposer: true },
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
+
+  // Count total pending offers for notification indicator
+  const totalPendingOffers = recentBounties.reduce((acc, b) => {
+    const pendingNegs = b.negotiations?.filter((n) => n.status === 'PENDING').length || 0;
+    const pendingUps = b.upgradeProposals?.filter((p) => p.status === 'PENDING').length || 0;
+    return acc + pendingNegs + pendingUps;
+  }, 0);
 
   // Calculate stats based on real data
   const stats = {
@@ -81,11 +96,21 @@ export default async function ProfilePage() {
           {/* Quick Access Dashboard */}
           <div className="mt-8">
             <div className="grid grid-cols-2 gap-4">
-              <Link href="/profile/bounty/manage" className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition border border-gray-100">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-xl text-gray-700">
+              <Link href="/profile/bounty/manage" className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition border border-gray-100 relative">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm text-xl text-gray-700 relative">
                   <i className="fa-solid fa-list-check"></i>
+                  {totalPendingOffers > 0 && (
+                    <span className="absolute -top-1 -right-1.5 min-w-[20px] h-5 bg-brand-red text-white text-[10px] font-bold rounded-full px-1 flex items-center justify-center shadow-xs animate-pulse">
+                      {totalPendingOffers}
+                    </span>
+                  )}
                 </div>
-                <span className="text-sm font-bold text-gray-800 text-center">จัดการปัญหาและรางวัล</span>
+                <div className="flex items-center gap-1.5 justify-center">
+                  <span className="text-sm font-bold text-gray-800 text-center">จัดการปัญหาและรางวัล</span>
+                  {totalPendingOffers > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-brand-red animate-ping" />
+                  )}
+                </div>
               </Link>
               
               <Link href="/profile/projects/manage" className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition border border-gray-100">

@@ -1002,15 +1002,6 @@ ${targetUrl}`;
                 </div>
               )}
             </div>
-
-            {/* ปุ่มนำทางไปดู 'การ์ดแก้ไขเบื้องต้น' ในหน้าโปรไฟล์ */}
-            <Link
-              href={resolvedProfileUrl}
-              className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] text-center"
-            >
-              <span>📋 ไปดู &apos;การ์ดแก้ไขเบื้องต้น&apos; ในหน้าโปรไฟล์ของคุณ</span>
-              <i className="fa-solid fa-arrow-right text-xs text-brand-red" />
-            </Link>
           </div>
         )}
       </div>

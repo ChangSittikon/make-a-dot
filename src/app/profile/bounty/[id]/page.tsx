@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth-mock';
 import { prisma } from '@/lib/prisma';
 import BountySummaryCard from '@/components/bounty/BountySummaryCard';
-import BountyNegotiationInbox from '@/components/bounty/BountyNegotiationInbox';
 import SolverActionSection from '@/components/bounty/SolverActionSection';
 import StickySolverBar from '@/components/bounty/StickySolverBar';
 
@@ -240,15 +239,6 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               isConfirmed={true}
               profileUrl="/profile"
             />
-
-            {/* Requester Inbox Section (Dual Tabs: ผู้เสนอตัวรับงาน & ข้อเสนออัปเกรด) */}
-            {isRequester && (
-              <BountyNegotiationInbox
-                bountyId={bounty.id}
-                initialNegotiations={(bounty.negotiations as any) || []}
-                initialUpgradeProposals={(bounty.upgradeProposals as any) || []}
-              />
-            )}
 
             {/* Solver Action Section (ปุ่มรับงานเจรจา + Negotiation Modal) */}
             <SolverActionSection

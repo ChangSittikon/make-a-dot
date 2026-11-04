@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { QuickFixCardModal } from './QuickFixCardModal';
+import { BountyProposalsModal } from './BountyProposalsModal';
 
 export interface RecentActivityItem {
   id: string;
@@ -17,6 +18,8 @@ export interface RecentActivityItem {
   targetOccupations?: Array<{ name: string }>;
   targetSkills?: Array<{ name: string }>;
   createdAt?: string | Date;
+  negotiations?: any[];
+  upgradeProposals?: any[];
 }
 
 export interface RecentActivitySectionProps {
@@ -26,6 +29,8 @@ export interface RecentActivitySectionProps {
 export function RecentActivitySection({ initialBounties = [] }: RecentActivitySectionProps) {
   const [selectedBounty, setSelectedBounty] = useState<RecentActivityItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProposalBounty, setSelectedProposalBounty] = useState<RecentActivityItem | null>(null);
+  const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
 
   const handleOpenQuickFix = (bounty: RecentActivityItem) => {
     setSelectedBounty(bounty);
@@ -37,6 +42,16 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
     setSelectedBounty(null);
   };
 
+  const handleOpenProposals = (bounty: RecentActivityItem) => {
+    setSelectedProposalBounty(bounty);
+    setIsProposalModalOpen(true);
+  };
+
+  const handleCloseProposals = () => {
+    setIsProposalModalOpen(false);
+    setSelectedProposalBounty(null);
+  };
+
   // ถ้าไม่มีข้อมูลในฐานข้อมูล จำลองตัวอย่างงานที่เพิ่งยืนยันเข้ามา เพื่อให้สามารถกดทดสอบได้ทันที
   const displayBounties: RecentActivityItem[] = initialBounties.length > 0
     ? initialBounties
@@ -45,13 +60,35 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
           id: 'cmw-demo-01',
           originDotCode: '#DOT-99281',
           rawDescription: 'ปัญหา: ต้องการคนช่วยประสานงานจัดซื้อวัสดุและอุปกรณ์ปรับปรุงพื้นที่หน้างาน และตรวจสอบราคากลาง สิ่งที่คาดหวัง: ได้ราคากลางที่เป็นธรรมและไม่โดนโก่งราคา',
-          status: 'OPEN',
+          status: 'NEGOTIATING',
           bountyType: 'CASH',
           bountyPrizeSatang: 500000,
           problemCategory: 'ก่อสร้างและอสังหาริมทรัพย์',
           occupation: { name: 'นักจัดซื้อและประสานงานไซต์งาน' },
           targetOccupations: [{ name: 'นักจัดซื้อและประสานงาน' }],
           targetSkills: [{ name: 'ตรวจสอบราคากลาง' }, { name: 'เจรจาต่อรอง' }],
+          negotiations: [
+            {
+              id: 'neg-demo-1',
+              bountyId: 'cmw-demo-01',
+              solverId: 'mock-solver-1',
+              proposedKPI: 'จัดหาราคากลางและต่อรองราคาวัสดุเทียบ 3 เจ้า พร้อมสรุปตารางเปรียบเทียบภายใน 3 วัน',
+              timeframeDays: 3,
+              priceSatang: 450000,
+              status: 'PENDING',
+              createdAt: new Date().toISOString(),
+              solver: {
+                id: 'mock-solver-1',
+                name: 'สมชาย นักจัดซื้อชำนาญการ',
+                email: 'somchai@mock.com',
+                role: 'PROFESSIONAL',
+                image: null,
+                avatarUrl: null,
+                trustScore: 95,
+              },
+            },
+          ],
+          upgradeProposals: [],
         },
       ];
 
@@ -128,6 +165,40 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
                 </div>
               </div>
 
+              {/* แถบแจ้งเตือนเมื่อมีผู้สนใจเสนอตัวรับงานหรือเสนอเงื่อนไข KPI */}
+              {(() => {
+                const pendingNegotiations = (bounty.negotiations || []).filter((n: any) => n.status === 'PENDING');
+                const pendingUpgrades = (bounty.upgradeProposals || []).filter((p: any) => p.status === 'PENDING');
+                const pendingOffers = pendingNegotiations.length + pendingUpgrades.length;
+
+                if (pendingOffers === 0) return null;
+
+                return (
+                  <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-2.5 flex items-center justify-between gap-2 animate-fade-in">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base shrink-0 animate-pulse">🔔</span>
+                      <div>
+                        <div className="text-xs font-bold text-amber-900">
+                          มีผู้สนใจเสนอตัว {pendingOffers} รายการ!
+                        </div>
+                        <div className="text-[10px] text-amber-700 font-medium">
+                          {pendingNegotiations.length > 0 && `${pendingNegotiations.length} ผู้เสนอตัวรับงาน`}
+                          {pendingNegotiations.length > 0 && pendingUpgrades.length > 0 && " • "}
+                          {pendingUpgrades.length > 0 && `${pendingUpgrades.length} ข้อเสนออัปเกรด`}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenProposals(bounty)}
+                      className="text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs shrink-0"
+                    >
+                      ดูข้อเสนอ
+                    </button>
+                  </div>
+                );
+              })()}
+
               {/* ปุ่มการกระทำ: [💡 เปิดดูการ์ดแก้ไขเบื้องต้น] + [ดูการ์ดสรุปปัญหา] */}
               <div className="pt-1 flex flex-col sm:flex-row gap-2">
                 <button
@@ -157,6 +228,13 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
         isOpen={isModalOpen}
         onClose={handleCloseQuickFix}
         bounty={selectedBounty}
+      />
+
+      {/* Modal 'ข้อเสนอผู้เชี่ยวชาญ' */}
+      <BountyProposalsModal
+        isOpen={isProposalModalOpen}
+        onClose={handleCloseProposals}
+        bounty={selectedProposalBounty}
       />
     </div>
   );

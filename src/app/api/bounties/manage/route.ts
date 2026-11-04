@@ -53,6 +53,18 @@ export async function GET(req: Request) {
             skillTag: true,
           },
         },
+        negotiations: {
+          include: {
+            solver: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        upgradeProposals: {
+          include: {
+            proposer: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
         requester: {
           select: {
             name: true,

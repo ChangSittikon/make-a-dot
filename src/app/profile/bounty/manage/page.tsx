@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { QuickFixCardModal } from '@/components/profile/QuickFixCardModal';
+import { BountyProposalsModal } from '@/components/profile/BountyProposalsModal';
 
 type TabFilter = 'ALL' | 'OPEN' | 'NEGOTIATING' | 'ACTIVE' | 'COMPLETED';
 
@@ -12,6 +13,8 @@ export default function MyQuestsManagementPage() {
   const [activeTab, setActiveTab] = useState<TabFilter>('ALL');
   const [selectedQuickFixBounty, setSelectedQuickFixBounty] = useState<any | null>(null);
   const [isQuickFixModalOpen, setIsQuickFixModalOpen] = useState(false);
+  const [selectedProposalBounty, setSelectedProposalBounty] = useState<any | null>(null);
+  const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchMyBounties() {
@@ -165,6 +168,42 @@ export default function MyQuestsManagementPage() {
                       </div>
                     </div>
 
+                    {/* Activity notification banner */}
+                    {(() => {
+                      const pendingNegs = (bounty.negotiations || []).filter((n: any) => n.status === 'PENDING');
+                      const pendingUps = (bounty.upgradeProposals || []).filter((p: any) => p.status === 'PENDING');
+                      const pendingCount = pendingNegs.length + pendingUps.length;
+                      if (pendingCount === 0) return null;
+
+                      return (
+                        <div className="mb-3 bg-amber-50 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base shrink-0 animate-pulse">🔔</span>
+                            <div>
+                              <div className="text-xs font-bold text-amber-900">
+                                มีผู้เสนอตัว {pendingCount} รายการ!
+                              </div>
+                              <div className="text-[10px] text-amber-700">
+                                {pendingNegs.length > 0 && `${pendingNegs.length} ผู้เสนอตัว`}
+                                {pendingNegs.length > 0 && pendingUps.length > 0 && " • "}
+                                {pendingUps.length > 0 && `${pendingUps.length} ข้อเสนออัปเกรด`}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProposalBounty(bounty);
+                              setIsProposalModalOpen(true);
+                            }}
+                            className="text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-full shadow-xs cursor-pointer"
+                          >
+                            ตรวจดูข้อเสนอ
+                          </button>
+                        </div>
+                      );
+                    })()}
+
                     {/* Actions */}
                     <div className="space-y-2">
                       <button
@@ -208,6 +247,16 @@ export default function MyQuestsManagementPage() {
             setSelectedQuickFixBounty(null);
           }}
           bounty={selectedQuickFixBounty}
+        />
+
+        {/* Modal ข้อเสนอผู้เชี่ยวชาญ */}
+        <BountyProposalsModal
+          isOpen={isProposalModalOpen}
+          onClose={() => {
+            setIsProposalModalOpen(false);
+            setSelectedProposalBounty(null);
+          }}
+          bounty={selectedProposalBounty}
         />
       </div>
     </div>
