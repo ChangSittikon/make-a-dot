@@ -927,80 +927,52 @@ ${targetUrl}`;
             )}
           </div>
         ) : (
-          /* ---------------- สถานะยืนยันสำเร็จแล้ว: แถบแชร์ Facebook/LINE + บันทึกรูป ---------------- */
-          <div className="space-y-2.5 animate-fade-in">
-            {/* แถบปุ่มแชร์โซเชียล โทนสี ขาว-แดง-ดำ สะอาดตา */}
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2.5">
-              <div className="text-[11px] font-bold text-gray-700 flex items-center justify-between">
-                <span>แชร์การ์ดนี้เพื่อหาคนช่วย:</span>
-                <span className="text-[10px] font-mono text-brand-red font-bold">MAKE A DOT POSTER</span>
-              </div>
+          /* ---------------- สถานะยืนยันสำเร็จแล้ว: แถบแชร์ 4 ปุ่มกระชับ แถวเดียว ---------------- */
+          <div className="bg-gray-50 border border-gray-200/90 rounded-2xl p-2 animate-fade-in">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+              {/* 1. ปุ่ม Facebook */}
+              <button
+                type="button"
+                onClick={() => handleAutoShareFlow('facebook')}
+                disabled={isSavingImage}
+                className="bg-white hover:bg-gray-100 active:scale-95 text-gray-800 border border-gray-200 font-bold py-2 px-1 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              >
+                <i className="fa-brands fa-facebook text-blue-600 text-sm" />
+                <span>Facebook</span>
+              </button>
 
-              {/* 4 ปุ่มหลัก: Facebook | LINE | คัดลอก | บันทึกรูป (ระบบ Auto-Copy + Auto-Download) */}
-              <div className="grid grid-cols-4 gap-2">
-                {/* 1. ปุ่ม Facebook */}
-                <button
-                  type="button"
-                  onClick={() => handleAutoShareFlow('facebook')}
-                  disabled={isSavingImage}
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <i className="fa-brands fa-facebook text-blue-600 text-sm" />
-                  <span>Facebook</span>
-                </button>
+              {/* 2. ปุ่ม LINE */}
+              <button
+                type="button"
+                onClick={() => handleAutoShareFlow('line')}
+                disabled={isSavingImage}
+                className="bg-white hover:bg-gray-100 active:scale-95 text-gray-800 border border-gray-200 font-bold py-2 px-1 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              >
+                <i className="fa-brands fa-line text-emerald-500 text-sm" />
+                <span>LINE</span>
+              </button>
 
-                {/* 2. ปุ่ม LINE */}
-                <button
-                  type="button"
-                  onClick={() => handleAutoShareFlow('line')}
-                  disabled={isSavingImage}
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <i className="fa-brands fa-line text-emerald-500 text-sm" />
-                  <span>LINE</span>
-                </button>
-
-                {/* 3. ปุ่มคัดลอกข้อความ */}
-                <button
-                  type="button"
-                  onClick={() => handleAutoShareFlow()}
-                  disabled={isSavingImage}
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <i className="fa-regular fa-copy text-gray-700 text-xs" />
-                  <span>คัดลอก</span>
-                </button>
-
-                {/* 4. ปุ่มบันทึกรูปการ์ด */}
-                <button
-                  type="button"
-                  onClick={() => handleAutoShareFlow()}
-                  disabled={isSavingImage}
-                  className="bg-white hover:bg-gray-100 text-gray-900 border border-gray-300 font-bold py-2.5 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                >
-                  <i className="fa-regular fa-image text-brand-red text-xs" />
-                  <span>{isSavingImage ? "กำลังเซฟ..." : "บันทึกรูป"}</span>
-                </button>
-              </div>
-
-              {/* ปุ่มบันทึกรูปการ์ดโปสเตอร์แบบเต็มแถว (Step A -> Step B -> Step C) */}
+              {/* 3. ปุ่มคัดลอก */}
               <button
                 type="button"
                 onClick={() => handleAutoShareFlow()}
                 disabled={isSavingImage}
-                className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+                className="bg-white hover:bg-gray-100 active:scale-95 text-gray-800 border border-gray-200 font-bold py-2 px-1 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
               >
-                <i className="fa-regular fa-image text-sm" />
-                <span>🖼️ บันทึกรูปการ์ดภารกิจ (Bounty Poster) พร้อมโพสต์ทันที</span>
+                <i className="fa-regular fa-copy text-gray-600 text-xs" />
+                <span>คัดลอก</span>
               </button>
 
-              {/* ข้อความแจ้งเตือน Toast / Alert ตามโจทย์ */}
-              {toastMessage && (
-                <div className="text-center text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 py-2.5 px-3 rounded-xl animate-fade-in flex items-center justify-center gap-2 shadow-sm">
-                  <i className="fa-solid fa-circle-check text-emerald-600 text-sm shrink-0" />
-                  <span>{toastMessage}</span>
-                </div>
-              )}
+              {/* 4. ปุ่มบันทึกรูปโปสเตอร์ (สีแดง Make a Dot เด่นชัด) */}
+              <button
+                type="button"
+                onClick={() => handleAutoShareFlow()}
+                disabled={isSavingImage}
+                className="bg-brand-red hover:bg-red-600 active:scale-95 text-white font-bold py-2 px-1 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              >
+                <i className="fa-regular fa-image text-xs" />
+                <span>{isSavingImage ? "กำลังเซฟ..." : "บันทึกรูป"}</span>
+              </button>
             </div>
           </div>
         )}
