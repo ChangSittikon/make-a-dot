@@ -142,14 +142,27 @@ function BoardContent() {
                   ) : (
                     bounties.map((bounty) => {
                       const statusInfo = getStatusDisplay(bounty.status || 'OPEN');
+                      let scoutRewardText: string | null = null;
+                      if (bounty.deepAttributes) {
+                        try {
+                          const parsed = typeof bounty.deepAttributes === 'string' ? JSON.parse(bounty.deepAttributes) : bounty.deepAttributes;
+                          if (parsed?.scoutReward) scoutRewardText = parsed.scoutReward;
+                        } catch {}
+                      }
                       return (
                       <div key={bounty.id} className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-gray-50 transition group flex flex-col h-full">
                         <div className="flex justify-between items-start mb-2.5">
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <span className={`inline-flex items-center gap-1.5 ${statusInfo.bg} ${statusInfo.color} text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border ${statusInfo.border}`}>
                               <span className={`w-1.5 h-1.5 ${statusInfo.dot} rounded-full`}></span>
                               {statusInfo.text}
                             </span>
+                            {scoutRewardText && (
+                              <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/90 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs">
+                                <span>📢 ชี้เป้า:</span>
+                                <span className="text-brand-red font-black">{scoutRewardText}</span>
+                              </span>
+                            )}
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-bold text-gray-900 leading-none">

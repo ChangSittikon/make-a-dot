@@ -1,17 +1,58 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
+import { getCurrentUser } from '@/lib/auth-mock';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session || !session.user) {
+    let currentUserId: string | undefined = session?.user?.id;
+    if (!currentUserId) {
+      const mockUser = await getCurrentUser();
+      currentUserId = mockUser?.id;
+    }
+    if (!currentUserId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { kpiDefinition, contractBindingType } = await request.json();
+    const body = await request.json();
     const resolvedParams = await params;
     const problemNodeId = resolvedParams.id;
+
+    // 1. จัดการอัปเดต 'ค่าชี้เป้า' (Scout Reward) ใน deepAttributes
+    if (body.scoutReward !== undefined) {
+      const existing = await prisma.problemNode.findUnique({
+        where: { id: problemNodeId },
+        select: { deepAttributes: true }
+      });
+
+      let deep: Record<string, unknown> = {};
+      if (existing?.deepAttributes) {
+        try {
+          deep = JSON.parse(existing.deepAttributes);
+        } catch {
+          deep = {};
+        }
+      }
+
+      if (typeof body.scoutReward === 'string' && body.scoutReward.trim()) {
+        deep.scoutReward = body.scoutReward.trim();
+      } else {
+        delete deep.scoutReward;
+      }
+
+      const updatedNode = await prisma.problemNode.update({
+        where: { id: problemNodeId },
+        data: {
+          deepAttributes: JSON.stringify(deep)
+        }
+      });
+
+      return NextResponse.json({ success: true, problemNode: updatedNode });
+    }
+
+    // 2. จัดการเจรจางานและบันทึก KPI
+    const { kpiDefinition, contractBindingType } = body;
 
     // Start a transaction: Update ProblemNode to NEGOTIATING, Create/Update ContractBinding
     const [updatedNode] = await prisma.$transaction([
@@ -20,7 +61,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         data: {
           status: 'NEGOTIATING',
           kpiDefinition: JSON.stringify(kpiDefinition),
-          solverId: session.user.id // The solver accepts the negotiation
+          solverId: currentUserId // The solver accepts the negotiation
         }
       }),
       prisma.contractBinding.upsert({

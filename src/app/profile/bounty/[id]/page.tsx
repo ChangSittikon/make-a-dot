@@ -167,9 +167,11 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
     if (ind?.name) requesterIndustryName = ind.name;
   }
 
+  let scoutReward: string | undefined = undefined;
   if (bounty.deepAttributes) {
     try {
       const parsed = JSON.parse(bounty.deepAttributes);
+      if (parsed.scoutReward) scoutReward = parsed.scoutReward;
       if (parsed.requesterWorkTypeName) requesterWorkTypeName = parsed.requesterWorkTypeName;
       if (parsed.requesterIndustryName) requesterIndustryName = parsed.requesterIndustryName;
       if (parsed.cascadeValue?.requesterWorkTypeName) requesterWorkTypeName = parsed.cascadeValue.requesterWorkTypeName;
@@ -237,6 +239,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               isRequester={isRequester}
               isConfirmed={true}
               profileUrl="/profile"
+              scoutReward={scoutReward}
             />
           </div>
         </main>

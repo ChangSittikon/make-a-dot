@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       urgencyState,            // String? (optional)
       deepAttributes,          // String? or Object
       impactScale,
+      scoutReward,             // String? ค่าชี้เป้า (Upsell)
     } = body;
 
     // ===== GUARD NON-NULLABLE FIELDS (RULE 2: DYNAMIC & TYPE-SAFE FIRST) =====
@@ -152,6 +153,9 @@ export async function POST(req: Request) {
     }
     if (typeof requesterIndustryName === "string" && requesterIndustryName.trim()) {
       deepData.requesterIndustryName = requesterIndustryName.trim();
+    }
+    if (typeof scoutReward === "string" && scoutReward.trim()) {
+      deepData.scoutReward = scoutReward.trim();
     }
 
     // ===== CREATE ProblemNode =====

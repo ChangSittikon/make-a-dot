@@ -24,8 +24,9 @@ export interface BountySummaryCardProps {
   impactScale?: ImpactScale | string | null;
   isConfirmed?: boolean;
   onEdit?: () => void;
-  onConfirm?: () => void;
+  onConfirm?: (scoutReward?: string) => void;
   profileUrl?: string;
+  scoutReward?: string | null;
 }
 
 export function parseProblemSections(text?: string | null) {
@@ -214,9 +215,13 @@ export function BountySummaryCard({
   onEdit,
   onConfirm,
   profileUrl,
+  scoutReward: initialScoutReward,
 }: BountySummaryCardProps) {
   // สถานะการยืนยันข้อมูล
   const [confirmedState, setConfirmedState] = useState<boolean>(isConfirmed);
+  // สถานะ 'ค่าชี้เป้า' (Scout Reward)
+  const [hasScoutReward, setHasScoutReward] = useState<boolean>(Boolean(initialScoutReward));
+  const [scoutRewardText, setScoutRewardText] = useState<string>(initialScoutReward || "");
   // สถานะ Accordion สำหรับดูรายละเอียดเพิ่มเติม (พับเก็บไว้เป็นค่าเริ่มต้น)
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
   // ข้อความแจ้งเตือน Toast/Alert
@@ -268,10 +273,22 @@ export function BountySummaryCard({
   }
 
   // จัดการเมื่อกดยืนยันข้อมูลเข้าระบบ
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     setConfirmedState(true);
+    const finalScout = hasScoutReward && scoutRewardText.trim() ? scoutRewardText.trim() : "";
+    if (bountyId && finalScout) {
+      try {
+        await fetch(`/api/bounties/${bountyId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scoutReward: finalScout }),
+        });
+      } catch (err) {
+        console.warn("Could not save scoutReward to backend:", err);
+      }
+    }
     if (onConfirm) {
-      onConfirm();
+      onConfirm(finalScout);
     }
   };
 
@@ -290,13 +307,14 @@ export function BountySummaryCard({
     const targetUrl = getShareUrl();
     const prizeText = rewardText || "ตามตกลง";
     const expectationText = cleanExpectationText || "ช่วยแก้ปัญหาให้สำเร็จตามตกลง";
+    const scoutLine = scoutRewardText.trim() ? `\n📢 ค่าชี้เป้า (ผู้ช่วยแชร์/แนะนำ): ${scoutRewardText.trim()}` : "";
 
     // โครงสร้างข้อความ Copywriting สำหรับแชร์โซเชียลตามรูปแบบที่กำหนด
     return `🚨 ภารกิจด่วนจาก MAKE A DOT [${displayBountyId}]
 ใครแก้ปัญหานี้ได้ รับรางวัลไปเลย!
 🎯 ปัญหาคือ: ${cleanProblemText}
 ✨ สิ่งที่ต้องการ: ${expectationText}
-💰 ค่าตอบแทน/สิ่งแลกเปลี่ยน: ${prizeText}
+💰 ค่าตอบแทน/สิ่งแลกเปลี่ยน: ${prizeText}${scoutLine}
 👉 ใครทำได้หรือมีไอเดียดีๆ กดลิงก์เข้ามารับงานหรือเสนอตัวช่วยกันเลยที่:
 ${targetUrl}`;
   };
@@ -388,6 +406,10 @@ ${targetUrl}`;
     const rewardTitleH = 24;
     const escrowNoteH = 22;
 
+    const hasScout = Boolean(scoutRewardText && scoutRewardText.trim());
+    const scoutBadgeH = hasScout ? 46 : 0;
+    const gapRewardToScout = hasScout ? 14 : 0;
+
     // ระยะช่องว่าง (Gaps) ภายใน Body Content
     const gapTagToHook = 28;
     const gapHookToDetails = detailsLineCount > 0 ? 14 : 0;
@@ -408,6 +430,7 @@ ${targetUrl}`;
       rewardTitleH +
       gapRewardTitleToPrize +
       prizeHeight +
+      (hasScout ? (gapRewardToScout + scoutBadgeH) : 0) +
       gapPrizeToEscrow +
       escrowNoteH;
 
@@ -597,6 +620,50 @@ ${targetUrl}`;
       ctx.fillText(line, width / 2, curY + prizeLineH / 2);
       curY += prizeLineH;
     });
+
+    // ป้ายตรายางค่าชี้เป้าบนโปสเตอร์ (เมื่อมีการระบุ)
+    if (hasScout) {
+      curY += gapRewardToScout;
+      const scoutStr = `📢 ค่าชี้เป้า / แนะนำงาน: ${scoutRewardText.trim()}`;
+      ctx.font = 'bold 22px "Prompt", sans-serif';
+      const scoutW = Math.min(maxContentW, ctx.measureText(scoutStr).width + 56);
+      const scoutH = 46;
+      ctx.fillStyle = '#FEF3C7'; // Amber-100
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect((width - scoutW) / 2, curY, scoutW, scoutH, 23);
+        ctx.fill();
+        ctx.strokeStyle = '#F59E0B'; // Amber-500
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      } else {
+        ctx.fillRect((width - scoutW) / 2, curY, scoutW, scoutH);
+      }
+      ctx.fillStyle = '#92400E'; // Amber-800
+      ctx.fillText(scoutStr, width / 2, curY + scoutH / 2);
+      curY += scoutH;
+
+      // ตรายางจำลองมุมขวาบนของการ์ด
+      ctx.save();
+      ctx.translate(width - 150, 220);
+      ctx.rotate((12 * Math.PI) / 180);
+      ctx.strokeStyle = '#D97706'; // Amber-600
+      ctx.lineWidth = 3;
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(-85, -22, 170, 44, 10);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(-85, -22, 170, 44);
+      }
+      ctx.fillStyle = '#D97706';
+      ctx.font = 'bold 17px "Prompt", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⭐ มีค่าชี้เป้า', 0, 0);
+      ctx.restore();
+    }
+
     curY += gapPrizeToEscrow;
 
     // ข้อความ Escrow
@@ -834,6 +901,19 @@ ${targetUrl}`;
             <div className="text-sm sm:text-base font-black text-brand-red tracking-tight break-words leading-snug">
               {rewardText}
             </div>
+
+            {/* ป้ายตรายางค่าชี้เป้า เมื่อมีการระบุ */}
+            {scoutRewardText.trim() && (
+              <div className="pt-2 mt-2 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                  <span>📢 ค่าชี้เป้า:</span>
+                  <span className="text-brand-red font-black text-xs sm:text-sm">{scoutRewardText.trim()}</span>
+                </div>
+                <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200/80 uppercase">
+                  Scout Reward
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -931,32 +1011,77 @@ ${targetUrl}`;
       {/* ========================================================================= */}
       <div className="pt-1">
         {!confirmedState ? (
-          /* ---------------- สถานะก่อนกดยืนยัน: ซ่อนปุ่มแชร์ทั้งหมด ---------------- */
-          <div className="flex items-center gap-2">
-            {actions ? (
-              actions
-            ) : (
-              <>
-                {onEdit && (
+          /* ---------------- สถานะก่อนกดยืนยัน: แถบค่าชี้เป้า + ปุ่มแก้ไข/ยืนยัน ---------------- */
+          <div className="space-y-3">
+            {/* แถบสี่เหลี่ยมสีขาวขอบเทา/แดงอ่อน: เพิ่ม 'ค่าชี้เป้า' (Upsell UI) */}
+            <div className={`bg-white border transition-all duration-200 rounded-2xl p-3.5 shadow-2xs ${
+              hasScoutReward ? "border-brand-red/40 ring-1 ring-brand-red/20" : "border-gray-200/90 hover:border-gray-300"
+            }`}>
+              <label className="flex items-center justify-between cursor-pointer select-none gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base select-none shrink-0">📢</span>
+                  <span className="text-xs sm:text-[13px] font-bold text-gray-800 leading-snug">
+                    เพิ่ม &apos;ค่าชี้เป้า&apos; เพื่อกระตุ้นให้คนช่วยแชร์และหาคนรับงานได้ไวขึ้น <span className="text-gray-400 font-normal">(เลือกได้)</span>
+                  </span>
+                </div>
+                {/* Modern Toggle Switch */}
+                <div className="relative inline-flex items-center shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={hasScoutReward}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setHasScoutReward(checked);
+                      if (!checked) setScoutRewardText("");
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand-red cursor-pointer"></div>
+                </div>
+              </label>
+
+              {/* กางช่องกรอกข้อมูลออกมาด้านล่างทันทีเมื่อเปิดใช้งาน */}
+              {hasScoutReward && (
+                <div className="pt-2 animate-fade-in border-t border-gray-100 mt-2.5">
+                  <input
+                    type="text"
+                    value={scoutRewardText}
+                    onChange={(e) => setScoutRewardText(e.target.value)}
+                    placeholder="ระบุจำนวนเงิน หรือ % ส่วนแบ่ง (เช่น ฿500 หรือ 10%)"
+                    className="w-full bg-[#F5F5F7] border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-gray-900 focus:outline-none focus:bg-white focus:border-brand-red/50 focus:ring-1 focus:ring-brand-red/50 transition-all placeholder:text-gray-400 placeholder:font-normal"
+                    autoFocus
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* ปุ่ม [แก้ไข] และ [ยืนยันข้อมูลเข้าระบบ ->] */}
+            <div className="flex items-center gap-2">
+              {actions ? (
+                actions
+              ) : (
+                <>
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={onEdit}
+                      className="inline-flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs sm:text-sm font-bold px-4 py-3 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0 border border-gray-200"
+                    >
+                      <i className="fa-solid fa-pen-to-square text-xs text-gray-600" />
+                      <span>แก้ไข</span>
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={onEdit}
-                    className="inline-flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs sm:text-sm font-bold px-4 py-3 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0 border border-gray-200"
+                    onClick={handleConfirmAction}
+                    className="inline-flex items-center justify-center gap-1.5 bg-brand-red hover:bg-red-600 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-xl transition-all flex-1 shadow-md shadow-red-500/20 active:scale-95 cursor-pointer text-center"
                   >
-                    <i className="fa-solid fa-pen-to-square text-xs text-gray-600" />
-                    <span>แก้ไข</span>
+                    <span>ยืนยันข้อมูลเข้าระบบ</span>
+                    <i className="fa-solid fa-arrow-right text-xs" />
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleConfirmAction}
-                  className="inline-flex items-center justify-center gap-1.5 bg-brand-red hover:bg-red-600 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-xl transition-all flex-1 shadow-md shadow-red-500/20 active:scale-95 cursor-pointer text-center"
-                >
-                  <span>ยืนยันข้อมูลเข้าระบบ</span>
-                  <i className="fa-solid fa-arrow-right text-xs" />
-                </button>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         ) : (
           /* ---------------- สถานะยืนยันสำเร็จแล้ว: แถบแชร์ 4 ปุ่มกระชับ แถวเดียว ---------------- */
