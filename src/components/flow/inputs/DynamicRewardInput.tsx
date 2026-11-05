@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 // Reward type values — must match ProblemNode.bountyType in schema.prisma
 export type RewardType = "CASH" | "RESOURCE_SWAP" | "REV_SHARE" | "HYBRID" | "CONNECTION";
@@ -44,10 +44,10 @@ const REWARD_ITEMS: RewardItem[] = [
   { id: "cash-100",    tab: "CASH", label: "฿100",      textName: "฿100",      value: 100 },
   { id: "cash-500",    tab: "CASH", label: "฿500",      textName: "฿500",      value: 500 },
   { id: "cash-1000",   tab: "CASH", label: "฿1,000",    textName: "฿1,000",    value: 1000 },
-  { id: "cash-5000",   tab: "CASH", label: "฿5,000",    textName: "฿5,000",    value: 5000 },
   { id: "cash-10000",  tab: "CASH", label: "฿10,000",   textName: "฿10,000",   value: 10000 },
   { id: "cash-50000",  tab: "CASH", label: "฿50,000",   textName: "฿50,000",   value: 50000 },
   { id: "cash-100000", tab: "CASH", label: "฿100,000",  textName: "฿100,000",  value: 100000 },
+  { id: "cash-custom", tab: "CASH", label: "ระบุเอง",   textName: "",          value: 0 },
 
   // แท็บ สิ่งของ
   { id: "item-space",    tab: "RESOURCE_SWAP", label: "🏠 พื้นที่หน้าบ้าน",     textName: "พื้นที่หน้าบ้าน",     value: 5000 },
@@ -86,6 +86,7 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
         : value.bountyDescription || ""
       : ""
   );
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // คำนวณข้อความสั้นกระชับ ไม่เขียนภาษารายงานตามข้อ 4
   const buildFormulaText = (ids: string[]) => {
@@ -94,7 +95,7 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
     const selectedItems = REWARD_ITEMS.filter(item => ids.includes(item.id));
     if (selectedItems.length === 0) return "";
 
-    const cashItems = selectedItems.filter(item => item.tab === "CASH");
+    const cashItems = selectedItems.filter(item => item.tab === "CASH" && item.id !== "cash-custom");
     const nonCashItems = selectedItems.filter(item => item.tab !== "CASH");
 
     const parts: string[] = [];
@@ -117,23 +118,27 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
   const emitValue = (currentTab: RewardType, currentIds: string[], text: string) => {
     const trimmed = text.trim();
     const selectedItems = REWARD_ITEMS.filter(item => currentIds.includes(item.id));
-    const cashItems = selectedItems.filter(i => i.tab === "CASH");
+    const cashItems = selectedItems.filter(i => i.tab === "CASH" && i.id !== "cash-custom");
     const nonCashItems = selectedItems.filter(i => i.tab !== "CASH");
+    const hasCustomCash = currentIds.includes("cash-custom");
 
     // คำนวณมูลค่ารวม
     let totalThb = 0;
-    if (selectedItems.length > 0) {
+    const numMatch = trimmed.replace(/,/g, "").match(/\d+/);
+    const parsedCustomNum = numMatch ? parseInt(numMatch[0], 10) : 0;
+
+    if (hasCustomCash) {
+      const presetThb = [...cashItems, ...nonCashItems].reduce((acc, curr) => acc + curr.value, 0);
+      totalThb = presetThb + parsedCustomNum;
+    } else if (selectedItems.length > 0) {
       totalThb = selectedItems.reduce((acc, curr) => acc + curr.value, 0);
     } else {
-      const numMatch = trimmed.replace(/,/g, "").match(/\d+/);
-      if (numMatch) {
-        totalThb = parseInt(numMatch[0], 10);
-      }
+      totalThb = parsedCustomNum;
     }
 
-    // กรณีเป็นเงินสดล้วน (เช่น "฿1,100" หรือตัวเลขล้วน)
+    // กรณีเป็นเงินสดล้วน (เช่น "฿1,100", ตัวเลขล้วน หรือระบุเองในแท็บเงินสดโดยไม่มีสิ่งของ)
     const isPureCashPattern = /^[฿\s\d,]+(บาท)?$/.test(trimmed);
-    const hasOnlyCashItems = cashItems.length > 0 && nonCashItems.length === 0;
+    const hasOnlyCashItems = (cashItems.length > 0 || hasCustomCash) && nonCashItems.length === 0;
 
     if ((hasOnlyCashItems || isPureCashPattern) && nonCashItems.length === 0) {
       const numeric = trimmed.replace(/[^0-9]/g, "");
@@ -145,7 +150,7 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
       });
     } else {
       // กรณีผสมหลายหมวด หรือเป็นสิ่งของ/ส่วนแบ่ง/แลกงาน/คนรู้จัก
-      const resolvedType: RewardType = (cashItems.length > 0 && nonCashItems.length > 0) || selectedItems.length > 1
+      const resolvedType: RewardType = ((cashItems.length > 0 || hasCustomCash) && nonCashItems.length > 0) || selectedItems.length > 1
         ? "HYBRID"
         : (currentTab === "CASH" ? "RESOURCE_SWAP" : currentTab);
       onChange({
@@ -158,11 +163,41 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
 
   // แตะเลือก/ยกเลิกตัวเลือก (Multi-Select toggle)
   const handleToggleItem = (item: RewardItem) => {
+    if (item.id === "cash-custom") {
+      const isCurrentlySelected = selectedIds.includes("cash-custom");
+      if (isCurrentlySelected) {
+        const nextIds = selectedIds.filter(id => id !== "cash-custom");
+        setSelectedIds(nextIds);
+        const generated = buildFormulaText(nextIds);
+        setDescText(generated);
+        emitValue(activeType, nextIds, generated);
+      } else {
+        // เลือก "ระบุเอง": ล้างเงินสดคงที่ออก แล้วโฟกัสที่ช่องกรอกทันที
+        const nextIds = [...selectedIds.filter(id => !id.startsWith("cash-")), "cash-custom"];
+        setSelectedIds(nextIds);
+        
+        // ถ้าเป็นตัวเลขคงที่ ให้เคลียร์เพื่อให้พิมพ์ใหม่ได้สะดวก
+        const isPureCashText = /^[฿\s\d,]+(บาท)?$/.test(descText.trim());
+        const newText = isPureCashText ? "" : descText;
+        setDescText(newText);
+        emitValue(activeType, nextIds, newText);
+
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 50);
+      }
+      return;
+    }
+
+    // กรณีเลือกตัวเลือกเงินสดคงที่ ให้ถอด "ระบุเอง" ออก
     let nextIds: string[];
     if (selectedIds.includes(item.id)) {
       nextIds = selectedIds.filter(id => id !== item.id);
     } else {
-      nextIds = [...selectedIds, item.id];
+      const baseIds = item.tab === "CASH"
+        ? selectedIds.filter(id => id !== "cash-custom")
+        : selectedIds;
+      nextIds = [...baseIds, item.id];
     }
     setSelectedIds(nextIds);
 
@@ -174,7 +209,21 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
   // ผู้ใช้พิมพ์แก้ไขข้อความหรือตัวเลขเองในช่องกรอก
   const handleManualTextChange = (newText: string) => {
     setDescText(newText);
-    emitValue(activeType, selectedIds, newText);
+    
+    // ถ้าผู้ใช้พิมพ์เองในแท็บเงินสด โดยไม่มีปุ่มเงินสดคงที่ถูกเลือก ให้เปิดสถานะ "ระบุเอง" อัตโนมัติ
+    let currentIds = selectedIds;
+    if (activeType === "CASH" && newText.trim()) {
+      const hasFixedCash = selectedIds.some(id => id.startsWith("cash-") && id !== "cash-custom");
+      if (!hasFixedCash && !selectedIds.includes("cash-custom")) {
+        currentIds = [...selectedIds, "cash-custom"];
+        setSelectedIds(currentIds);
+      }
+    } else if (activeType === "CASH" && !newText.trim() && selectedIds.includes("cash-custom")) {
+      currentIds = selectedIds.filter(id => id !== "cash-custom");
+      setSelectedIds(currentIds);
+    }
+
+    emitValue(activeType, currentIds, newText);
   };
 
   // ล้างข้อมูลทั้งหมด
@@ -258,6 +307,7 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
       {/* --------------------------------------------------------------------- */}
       <div className="relative w-full">
         <textarea
+          ref={textareaRef}
           value={descText}
           onChange={e => handleManualTextChange(e.target.value)}
           onKeyDown={e => {
@@ -266,7 +316,7 @@ export function DynamicRewardInput({ value, onChange, onSubmit }: Props) {
               onSubmit();
             }
           }}
-          placeholder="ระบุค่าตอบแทน หรือเลือกตัวเลือกด้านบน..."
+          placeholder={selectedIds.includes("cash-custom") ? "พิมพ์จำนวนเงิน หรือข้อเสนอที่คุณต้องการระบุเอง..." : "ระบุค่าตอบแทน หรือเลือกตัวเลือกด้านบน..."}
           className="w-full bg-[#F5F5F7] border border-transparent rounded-[20px] px-4 py-3.5 pr-14 text-brand-black text-[13px] sm:text-[14px] focus:outline-none focus:bg-white focus:border-brand-red/40 focus:ring-1 focus:ring-brand-red/40 focus:shadow-xs transition-all duration-200 min-h-[90px] resize-none leading-relaxed placeholder:text-gray-400"
         />
 
