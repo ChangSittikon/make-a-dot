@@ -1085,7 +1085,18 @@ ${targetUrl}`;
           </div>
         ) : (
           /* ---------------- สถานะยืนยันสำเร็จแล้ว: แถบแชร์ 4 ปุ่มกระชับ แถวเดียว ---------------- */
-          <div className="bg-gray-50 border border-gray-200/90 rounded-2xl p-2 animate-fade-in">
+          <div className="bg-gray-50 border border-gray-200/90 rounded-2xl p-2.5 animate-fade-in space-y-2">
+            {/* ข้อความกระตุ้น: แชร์เพื่อมีสิทธิ์รับค่าแนะนำ */}
+            <div className="text-center text-xs sm:text-[13px] font-bold text-gray-800 flex items-center justify-center gap-1.5 pt-0.5">
+              <span className="text-brand-red">📢</span>
+              <span>แชร์เพื่อมีสิทธิ์รับค่าแนะนำ</span>
+              {scoutRewardText.trim() && (
+                <span className="ml-0.5 text-[10px] font-black text-brand-red bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
+                  {scoutRewardText.trim()}
+                </span>
+              )}
+            </div>
+
             <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {/* 1. ปุ่ม Facebook */}
               <button
