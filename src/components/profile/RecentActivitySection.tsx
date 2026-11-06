@@ -4,6 +4,13 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { QuickFixCardModal } from './QuickFixCardModal';
 import { BountyProposalsModal } from './BountyProposalsModal';
+import {
+  Bell,
+  FileText,
+  ArrowRight,
+  Briefcase,
+  ChevronRight,
+} from 'lucide-react';
 
 export interface RecentActivityItem {
   id: string;
@@ -24,6 +31,36 @@ export interface RecentActivityItem {
 
 export interface RecentActivitySectionProps {
   initialBounties?: RecentActivityItem[];
+}
+
+/**
+ * แยกส่วนข้อความโจทย์ปัญหา:
+ * - ดึงหัวข้อปัญหาเด่นๆ มาเป็นบรรทัดแรก (ตัด prefix ปัญหา: และเครื่องหมายคำพูด)
+ * - ดึงสิ่งที่คาดหวังมาเป็นตัวเทาขนาดเล็กบรรทัดถัดไป
+ */
+function parseProblemParts(rawText?: string | null): { problem: string; expectation: string | null } {
+  if (!rawText) return { problem: 'ไม่มีรายละเอียดปัญหา', expectation: null };
+
+  let clean = rawText.replace(/^["'“]|["'”]$/g, '').trim();
+
+  // ตรวจจับรูปแบบ ปัญหา: ... สิ่งที่คาดหวัง: ... ข้อจำกัด: ...
+  const probMatch = clean.match(/ปัญหา\s*:\s*([^สิ่งที่คาดหวัง|ข้อจำกัด]+)/i);
+  const expMatch = clean.match(/สิ่งที่คาดหวัง\s*:\s*([^ข้อจำกัด]+)/i);
+
+  if (probMatch || expMatch) {
+    const p = probMatch ? probMatch[1].trim() : clean;
+    const e = expMatch ? expMatch[1].trim() : null;
+    return {
+      problem: p.replace(/^(ปัญหา\s*:\s*)/i, '').replace(/["'“”]/g, '').trim(),
+      expectation: e ? e.replace(/^(สิ่งที่คาดหวัง\s*:\s*)/i, '').replace(/["'“”]/g, '').trim() : null,
+    };
+  }
+
+  // กรณีไม่มีคีย์เวิร์ด
+  return {
+    problem: clean.replace(/["'“”]/g, '').trim(),
+    expectation: null,
+  };
 }
 
 export function RecentActivitySection({ initialBounties = [] }: RecentActivitySectionProps) {
@@ -52,7 +89,7 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
     setSelectedProposalBounty(null);
   };
 
-  // ถ้าไม่มีข้อมูลในฐานข้อมูล จำลองตัวอย่างงานที่เพิ่งยืนยันเข้ามา เพื่อให้สามารถกดทดสอบได้ทันที
+  // Fallback ตัวอย่างงานกรณีไม่มีใน DB เพื่อให้กดทดสอบได้ทันที
   const displayBounties: RecentActivityItem[] = initialBounties.length > 0
     ? initialBounties
     : [
@@ -92,26 +129,28 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
         },
       ];
 
+  // คุมโทนสถานะ Swiss Style (ขาว-ดำ-แดง เท่านั้น)
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'OPEN':
       case 'MATCHING':
-        return { text: 'พร้อมส่งตัว / รอคนช่วย', color: 'bg-amber-50 text-amber-700 border-amber-200' };
+        return { text: 'พร้อมส่งตัว / รอคนช่วย', color: 'bg-red-50 text-brand-red border-red-200' };
       case 'NEGOTIATING':
-        return { text: 'กำลังเจรจา', color: 'bg-blue-50 text-blue-700 border-blue-200' };
+        return { text: 'กำลังเจรจา', color: 'bg-gray-100 text-gray-900 border-gray-300' };
       case 'ACTIVE':
-        return { text: 'กำลังดำเนินการ', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+        return { text: 'กำลังดำเนินการ', color: 'bg-gray-900 text-white border-gray-900' };
       case 'COMPLETED':
-        return { text: 'สำเร็จ', color: 'bg-green-50 text-green-700 border-green-200' };
+        return { text: 'สำเร็จ', color: 'bg-gray-100 text-gray-700 border-gray-300' };
       default:
-        return { text: 'ยืนยันข้อมูลแล้ว', color: 'bg-gray-100 text-gray-700 border-gray-300' };
+        return { text: 'ยืนยันข้อมูลแล้ว', color: 'bg-gray-100 text-gray-800 border-gray-200' };
     }
   };
 
   return (
     <div className="mt-8 font-prompt space-y-3">
+      {/* Header กิจกรรมล่าสุด */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <h3 className="text-base font-black text-gray-900 flex items-center gap-2">
           <span>กิจกรรมล่าสุด</span>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-brand-red border border-red-200">
             {displayBounties.length} ปัญหา
@@ -122,7 +161,7 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
           className="text-xs font-bold text-brand-red hover:underline flex items-center gap-1"
         >
           <span>จัดการปัญหาทั้งหมด</span>
-          <i className="fa-solid fa-chevron-right text-[10px]" />
+          <ChevronRight className="w-3.5 h-3.5 text-brand-red" />
         </Link>
       </div>
 
@@ -133,14 +172,16 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
             ? `฿${(bounty.bountyPrizeSatang / 100).toLocaleString()}`
             : bounty.bountyDescription || 'ตามตกลง';
 
+          const { problem, expectation } = parseProblemParts(bounty.rawDescription);
+
           return (
             <div
               key={bounty.id}
-              className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all space-y-3"
+              className="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs hover:border-gray-900 transition-all space-y-3"
             >
-              {/* Header การ์ด: รหัส + สถานะ */}
+              {/* Header การ์ด: รหัส + ป้ายสถานะ Swiss Style */}
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-800 rounded">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-900 rounded">
                   {bounty.originDotCode || `#DOT-${bounty.id.slice(-6).toUpperCase()}`}
                 </span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusInfo.color}`}>
@@ -148,14 +189,19 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
                 </span>
               </div>
 
-              {/* ปัญหา */}
-              <div>
-                <p className="text-xs text-gray-800 line-clamp-2 leading-snug font-medium">
-                  &ldquo;{bounty.rawDescription || 'ไม่มีรายละเอียดปัญหา'}&rdquo;
-                </p>
-                <div className="flex items-center gap-3 mt-1.5 text-[11px] text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <i className="fa-solid fa-briefcase text-gray-400 text-[10px]" />
+              {/* ข้อความโจทย์: หัวข้อปัญหาตัวหนาบรรทัดเดียว + สิ่งที่คาดหวังตัวเทาบรรทัดถัดไป (ไม่มีเครื่องหมายคำพูด ") */}
+              <div className="space-y-1">
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-1 leading-snug">
+                  {problem}
+                </h4>
+                {expectation && (
+                  <p className="text-[11px] text-gray-500 line-clamp-1 font-normal">
+                    เป้าหมาย: {expectation}
+                  </p>
+                )}
+                <div className="flex items-center gap-3 pt-1 text-[11px] text-gray-500">
+                  <span className="flex items-center gap-1 font-medium">
+                    <Briefcase className="w-3 h-3 text-gray-400" />
                     <span>{bounty.occupation?.name || 'ช่าง/ผู้เชี่ยวชาญ'}</span>
                   </span>
                   <span>•</span>
@@ -165,7 +211,7 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
                 </div>
               </div>
 
-              {/* แถบแจ้งเตือนเมื่อมีผู้สนใจเสนอตัวรับงานหรือเสนอเงื่อนไข KPI */}
+              {/* กล่องแจ้งเตือนข้อเสนอ: พื้นขาว ขอบแดง ปุ่มสีแดงสด ไอคอน Lucide Bell */}
               {(() => {
                 const pendingNegotiations = (bounty.negotiations || []).filter((n: any) => n.status === 'PENDING');
                 const pendingUpgrades = (bounty.upgradeProposals || []).filter((p: any) => p.status === 'PENDING');
@@ -174,14 +220,16 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
                 if (pendingOffers === 0) return null;
 
                 return (
-                  <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-2.5 flex items-center justify-between gap-2 animate-fade-in">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base shrink-0 animate-pulse">🔔</span>
+                  <div className="bg-white border-2 border-brand-red rounded-xl p-3 flex items-center justify-between gap-2 shadow-2xs animate-fade-in">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                        <Bell className="w-4 h-4 text-brand-red" />
+                      </div>
                       <div>
-                        <div className="text-xs font-bold text-amber-900">
+                        <div className="text-xs font-black text-gray-900">
                           มีผู้สนใจเสนอตัว {pendingOffers} รายการ!
                         </div>
-                        <div className="text-[10px] text-amber-700 font-medium">
+                        <div className="text-[10px] text-gray-500 font-medium">
                           {pendingNegotiations.length > 0 && `${pendingNegotiations.length} ผู้เสนอตัวรับงาน`}
                           {pendingNegotiations.length > 0 && pendingUpgrades.length > 0 && " • "}
                           {pendingUpgrades.length > 0 && `${pendingUpgrades.length} ข้อเสนออัปเกรด`}
@@ -191,7 +239,7 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
                     <button
                       type="button"
                       onClick={() => handleOpenProposals(bounty)}
-                      className="text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs shrink-0"
+                      className="text-xs font-bold bg-brand-red hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs shrink-0"
                     >
                       ดูข้อเสนอ
                     </button>
@@ -199,23 +247,23 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
                 );
               })()}
 
-              {/* ปุ่มการกระทำ: [💡 เปิดดูการ์ดแก้ไขเบื้องต้น] + [ดูการ์ดสรุปปัญหา] */}
+              {/* ปุ่มการกระทำ: [เปิดดูการ์ดแก้ไขเบื้องต้น] (ขาว ขอบดำ ตัวหนังสือดำ) + [ดูรายละเอียด] (แดงสด) */}
               <div className="pt-1 flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   onClick={() => handleOpenQuickFix(bounty)}
-                  className="flex-1 bg-red-50 hover:bg-red-100 text-brand-red border border-red-200 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="flex-1 bg-white hover:bg-gray-50 text-gray-900 border border-gray-900 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 >
-                  <span className="text-sm">💡</span>
+                  <FileText className="w-3.5 h-3.5 text-brand-red" />
                   <span>เปิดดูการ์ดแก้ไขเบื้องต้น</span>
                 </button>
 
                 <Link
                   href={`/profile/bounty/${bounty.id}`}
-                  className="inline-flex items-center justify-center bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shrink-0"
+                  className="inline-flex items-center justify-center bg-brand-red hover:bg-red-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shrink-0 gap-1.5 shadow-2xs"
                 >
                   <span>ดูรายละเอียด</span>
-                  <i className="fa-solid fa-arrow-right text-[10px] ml-1.5" />
+                  <ArrowRight className="w-3.5 h-3.5 text-white" />
                 </Link>
               </div>
             </div>
@@ -223,7 +271,7 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
         })}
       </div>
 
-      {/* Modal 'การ์ดแก้ไขเบื้องต้น' */}
+      {/* Modal 'การ์ดแก้ไขเบื้องต้น' (Z-Index ทับแถบเมนูด้านล่างเสมอ) */}
       <QuickFixCardModal
         isOpen={isModalOpen}
         onClose={handleCloseQuickFix}

@@ -1,4 +1,5 @@
 import { auth } from '@/auth';
+import { getCurrentUser } from '@/lib/auth-mock';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -14,14 +15,33 @@ import RecentActivitySection from '@/components/profile/RecentActivitySection';
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
-  const session = await auth();
+  let session = await auth();
   
   if (!session || !session.user) {
+    const mockUser = await getCurrentUser();
+    if (mockUser) {
+      session = {
+        user: {
+          id: mockUser.id,
+          name: mockUser.name,
+          email: mockUser.email,
+          role: mockUser.role,
+        },
+        expires: new Date(Date.now() + 86400000).toISOString(),
+      } as any;
+    } else {
+      redirect('/api/auth/signin?callbackUrl=/profile');
+    }
+  }
+
+  if (!session?.user?.id) {
     redirect('/api/auth/signin?callbackUrl=/profile');
   }
 
+  const sessionUser = session.user;
+
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: sessionUser.id },
     include: {
       directorProfile: true,
       projectsOwned: true,
@@ -37,7 +57,7 @@ export default async function ProfilePage() {
 
   // Fetch recent problem nodes for user with negotiations and proposals
   const recentBounties = await prisma.problemNode.findMany({
-    where: { requesterId: session.user.id },
+    where: { requesterId: sessionUser.id },
     orderBy: { createdAt: 'desc' },
     take: 5,
     include: {
