@@ -1,7 +1,25 @@
 "use client";
 
-import React, { useState } from 'react';
-import { NongDot } from '@/components/flow/NongDot';
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { NongDot } from "@/components/flow/NongDot";
+import {
+  resolveAISolution,
+  AISolutionResult,
+} from "@/lib/career-core";
+import {
+  X,
+  Activity,
+  CheckCircle2,
+  UserCheck,
+  ShieldCheck,
+  Clock,
+  Repeat,
+  FileCheck2,
+  Check,
+  Sparkles,
+  Layers,
+} from "lucide-react";
 
 export interface QuickFixCardModalProps {
   isOpen: boolean;
@@ -19,54 +37,36 @@ export interface QuickFixCardModalProps {
   } | null;
 }
 
-/**
- * ฟังก์ชันช่วยวิเคราะห์อาชีพและคนช่วยที่ตรงจุดจากปัญหา (ภาษาคนทั่วไป)
- */
-function resolveRecommendedHelper(bounty: QuickFixCardModalProps['bounty']) {
-  if (bounty?.occupation?.name) return bounty.occupation.name;
-  if (bounty?.targetOccupations && bounty.targetOccupations.length > 0 && bounty.targetOccupations[0]?.name) {
-    return bounty.targetOccupations[0].name;
-  }
-
-  const text = (bounty?.rawDescription || '').toLowerCase();
-  if (text.includes('จัดซื้อ') || text.includes('ราคา') || text.includes('วัสดุ') || text.includes('ของ')) {
-    return 'นักจัดซื้อและประสานงานไซต์งาน (เชี่ยวชาญเทียบราคากลาง)';
-  }
-  if (text.includes('บัญชี') || text.includes('เงิน') || text.includes('ภาษี') || text.includes('บิล')) {
-    return 'นักบัญชีและที่ปรึกษากระแสเงินสด';
-  }
-  if (text.includes('คน') || text.includes('แรงงาน') || text.includes('หาคน') || text.includes('ช่าง')) {
-    return 'หัวหน้าทีมช่างและผู้จัดการแรงงาน';
-  }
-  if (text.includes('สัญญา') || text.includes('สิทธิ์') || text.includes('โกง') || text.includes('เทศบาล')) {
-    return 'ที่ปรึกษาสัญญาและรักษาสิทธิ์';
-  }
-  if (text.includes('ซ่อม') || text.includes('ไฟ') || text.includes('น้ำ') || text.includes('ท่อ') || text.includes('แอร์')) {
-    return 'ช่างซ่อมบำรุงและดูแลงานระบบอาคาร';
-  }
-  return 'ช่างหรือผู้เชี่ยวชาญเฉพาะทางหน้างาน';
-}
+type AISubTab = "all" | "diagnostic" | "sop" | "kpi";
 
 export function QuickFixCardModal({
   isOpen,
   onClose,
   bounty,
 }: QuickFixCardModalProps) {
-  // Accordion พับเก็บเป็นค่าเริ่มต้น (Collapsed by default)
-  const [openSection, setOpenSection] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+  // Default active tab is "(ก) AI วินิจฉัย" ('diagnostic') as strictly requested
+  const [activeTab, setActiveTab] = useState<AISubTab>("diagnostic");
 
-  // เช็กลิสต์ติ๊กถูกได้ 3 ขั้นตอน
+  // Step checklist state for interactive checking
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({
     1: false,
     2: false,
     3: false,
   });
 
-  if (!isOpen || !bounty) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const toggleSection = (sectionIndex: number) => {
-    setOpenSection(openSection === sectionIndex ? null : sectionIndex);
-  };
+  // Reset tab to 'diagnostic' when opened
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab("diagnostic");
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !bounty) return null;
 
   const toggleStep = (stepNumber: number) => {
     setCheckedSteps((prev) => ({
@@ -76,301 +76,340 @@ export function QuickFixCardModal({
   };
 
   const completedCount = Object.values(checkedSteps).filter(Boolean).length;
-  const displayCode = bounty.originDotCode || (bounty.id ? `#${bounty.id.slice(-6).toUpperCase()}` : '#DOT-QUEST');
-  const descriptionSnippet = bounty.rawDescription?.trim() || "ตามรายละเอียดที่แจ้งในระบบ";
-  const recommendedHelper = resolveRecommendedHelper(bounty);
+  const displayCode =
+    bounty.originDotCode ||
+    (bounty.id ? `#${bounty.id.slice(-6).toUpperCase()}` : "#DOT-QUEST");
+  const rawDesc =
+    bounty.rawDescription?.replace(/^["'“]|["'”]$/g, "").trim() ||
+    "ตามรายละเอียดที่แจ้งในระบบ";
 
-  return (
-    /* Z-Index Fix: ปรับ z-[9999] ให้สูงกว่า BottomTabBar (z-50) เสมอ เพื่อไม่ให้แถบเมนูด้านล่างบังปุ่ม */
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs font-prompt animate-fade-in">
-      {/* คลิกพื้นหลังเพื่อปิด */}
+  // Compute AI Solution from career-core engine
+  const solution: AISolutionResult = resolveAISolution(
+    bounty.rawDescription,
+    bounty.targetOccupations,
+    bounty.targetSkills
+  );
+
+  const modalContent = (
+    /* Z-Index Fix: fixed inset-0 z-[99999] overlays Bottom Navigation Bar cleanly */
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs font-prompt animate-fade-in">
+      {/* Background overlay click to close */}
       <div className="fixed inset-0" onClick={onClose} />
 
-      {/* Width Fix: จำกัดความกว้าง max-w-[390px] sm:max-w-[400px] ไม่ให้ล้นกรอบจอมือถือ และจัด flex-col ให้ปุ่มปิดอยู่ล่างสุดเสมอ */}
-      <div className="bg-white border-2 border-gray-900 rounded-[24px] sm:rounded-[28px] p-4 sm:p-5 shadow-2xl max-w-[390px] sm:max-w-[400px] w-full max-h-[88vh] flex flex-col relative z-10 overflow-hidden">
-        
-        {/* ปุ่มกากบาทปิดมุมบนขวา */}
+      {/* Modal Dialog: Strict Swiss Style (ขาว-ดำ-แดง, คมชัด 100%) */}
+      <div className="bg-white border-2 border-gray-900 rounded-[28px] p-4 sm:p-5 shadow-2xl max-w-[430px] w-full max-h-[92vh] flex flex-col relative z-10 overflow-hidden">
+        {/* Close Button at top-right */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold flex items-center justify-center transition-colors cursor-pointer z-20"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 flex items-center justify-center transition-colors cursor-pointer z-20"
           aria-label="ปิดหน้าต่าง"
         >
-          ✕
+          <X className="w-4 h-4 text-gray-900" />
         </button>
 
-        {/* ---------------- หัวการ์ด: น้องดอท thinking + ชื่อการ์ดแก้ไขเบื้องต้น (คงที่ด้านบน) ---------------- */}
-        <div className="flex flex-col items-center text-center pt-1 pb-2 border-b border-gray-200 shrink-0">
-          <div className="mb-1.5">
-            <NongDot mood="thinking" size={36} color="red" />
+        {/* ---------------- หัวการ์ด: น้องดอท + SMART AI CARD + Title ---------------- */}
+        <div className="flex flex-col items-center text-center pt-1 pb-3 border-b border-gray-200 shrink-0">
+          <div className="mb-2">
+            <NongDot mood="classic" size={36} color="red" />
           </div>
-          <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-800 rounded-full mb-1">
-            {displayCode}
-          </span>
-          <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight">
-            การ์ดแก้ไขเบื้องต้น
+
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap justify-center">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-900 text-white rounded-full">
+              SMART AI CARD
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-900 rounded-full">
+              {displayCode}
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 bg-red-50 text-brand-red border border-red-200 rounded-full flex items-center gap-1">
+              <Activity className="w-3 h-3 text-brand-red" />
+              <span>ระบบวินิจฉัยสด 24 ชม.</span>
+            </span>
+          </div>
+
+          <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight flex items-center gap-1.5">
+            <span>AI Solution & Quick-Fix SOP</span>
           </h2>
-          <p className="text-[11px] text-gray-500 font-medium">
-            แนวทางแก้ปัญหาและจับคู่คนช่วยฉบับเข้าใจง่าย โดย MAKE A DOT
+          <p className="text-[10.5px] text-gray-500 font-medium">
+            ดึงข้อมูลจาก Universal 8 โมดูล & Specialized 7 ตำแหน่ง
           </p>
         </div>
 
-        {/* ---------------- ส่วนเนื้อหาภายใน (เลื่อน Scroll ได้อิสระ ไม่ดันปุ่มปิดหลุดจอ) ---------------- */}
-        <div className="flex-1 overflow-y-auto space-y-3 py-3 pr-0.5 no-scrollbar">
-          
-          {/* กล่องสรุปปัญหาเบื้องต้น */}
-          <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 text-xs">
-            <div className="text-[10px] font-bold text-brand-red uppercase mb-0.5">
-              ปัญหาที่แจ้งไว้:
-            </div>
-            <p className="text-gray-800 leading-snug line-clamp-2 font-normal">
-              &ldquo;{descriptionSnippet}&rdquo;
-            </p>
-          </div>
-
-          {/* 3 ส่วน ACCORDION พับเก็บเป็นค่าเริ่มต้น (Collapsed by default) */}
-          <div className="space-y-2">
-            
-            {/* ========================================================================= */}
-            {/* หัวข้อที่ 1: 🎯 อาชีพและคนช่วยที่ตรงจุดกับปัญหานี้                         */}
-            {/* ========================================================================= */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-              <button
-                type="button"
-                onClick={() => toggleSection(1)}
-                className="w-full flex items-center justify-between p-3 text-left font-bold text-xs text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer select-none"
-              >
-                <span className="flex items-center gap-1.5">
-                  <span>🎯</span>
-                  <span>หัวข้อที่ 1: อาชีพและคนช่วยที่ตรงจุด</span>
-                </span>
-                <i
-                  className={`fa-solid fa-chevron-down text-gray-400 text-xs transition-transform duration-200 ${
-                    openSection === 1 ? 'rotate-180 text-brand-red' : ''
-                  }`}
-                />
-              </button>
-
-              {openSection === 1 && (
-                <div className="p-3 border-t border-gray-100 bg-gray-50/70 space-y-2.5 text-xs text-gray-800 animate-fade-in">
-                  {/* อาชีพที่แนะนำ */}
-                  <div className="bg-white rounded-lg p-2.5 border border-gray-200">
-                    <div className="text-[10px] text-gray-500 font-medium">คนช่วยที่ควรหาเป็นอันดับแรก:</div>
-                    <div className="text-xs sm:text-sm font-bold text-brand-red mt-0.5 flex items-center gap-1.5">
-                      <i className="fa-solid fa-user-check text-xs shrink-0" />
-                      <span>{recommendedHelper}</span>
-                    </div>
-                  </div>
-
-                  {/* 3 สิ่งสำคัญที่ต้องดู */}
-                  <div className="space-y-1">
-                    <div className="font-bold text-gray-900 text-[11px]">
-                      สิ่งที่ต้องถามและตรวจดูก่อนตกลงจ้าง:
-                    </div>
-                    <ul className="space-y-1.5 text-gray-700 text-[11px] pl-1">
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-brand-red font-bold shrink-0">1.</span>
-                        <span><strong>มีผลงานเก่าให้ดู:</strong> ขอดูรูปถ่ายงานที่เคยแก้เสร็จจริงเพื่อดูความเรียบร้อย</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-brand-red font-bold shrink-0">2.</span>
-                        <span><strong>มีเครื่องมือพร้อมหน้างาน:</strong> ไม่ต้องรอสั่งของนาน และสามารถเริ่มแก้ได้ทันที</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-brand-red font-bold shrink-0">3.</span>
-                        <span><strong>แจกแจงค่าของและค่าแรงชัดเจน:</strong> แยกราคาให้เห็นชัด จะได้ไม่โดนบวกเพิ่มระหว่างทำ</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* ข้อคิดเตือนใจ */}
-                  <div className="bg-red-50 text-brand-red border border-red-200 rounded-lg p-2 text-[10px] font-medium leading-relaxed">
-                    💡 <strong>ข้อแนะนำ:</strong> อย่าเลือกแค่คนที่ราคาถูกที่สุด ให้เลือกคนที่คุยเข้าใจตรงกันและกล้ารับประกันผลงาน
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ========================================================================= */}
-            {/* หัวข้อที่ 2: ⚡ 3 ขั้นตอนแก้ปัญหาเบื้องต้นด้วยตัวเอง (เช็กลิสต์ติ๊กถูกได้) */}
-            {/* ========================================================================= */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-              <button
-                type="button"
-                onClick={() => toggleSection(2)}
-                className="w-full flex items-center justify-between p-3 text-left font-bold text-xs text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer select-none"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>⚡</span>
-                  <span>หัวข้อที่ 2: 3 ขั้นตอนแก้ปัญหาด้วยตัวเอง</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-red-50 text-brand-red border border-red-200">
-                    {completedCount}/3
-                  </span>
-                  <i
-                    className={`fa-solid fa-chevron-down text-gray-400 text-xs transition-transform duration-200 ${
-                      openSection === 2 ? 'rotate-180 text-brand-red' : ''
-                    }`}
-                  />
-                </div>
-              </button>
-
-              {openSection === 2 && (
-                <div className="p-3 border-t border-gray-100 bg-gray-50/70 space-y-2 text-xs text-gray-800 animate-fade-in">
-                  <p className="text-[10px] text-gray-500 font-medium">
-                    แตะที่กล่องเพื่อติ๊กถูกเมื่อทำแต่ละข้อเสร็จ:
-                  </p>
-
-                  {/* ข้อ 1 */}
-                  <div
-                    onClick={() => toggleStep(1)}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2 ${
-                      checkedSteps[1]
-                        ? 'bg-red-50/70 border-brand-red/50 text-gray-900'
-                        : 'bg-white border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checkedSteps[1]}
-                      onChange={() => {}}
-                      className="w-4 h-4 mt-0.5 rounded accent-brand-red cursor-pointer shrink-0"
-                    />
-                    <div className="flex-1 text-[11px]">
-                      <div className="font-bold text-gray-900 flex items-center justify-between">
-                        <span>ขั้นที่ 1: ถ่ายรูปบันทึกจุดเสีย & สกัดเงินรั่วไหล</span>
-                        {checkedSteps[1] && <span className="text-[10px] text-brand-red font-bold">✓ ทำแล้ว</span>}
-                      </div>
-                      <p className="text-gray-600 mt-0.5 leading-snug">
-                        ถ่ายรูปและคลิปวิดีโอจุดเสียทุกมุม จดรายการของลงสมุด <strong>ห้ามโอนเงินมัดจำก้อนโตเด็ดขาด</strong>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* ข้อ 2 */}
-                  <div
-                    onClick={() => toggleStep(2)}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2 ${
-                      checkedSteps[2]
-                        ? 'bg-red-50/70 border-brand-red/50 text-gray-900'
-                        : 'bg-white border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checkedSteps[2]}
-                      onChange={() => {}}
-                      className="w-4 h-4 mt-0.5 rounded accent-brand-red cursor-pointer shrink-0"
-                    />
-                    <div className="flex-1 text-[11px]">
-                      <div className="font-bold text-gray-900 flex items-center justify-between">
-                        <span>ขั้นที่ 2: สอบถามและเปรียบเทียบคนช่วย 2-3 เจ้า</span>
-                        {checkedSteps[2] && <span className="text-[10px] text-brand-red font-bold">✓ ทำแล้ว</span>}
-                      </div>
-                      <p className="text-gray-600 mt-0.5 leading-snug">
-                        ส่งรูปปัญหาไปถามราคาและวิธีแก้จากช่างอย่างน้อย 2-3 คน เพื่อเทียบราคากลางและไม่โดนโก่งราคา
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* ข้อ 3 */}
-                  <div
-                    onClick={() => toggleStep(3)}
-                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2 ${
-                      checkedSteps[3]
-                        ? 'bg-red-50/70 border-brand-red/50 text-gray-900'
-                        : 'bg-white border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checkedSteps[3]}
-                      onChange={() => {}}
-                      className="w-4 h-4 mt-0.5 rounded accent-brand-red cursor-pointer shrink-0"
-                    />
-                    <div className="flex-1 text-[11px]">
-                      <div className="font-bold text-gray-900 flex items-center justify-between">
-                        <span>ขั้นที่ 3: ตกลงวันส่งมอบและการรับประกันให้ชัดเจน</span>
-                        {checkedSteps[3] && <span className="text-[10px] text-brand-red font-bold">✓ ทำแล้ว</span>}
-                      </div>
-                      <p className="text-gray-600 mt-0.5 leading-snug">
-                        นัดวันเริ่ม วันเสร็จ และตกลงรับประกันงานซ่อมขั้นต่ำ 30 วัน หากมีปัญหาซ้ำต้องกลับมาแก้ไขฟรี
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ========================================================================= */}
-            {/* หัวข้อที่ 3: 🛡️ แนะนำการแบ่งจ่ายงวดงาน / การใช้สิ่งของแลกเปลี่ยน          */}
-            {/* ========================================================================= */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-              <button
-                type="button"
-                onClick={() => toggleSection(3)}
-                className="w-full flex items-center justify-between p-3 text-left font-bold text-xs text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer select-none"
-              >
-                <span className="flex items-center gap-1.5">
-                  <span>🛡️</span>
-                  <span>หัวข้อที่ 3: แนะนำการแบ่งจ่ายงวดงาน</span>
-                </span>
-                <i
-                  className={`fa-solid fa-chevron-down text-gray-400 text-xs transition-transform duration-200 ${
-                    openSection === 3 ? 'rotate-180 text-brand-red' : ''
-                  }`}
-                />
-              </button>
-
-              {openSection === 3 && (
-                <div className="p-3 border-t border-gray-100 bg-gray-50/70 space-y-2.5 text-xs text-gray-800 animate-fade-in">
-                  {/* แผนผังการแบ่งจ่ายเงิน 3 งวด */}
-                  <div className="space-y-1">
-                    <div className="font-bold text-gray-900 text-[11px]">
-                      การแบ่งจ่ายเงินแบบปลอดภัย (ไม่โดนทิ้งงาน):
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-center">
-                      <div className="bg-white p-2 rounded-lg border border-gray-200">
-                        <div className="text-[9px] font-bold text-gray-500">งวดที่ 1</div>
-                        <div className="text-xs font-black text-gray-900 mt-0.5">20%</div>
-                        <div className="text-[8px] text-gray-500">มัดจำ/เตรียมของ</div>
-                      </div>
-                      <div className="bg-white p-2 rounded-lg border border-gray-200">
-                        <div className="text-[9px] font-bold text-gray-500">งวดที่ 2</div>
-                        <div className="text-xs font-black text-gray-900 mt-0.5">40%</div>
-                        <div className="text-[8px] text-gray-500">งานเกินครึ่ง</div>
-                      </div>
-                      <div className="bg-white p-2 rounded-lg border border-gray-200">
-                        <div className="text-[9px] font-bold text-gray-500">งวดที่ 3</div>
-                        <div className="text-xs font-black text-brand-red mt-0.5">40%</div>
-                        <div className="text-[8px] text-gray-500">ตรวจรับ 100%</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* การใช้สิ่งของแลกเปลี่ยน */}
-                  <div className="bg-white rounded-lg p-2.5 border border-gray-200 space-y-0.5">
-                    <div className="font-bold text-brand-red text-[11px] flex items-center gap-1">
-                      <i className="fa-solid fa-recycle text-xs" />
-                      <span>ถ้าอยากประหยัดเงินสด:</span>
-                    </div>
-                    <p className="text-gray-700 leading-snug text-[10px]">
-                      สามารถเจรจาขอนำ <strong>&ldquo;ของเหลือใช้, เศษวัสดุ, พื้นที่จอดรถ/พักของ, หรือช่วยงานอื่น&rdquo;</strong> มาหักลดค่าจ้างเงินสดลงได้ 20-50%
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+        {/* ---------------- Horizontal Sub-tabs (Swiss Style, no-scrollbar) ---------------- */}
+        <div className="pt-2.5 pb-2 border-b border-gray-200 shrink-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                activeTab === "all"
+                  ? "bg-gray-900 text-white shadow-xs"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
+              }`}
+            >
+              ดูทั้งหมด
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("diagnostic")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
+                activeTab === "diagnostic"
+                  ? "bg-gray-900 text-white shadow-xs"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>(ก) AI วินิจฉัย</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("sop")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
+                activeTab === "sop"
+                  ? "bg-gray-900 text-white shadow-xs"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span>(ข) SOP 24 ชม.</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("kpi")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
+                activeTab === "kpi"
+                  ? "bg-gray-900 text-white shadow-xs"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>(ค) เกณฑ์ KPI</span>
+            </button>
           </div>
         </div>
 
-        {/* ---------------- ปุ่มปิดด้านล่าง (Fixed at bottom of modal, มองเห็นและกดได้เสมอ) ---------------- */}
-        <div className="pt-2.5 pb-0.5 border-t border-gray-200 bg-white shrink-0 mt-auto">
+        {/* ---------------- Scrollable Content Body ---------------- */}
+        <div className="flex-1 overflow-y-auto space-y-3 py-3 pr-0.5 no-scrollbar">
+          {/* ปัญหาที่บันทึกไว้ในระบบ */}
+          <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 text-xs">
+            <div className="text-[10px] font-bold text-brand-red uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>โจทย์ปัญหาที่บันทึกไว้:</span>
+              <span className="text-[10px] font-bold text-gray-600 bg-white px-2 py-0.5 rounded-md border border-gray-200">
+                {solution.categoryTag}
+              </span>
+            </div>
+            <p className="text-gray-900 leading-snug line-clamp-2 font-medium">
+              {rawDesc}
+            </p>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* SECTION (ก): AI วินิจฉัย: แมปปิ้งอาชีพและทักษะที่แท้จริง                     */}
+          {/* ========================================================================= */}
+          {(activeTab === "all" || activeTab === "diagnostic") && (
+            <div className="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-2xs space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                <span className="text-xs font-black text-gray-900 flex items-center gap-1.5 uppercase tracking-wide">
+                  <UserCheck className="w-4 h-4 text-brand-red shrink-0" />
+                  <span>(ก) AI วินิจฉัย: แมปปิ้งอาชีพและทักษะที่แท้จริง</span>
+                </span>
+                <span className="text-[10px] font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded border border-gray-300">
+                  {solution.matchedRole.coordinateId}
+                </span>
+              </div>
+
+              {/* อาชีพเฉพาะทางที่ต้องใช้ */}
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
+                  อาชีพเฉพาะทางที่ต้องใช้ (Specialized Role):
+                </div>
+                <div className="text-xs sm:text-sm font-black text-gray-900 mt-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-brand-red shrink-0" />
+                  <span>{solution.matchedRole.roleName}</span>
+                </div>
+                <div className="text-[10.5px] text-gray-600 mt-1.5 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                  <span>
+                    โมดูลกองกลางรองรับ:{" "}
+                    <strong className="text-gray-900">
+                      {solution.matchedModule.shortName}
+                    </strong>{" "}
+                    ({solution.matchedModule.coordinateId})
+                  </span>
+                </div>
+              </div>
+
+              {/* ปรัชญาแก้เกม */}
+              <div className="bg-gray-50 rounded-xl p-3 border-l-4 border-l-brand-red border border-gray-200 text-xs">
+                <div className="font-bold text-gray-900 mb-0.5 flex items-center gap-1 text-[11px]">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-red shrink-0" />
+                  <span>ปรัชญาแก้เกม:</span>
+                </div>
+                <p className="text-gray-700 italic text-[11px] leading-relaxed">
+                  &ldquo;{solution.philosophy}&rdquo;
+                </p>
+              </div>
+
+              {/* ทักษะกุญแจสำคัญที่ต้องใช้หน้างาน */}
+              <div className="space-y-1.5">
+                <div className="text-[10.5px] font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1">
+                  <FileCheck2 className="w-3.5 h-3.5 text-brand-red shrink-0" />
+                  <span>ทักษะกุญแจสำคัญที่ต้องใช้หน้างาน (KEY COMPETENCIES):</span>
+                </div>
+                <ul className="space-y-1.5 text-[11px] text-gray-800">
+                  {solution.competencies.map((comp, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200"
+                    >
+                      <Check className="w-3.5 h-3.5 text-brand-red font-bold shrink-0 mt-0.5" />
+                      <span className="leading-snug">{comp}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SECTION (ข): SOP 24 ชม.: 3 ขั้นตอนที่เจ้าของปัญหาทำได้ทันที                  */}
+          {/* ========================================================================= */}
+          {(activeTab === "all" || activeTab === "sop") && (
+            <div className="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-2xs space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                <span className="text-xs font-black text-gray-900 flex items-center gap-1.5 uppercase tracking-wide">
+                  <Clock className="w-4 h-4 text-brand-red shrink-0" />
+                  <span>(ข) SOP 24 ชม.: 3 ขั้นตอนที่เจ้าของปัญหาทำได้ทันที</span>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-brand-red bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                    {completedCount}/3 ทำแล้ว
+                  </span>
+                  <span className="text-[10px] font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded border border-gray-300">
+                    Action Checklist
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-[10.5px] text-gray-500 font-medium">
+                แตะที่ขั้นตอนเพื่อติ๊กบันทึกความคืบหน้า:
+              </p>
+
+              <div className="space-y-2">
+                {solution.sopSteps.map((step, idx) => {
+                  const stepNum = idx + 1;
+                  const isChecked = checkedSteps[stepNum];
+                  return (
+                    <div
+                      key={stepNum}
+                      onClick={() => toggleStep(stepNum)}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ${
+                        isChecked
+                          ? "bg-red-50/50 border-brand-red text-gray-900 shadow-2xs"
+                          : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {}}
+                        className="w-4 h-4 mt-0.5 rounded accent-brand-red cursor-pointer shrink-0"
+                      />
+                      <div className="flex-1 text-[11px]">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-gray-900 flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono font-bold text-brand-red">
+                              {step.timeframe}
+                            </span>
+                            <span>{step.title}</span>
+                          </span>
+                          <span className="text-[9.5px] font-bold text-gray-700 bg-white border border-gray-200 px-1.5 py-0.2 rounded">
+                            {step.tag}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 leading-snug">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SECTION (ค): เกณฑ์ KPI แนะนำ: งวดงาน & การแลกเปลี่ยน                        */}
+          {/* ========================================================================= */}
+          {(activeTab === "all" || activeTab === "kpi") && (
+            <div className="bg-white rounded-2xl p-3.5 border border-gray-200 shadow-2xs space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                <span className="text-xs font-black text-gray-900 flex items-center gap-1.5 uppercase tracking-wide">
+                  <ShieldCheck className="w-4 h-4 text-brand-red shrink-0" />
+                  <span>(ค) เกณฑ์ KPI แนะนำ: งวดงาน & การแลกเปลี่ยน</span>
+                </span>
+                <span className="text-[10px] font-bold text-brand-red bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                  Smart Escrow
+                </span>
+              </div>
+
+              {/* งวดงาน 3 เฟส (20% / 40% / 40%) */}
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {solution.kpiPhases.map((phase, pIdx) => (
+                  <div
+                    key={pIdx}
+                    className="bg-gray-50 p-2.5 rounded-xl border border-gray-200 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="text-[9px] font-bold text-gray-500 uppercase">
+                        {phase.phase}
+                      </div>
+                      <div className="text-xs font-black text-gray-900 mt-0.5">
+                        {phase.pct}
+                      </div>
+                    </div>
+                    <div className="text-[9px] text-gray-600 mt-1 leading-tight font-medium">
+                      {phase.title}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ทางเลือกประหยัดทุน (Resource / Sweat Swap) */}
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 space-y-1">
+                <div className="font-bold text-gray-900 text-[11px] flex items-center gap-1.5">
+                  <Repeat className="w-3.5 h-3.5 text-brand-red shrink-0" />
+                  <span>ทางเลือกประหยัดทุน (Resource / Sweat Swap):</span>
+                </div>
+                <p className="text-gray-700 text-[10.5px] leading-snug">
+                  {solution.resourceSwapOptions}
+                </p>
+              </div>
+
+              {/* เกณฑ์การตรวจรับผลงาน (ACCEPTANCE CRITERIA) */}
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
+                  เกณฑ์การตรวจรับผลงาน (ACCEPTANCE CRITERIA):
+                </div>
+                <ul className="space-y-1 text-[11px] text-gray-700">
+                  {solution.acceptanceCriteria.map((crit, cIdx) => (
+                    <li key={cIdx} className="flex items-start gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-brand-red shrink-0 mt-0.5" />
+                      <span className="leading-snug">{crit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ---------------- Sticky Bottom Close Button ---------------- */}
+        <div className="pt-3 pb-1 border-t border-gray-200 bg-white shrink-0 mt-auto">
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-[0.98] cursor-pointer text-center shadow-md flex items-center justify-center gap-1.5"
+            className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-[0.98] cursor-pointer text-center shadow-md flex items-center justify-center gap-2"
           >
             <span>เข้าใจแล้ว ปิดหน้านี้</span>
           </button>
@@ -378,6 +417,8 @@ export function QuickFixCardModal({
       </div>
     </div>
   );
+
+  return mounted ? createPortal(modalContent, document.body) : null;
 }
 
 export default QuickFixCardModal;
