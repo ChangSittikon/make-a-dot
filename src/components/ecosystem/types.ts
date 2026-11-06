@@ -1,4 +1,4 @@
-export type MainTabType = 'PROCESS' | 'CAPITAL' | 'PRODUCTION' | 'CITY' | 'LOCAL' | 'SOLVER' | 'ECOSYSTEM';
+export type MainTabType = 'PROCESS' | 'ND_TOOLS' | 'CAPITAL' | 'PRODUCTION' | 'CITY' | 'LOCAL' | 'SOLVER' | 'ECOSYSTEM';
 
 export interface IndustryItem {
   id: string;

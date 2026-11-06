@@ -10,6 +10,7 @@ import {
 } from '@/components/ecosystem/constants';
 import { ALL_SUB_INDUSTRIES } from '@/components/ecosystem/allSubIndustries';
 import { ProcessingTab } from '@/components/ecosystem/tabs/ProcessingTab';
+import { NdToolsTab } from '@/components/ecosystem/tabs/NdToolsTab';
 import { CapitalTab } from '@/components/ecosystem/tabs/CapitalTab';
 import { ProductionTab } from '@/components/ecosystem/tabs/ProductionTab';
 import { CityTab } from '@/components/ecosystem/tabs/CityTab';
@@ -25,6 +26,7 @@ import { ProductChain } from '@/components/ecosystem/production/types';
 /* Tab Header Bar Items */
 const MAIN_TABS = [
   { id: 'PROCESS', label: 'ประมวลผล', icon: 'fa-solid fa-microchip', badge: 'AI' },
+  { id: 'ND_TOOLS', label: 'เครื่องมือ N-มิติ', icon: 'fa-solid fa-cubes', badge: 'N-D Hub' },
   { id: 'CAPITAL', label: 'ทำทุน', icon: 'fa-solid fa-coins', badge: 'Cap Table' },
   { id: 'PRODUCTION', label: 'ทำผลิต', icon: 'fa-solid fa-industry', badge: 'Production' },
   { id: 'CITY', label: 'ทำเมือง', icon: 'fa-solid fa-city', badge: 'City' },
@@ -34,8 +36,10 @@ const MAIN_TABS = [
 ];
 
 function EcosystemContent() {
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as MainTabType) || 'ND_TOOLS';
   const [viewMode, setViewMode] = useState<'MOBILE' | 'PC'>('MOBILE');
-  const [mainTab, setMainTab] = useState<MainTabType>('PRODUCTION');
+  const [mainTab, setMainTab] = useState<MainTabType>(initialTab);
 
   /* Tab 1 State: AI Processing Pipeline */
   const [promptInput, setPromptInput] = useState('');
@@ -261,6 +265,10 @@ function EcosystemContent() {
               />
             )}
 
+            {mainTab === 'ND_TOOLS' && (
+              <NdToolsTab />
+            )}
+
             {mainTab === 'CAPITAL' && (
               <CapitalTab
                 selectedIndustryId={selectedIndustryId}
@@ -438,6 +446,12 @@ function EcosystemContent() {
                 onRunProcessing={handleRunProcessing}
                 onNavigateToEcosystem={() => setMainTab('ECOSYSTEM')}
               />
+            </div>
+          )}
+
+          {mainTab === 'ND_TOOLS' && (
+            <div className="flex-1 flex overflow-hidden">
+              <NdToolsTab />
             </div>
           )}
 
