@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { BottomTabBar } from '@/components/shared/BottomTabBar';
 import { MainTabType, CapTableItem } from '@/components/ecosystem/types';
 import {

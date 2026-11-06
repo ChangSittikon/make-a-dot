@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { INDUSTRIES_LIST } from '../constants';
 import { ALL_SUB_INDUSTRIES } from '../allSubIndustries';
 import { HiddenNodesScannerModal } from '../production/HiddenNodesScannerModal';
+import { ExpertDemandMonitoringView } from '../ExpertDemandMonitoringView';
 
 interface ProcessingTabProps {
   promptInput?: string;
@@ -13,6 +14,7 @@ interface ProcessingTabProps {
   hasAnalyzed?: boolean;
   onRunProcessing?: () => void;
   onNavigateToEcosystem?: () => void;
+  initialSubTab?: string;
 }
 
 interface ProcessTabItem {
@@ -27,8 +29,9 @@ interface ProcessTabItem {
 
 export const ProcessingTab: React.FC<ProcessingTabProps> = ({
   onNavigateToEcosystem,
+  initialSubTab,
 }) => {
-  const [activeTabId, setActiveTabId] = useState<string>('all');
+  const [activeTabId, setActiveTabId] = useState<string>(initialSubTab || 'demand');
   const [localPrompt, setLocalPrompt] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
@@ -36,6 +39,15 @@ export const ProcessingTab: React.FC<ProcessingTabProps> = ({
 
   // 14 Tabs: 1 รวม + 12 หมวดอุตสาหกรรม + 1 ดอทปริศนา
   const TABS_14: ProcessTabItem[] = [
+    {
+      id: 'demand',
+      code: 'ดีมานด์',
+      label: 'มอนิเตอร์ดีมานด์',
+      icon: 'fa-solid fa-chart-line',
+      desc: 'มอนิเตอร์ดีมานด์ผู้เชี่ยวชาญ ดูความต้องการของ Requester (อาชีพ, ทักษะ Step 5) เพื่อปรับกลยุทธ์แพลตฟอร์ม',
+      color: '#ef4444',
+      badge: 'Demand',
+    },
     {
       id: 'all',
       code: 'รวม',
@@ -86,6 +98,7 @@ export const ProcessingTab: React.FC<ProcessingTabProps> = ({
           const isActive = activeTabId === tab.id;
           const isMystery = tab.id === 'mystery';
           const isAll = tab.id === 'all';
+          const isDemand = tab.id === 'demand';
 
           return (
             <button
@@ -142,6 +155,11 @@ export const ProcessingTab: React.FC<ProcessingTabProps> = ({
 
       {/* Right Content Area */}
       <div className="flex-1 min-w-0 overflow-y-auto pb-24 bg-white dark:bg-[#12141a] p-3 sm:p-4 space-y-4">
+        {/* TAB 0: มอนิเตอร์ดีมานด์ผู้เชี่ยวชาญ (EXPERT DEMAND MONITORING) */}
+        {activeTabId === 'demand' && (
+          <ExpertDemandMonitoringView />
+        )}
+
         {/* TAB 1: รวม (ALL OVERVIEW) */}
         {activeTabId === 'all' && (
           <div className="space-y-4">
@@ -251,7 +269,7 @@ export const ProcessingTab: React.FC<ProcessingTabProps> = ({
         )}
 
         {/* TABS 2-13: 12 หมวดอุตสาหกรรม (INDUSTRY DETAILS) */}
-        {activeTabId !== 'all' && activeTabId !== 'mystery' && (
+        {activeTabId !== 'all' && activeTabId !== 'mystery' && activeTabId !== 'demand' && (
           <div className="space-y-4">
             {/* Header Banner */}
             <div className="bg-gradient-to-r from-orange-500/10 via-brand-red/10 to-transparent p-4 rounded-2xl border border-orange-500/20">
