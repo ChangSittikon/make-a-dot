@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { HumanStateContext, EcosystemTool } from '@/lib/ecosystem-tools/types';
 import { HIGHLIGHT_TOOLS, UNIVERSAL_CORE_TOOLS } from '@/lib/ecosystem-tools/nd-matrix-and-core-registry';
 import { CONSTRUCTION_TOOLS, OTHER_INDUSTRIES_TOOLS } from '@/lib/ecosystem-tools/specialized-industry-registry';
@@ -55,7 +56,9 @@ interface NdToolsTabProps {
 }
 
 export const NdToolsTab: React.FC<NdToolsTabProps> = ({ initialSubTab = 'highlight' }) => {
-  const [activeSidebarTab, setActiveSidebarTab] = useState<string>(initialSubTab);
+  const searchParams = useSearchParams();
+  const urlSubTab = searchParams ? (searchParams.get('subtab') || initialSubTab) : initialSubTab;
+  const [activeSidebarTab, setActiveSidebarTab] = useState<string>(urlSubTab);
   const [selectedTool, setSelectedTool] = useState<EcosystemTool | null>(null);
 
   const [humanContext, setHumanContext] = useState<HumanStateContext>({
@@ -93,6 +96,15 @@ export const NdToolsTab: React.FC<NdToolsTabProps> = ({ initialSubTab = 'highlig
   };
 
   const activeTools = getActiveTools();
+
+  const categoryTitle =
+    activeSidebarTab === 'highlight'
+      ? 'เครื่องยนต์เชื่อมดอท 6 แกนเอกลักษณ์'
+      : activeSidebarTab === 'universal'
+      ? 'เครื่องมือสากลพื้นฐานมนุษยชาติ'
+      : activeSidebarTab === 'construction'
+      ? '01 ก่อสร้างและอสังหาริมทรัพย์'
+      : activeTools[0]?.categoryLabel || 'เครื่องมือเฉพาะทางประจำสายงาน';
 
   return (
     <div className="flex-1 flex flex-col w-full h-full font-prompt bg-white dark:bg-[#0F172A] overflow-hidden">
@@ -141,85 +153,48 @@ export const NdToolsTab: React.FC<NdToolsTabProps> = ({ initialSubTab = 'highlig
             <div className="space-y-4 animate-fade-in">
               
               {/* Category Governance Header */}
-              <div className="bg-[#F8FAFC] dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-gray-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+              <div className="bg-[#F8FAFC] dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-gray-800 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-2xs">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#E11D48] animate-pulse"></span>
-                    <h2 className="text-sm sm:text-base font-extrabold text-[#0F172A] dark:text-white">
-                      {activeSidebarTab === 'highlight' && 'เครื่องยนต์เชื่อมดอท 6 แกนเอกลักษณ์'}
-                      {activeSidebarTab === 'universal' && 'เครื่องมือสากลพื้นฐานมนุษยชาติ (D2.01 - D2.08)'}
-                      {activeSidebarTab === 'construction' && '01 ก่อสร้างและอสังหาริมทรัพย์ (D3.01.00 - D3.01.07)'}
-                      {activeSidebarTab.startsWith('ind_') && 'เครื่องมือเฉพาะทางประจำสายงานอุตสาหกรรม'}
+                    <h2 className="text-xs sm:text-sm font-extrabold text-[#0F172A] dark:text-white">
+                      {categoryTitle}
                     </h2>
                   </div>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    มาตรฐานรับรองโดย: Tier 4 Domain Director | ข้อมูลหน้างานจริงโดย: Tier 2 Professional
+                    รับรองโดย: Tier 4 Director • ข้อมูลโดย: Tier 2 Pro
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border border-emerald-200">
-                    <ShieldCheck className="w-3 h-3 inline mr-1" />
-                    HITL VERIFIED
+                <div className="shrink-0">
+                  <span className="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded border border-slate-900">
+                    VERIFIED STANDARD
                   </span>
                 </div>
               </div>
 
-              {/* Tool Cards Grid - Pure Swiss Style */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Tool Cards Grid - Clean Vertical App Icon Card (Swiss Style) */}
+              <div className="grid grid-cols-2 gap-2.5">
                 {activeTools.map((tool) => {
                   const Icon = ICON_MAP[tool.iconName] || Sparkles;
                   return (
-                    <div
+                    <button
                       key={tool.id}
                       data-tool-id={tool.id}
                       onClick={() => setSelectedTool(tool)}
-                      className="bg-white dark:bg-[#131926] border border-[#E2E8F0] dark:border-gray-800 rounded-2xl p-4 hover:border-[#0F172A] dark:hover:border-gray-600 transition-all cursor-pointer shadow-xs hover:shadow-md flex flex-col justify-between group"
+                      className="bg-white dark:bg-[#131926] border border-[#E2E8F0] dark:border-gray-800 rounded-2xl p-3 hover:border-slate-900 dark:hover:border-gray-500 transition-all cursor-pointer shadow-xs hover:shadow-md flex flex-col items-center justify-between group"
                     >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#0F172A] text-white">
-                            {tool.code}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-mono">
-                            {tool.version}
-                          </span>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[#0F172A] dark:text-white shrink-0 group-hover:bg-[#E11D48] group-hover:text-white transition-colors">
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] dark:text-white leading-tight group-hover:text-[#E11D48] transition-colors">
-                              {tool.name}
-                            </h3>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2 mt-1 leading-relaxed">
-                              {tool.description}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-1 pt-1">
-                          {tool.tags.map((t, idx) => (
-                            <span
-                              key={idx}
-                              className="text-[9px] px-1.5 py-0.2 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="flex items-center justify-end w-full mb-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
                       </div>
 
-                      {/* Card Footer CTA */}
-                      <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-[11px]">
-                        <span className="text-gray-400 text-[10px]">คลิกเปิดเครื่องมือโต้ตอบ</span>
-                        <span className="font-bold text-[#0F172A] dark:text-white flex items-center gap-0.5 group-hover:text-[#E11D48] transition-colors">
-                          เปิดใช้งาน <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </span>
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white group-hover:bg-rose-50 group-hover:border-rose-200 group-hover:text-rose-600 transition-colors mb-2">
+                        <Icon className="w-5 h-5" />
                       </div>
-                    </div>
+
+                      <span className="text-xs font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 text-center w-full">
+                        {tool.title || tool.name}
+                      </span>
+                    </button>
                   );
                 })}
               </div>

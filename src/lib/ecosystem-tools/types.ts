@@ -21,7 +21,8 @@ export interface HumanStateContext {
 export interface EcosystemTool {
   id: string;
   code: string;
-  name: string;
+  title: string;
+  name?: string;
   category: 'HIGHLIGHT' | 'UNIVERSAL' | 'CONSTRUCTION' | 'INDUSTRY';
   categoryLabel: string;
   iconName: string;

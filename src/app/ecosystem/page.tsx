@@ -25,8 +25,8 @@ import { ProductChain } from '@/components/ecosystem/production/types';
 
 /* Tab Header Bar Items */
 const MAIN_TABS = [
-  { id: 'PROCESS', label: 'ประมวลผล', icon: 'fa-solid fa-microchip', badge: 'AI' },
-  { id: 'ND_TOOLS', label: 'เครื่องมือ N-มิติ', icon: 'fa-solid fa-cubes', badge: 'N-D Hub' },
+
+  { id: 'ND_TOOLS', label: 'เชื่อมดอท & ดีมานด์', icon: 'fa-solid fa-cubes', badge: 'N-D Hub' },
   { id: 'CAPITAL', label: 'ทำทุน', icon: 'fa-solid fa-coins', badge: 'Cap Table' },
   { id: 'PRODUCTION', label: 'ทำผลิต', icon: 'fa-solid fa-industry', badge: 'Production' },
   { id: 'CITY', label: 'ทำเมือง', icon: 'fa-solid fa-city', badge: 'City' },
@@ -218,7 +218,7 @@ function EcosystemContent() {
           </header>
 
           {/* Subheader: Main Tabs Bar */}
-          <div className="px-2 py-1.5 bg-gray-50/90 dark:bg-[#16191e] border-b border-gray-100 dark:border-gray-800/80 flex gap-1 overflow-x-auto hide-scrollbar shrink-0 z-20">
+          <div className="px-2 py-1.5 bg-gray-50/90 dark:bg-[#16191e] border-b border-gray-100 dark:border-gray-800/80 flex gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 z-20">
             {MAIN_TABS.map((tab) => {
               const isActive = mainTab === tab.id;
               const hasBridgeSync =
@@ -387,7 +387,7 @@ function EcosystemContent() {
 
         {/* PC Subheader: Main Tabs Bar */}
         <div className="px-6 py-2 bg-gray-50 dark:bg-[#16191e] border-b border-gray-100 dark:border-gray-800/80 flex items-center justify-between shrink-0">
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {MAIN_TABS.map((tab) => {
               const isActive = mainTab === tab.id;
               const hasBridgeSync =
