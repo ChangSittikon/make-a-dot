@@ -38,29 +38,38 @@ export interface RecentActivitySectionProps {
  * - ดึงหัวข้อปัญหาเด่นๆ มาเป็นบรรทัดแรก (ตัด prefix ปัญหา: และเครื่องหมายคำพูด)
  * - ดึงสิ่งที่คาดหวังมาเป็นตัวเทาขนาดเล็กบรรทัดถัดไป
  */
-function parseProblemParts(rawText?: string | null): { problem: string; expectation: string | null } {
-  if (!rawText) return { problem: 'ไม่มีรายละเอียดปัญหา', expectation: null };
+export function parseProblemParts(rawText?: string | null): { problem: string; expectation: string | null } {
+  if (!rawText || !rawText.trim()) return { problem: 'ไม่มีรายละเอียดปัญหา', expectation: null };
 
-  let clean = rawText.replace(/^["'“]|["'”]$/g, '').trim();
+  const clean = rawText.replace(/^["'“]|["'”]$/g, '').trim();
 
-  // ตรวจจับรูปแบบ ปัญหา: ... สิ่งที่คาดหวัง: ... ข้อจำกัด: ...
-  const probMatch = clean.match(/ปัญหา\s*:\s*([^สิ่งที่คาดหวัง|ข้อจำกัด]+)/i);
-  const expMatch = clean.match(/สิ่งที่คาดหวัง\s*:\s*([^ข้อจำกัด]+)/i);
+  // ตรวจจับรูปแบบ ปัญหา: ... สิ่งที่คาดหวัง/สิ่งที่ต้องการ: ... ข้อจำกัด: ...
+  const probRegex = /(?:ปัญหา\s*:)\s*([\s\S]*?)(?=(?:สิ่งที่คาดหวัง|สิ่งที่ต้องการ|ข้อจำกัด)\s*:|$)/i;
+  const expRegex = /(?:สิ่งที่คาดหวัง|สิ่งที่ต้องการ)\s*:\s*([\s\S]*?)(?=(?:ข้อจำกัด|ปัญหา)\s*:|$)/i;
 
-  if (probMatch || expMatch) {
-    const p = probMatch ? probMatch[1].trim() : clean;
-    const e = expMatch ? expMatch[1].trim() : null;
-    return {
-      problem: p.replace(/^(ปัญหา\s*:\s*)/i, '').replace(/["'“”]/g, '').trim(),
-      expectation: e ? e.replace(/^(สิ่งที่คาดหวัง\s*:\s*)/i, '').replace(/["'“”]/g, '').trim() : null,
-    };
+  const probMatch = clean.match(probRegex);
+  const expMatch = clean.match(expRegex);
+
+  let problem = probMatch && probMatch[1]?.trim() ? probMatch[1].trim() : '';
+  let expectation = expMatch && expMatch[1]?.trim() ? expMatch[1].trim() : null;
+
+  if (!problem) {
+    const nonKeywordMatch = clean.match(/^([\s\S]*?)(?=(?:สิ่งที่คาดหวัง|สิ่งที่ต้องการ|ข้อจำกัด)\s*:|$)/i);
+    if (nonKeywordMatch && nonKeywordMatch[1]?.trim()) {
+      problem = nonKeywordMatch[1].trim();
+    } else {
+      const lines = clean.split('\n').map((l) => l.trim()).filter(Boolean);
+      const firstNonKeywordLine = lines.find((l) => !l.startsWith('สิ่งที่คาดหวัง') && !l.startsWith('สิ่งที่ต้องการ') && !l.startsWith('ข้อจำกัด'));
+      problem = firstNonKeywordLine || lines[0] || clean;
+    }
   }
 
-  // กรณีไม่มีคีย์เวิร์ด
-  return {
-    problem: clean.replace(/["'“”]/g, '').trim(),
-    expectation: null,
-  };
+  problem = problem.replace(/["'“”]/g, '').trim();
+  if (expectation) {
+    expectation = expectation.replace(/["'“”]/g, '').trim();
+  }
+
+  return { problem, expectation };
 }
 
 export function RecentActivitySection({ initialBounties = [] }: RecentActivitySectionProps) {
@@ -189,13 +198,13 @@ export function RecentActivitySection({ initialBounties = [] }: RecentActivitySe
                 </span>
               </div>
 
-              {/* ข้อความโจทย์: หัวข้อปัญหาตัวหนาบรรทัดเดียว + สิ่งที่คาดหวังตัวเทาบรรทัดถัดไป (ไม่มีเครื่องหมายคำพูด ") */}
+              {/* ข้อความโจทย์: หัวข้อปัญหาตัวหนา + สิ่งที่คาดหวังตัวเทาบรรทัดถัดไป (ตัดจุดไข่ปลาเมื่อเกิน 2 บรรทัดเต็ม) */}
               <div className="space-y-1">
-                <h4 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-1 leading-snug">
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
                   {problem}
                 </h4>
                 {expectation && (
-                  <p className="text-[11px] text-gray-500 line-clamp-1 font-normal">
+                  <p className="text-[11px] text-gray-500 line-clamp-2 font-normal leading-normal">
                     เป้าหมาย: {expectation}
                   </p>
                 )}

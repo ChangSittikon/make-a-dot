@@ -7,6 +7,7 @@ import {
   resolveAISolution,
   AISolutionResult,
 } from "@/lib/career-core";
+import { parseProblemParts } from "./RecentActivitySection";
 import {
   X,
   Activity,
@@ -79,9 +80,8 @@ export function QuickFixCardModal({
   const displayCode =
     bounty.originDotCode ||
     (bounty.id ? `#${bounty.id.slice(-6).toUpperCase()}` : "#DOT-QUEST");
-  const rawDesc =
-    bounty.rawDescription?.replace(/^["'“]|["'”]$/g, "").trim() ||
-    "ตามรายละเอียดที่แจ้งในระบบ";
+
+  const { problem, expectation } = parseProblemParts(bounty.rawDescription);
 
   // Compute AI Solution from career-core engine
   const solution: AISolutionResult = resolveAISolution(
@@ -96,47 +96,47 @@ export function QuickFixCardModal({
       {/* Background overlay click to close */}
       <div className="fixed inset-0" onClick={onClose} />
 
-      {/* Modal Dialog: Strict Swiss Style (ขาว-ดำ-แดง, คมชัด 100%) */}
-      <div className="bg-white border-2 border-gray-900 rounded-[28px] p-4 sm:p-5 shadow-2xl max-w-[430px] w-full max-h-[92vh] flex flex-col relative z-10 overflow-hidden">
-        {/* Close Button at top-right */}
+      {/* Modal Dialog: Strict Swiss Style (ขาว-ดำ-แดง, คมชัด 100%) - กำหนด max-h-[85vh] sm:max-h-[600px] พอดีกับจอมือถือ */}
+      <div className="bg-white border-2 border-gray-900 rounded-[24px] sm:rounded-[28px] p-4 shadow-2xl max-w-[390px] sm:max-w-[410px] w-full max-h-[85vh] sm:max-h-[600px] flex flex-col relative z-10 overflow-hidden">
+        {/* Close Button at top-right (Pinned/Sticky) */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 flex items-center justify-center transition-colors cursor-pointer z-20"
+          className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 flex items-center justify-center transition-colors cursor-pointer z-30 shadow-xs"
           aria-label="ปิดหน้าต่าง"
         >
           <X className="w-4 h-4 text-gray-900" />
         </button>
 
-        {/* ---------------- หัวการ์ด: น้องดอท + SMART AI CARD + Title ---------------- */}
-        <div className="flex flex-col items-center text-center pt-1 pb-3 border-b border-gray-200 shrink-0">
-          <div className="mb-2">
-            <NongDot mood="classic" size={36} color="red" />
+        {/* ---------------- หัวการ์ด: น้องดอท + SMART AI CARD + Title (Pinned/Sticky at Top) ---------------- */}
+        <div className="flex flex-col items-center text-center pt-0.5 pb-2.5 border-b border-gray-200 shrink-0">
+          <div className="mb-1.5">
+            <NongDot mood="classic" size={32} color="red" />
           </div>
 
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap justify-center">
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-900 text-white rounded-full">
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap justify-center">
+            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 bg-gray-900 text-white rounded-full">
               SMART AI CARD
             </span>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-900 rounded-full">
+            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-900 rounded-full">
               {displayCode}
             </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 bg-red-50 text-brand-red border border-red-200 rounded-full flex items-center gap-1">
+            <span className="text-[9.5px] font-bold px-2 py-0.5 bg-red-50 text-brand-red border border-red-200 rounded-full flex items-center gap-1">
               <Activity className="w-3 h-3 text-brand-red" />
               <span>ระบบวินิจฉัยสด 24 ชม.</span>
             </span>
           </div>
 
-          <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight flex items-center gap-1.5">
+          <h2 className="text-sm sm:text-base font-black text-gray-900 tracking-tight flex items-center gap-1.5">
             <span>AI Solution & Quick-Fix SOP</span>
           </h2>
-          <p className="text-[10.5px] text-gray-500 font-medium">
+          <p className="text-[10px] text-gray-500 font-medium">
             ดึงข้อมูลจาก Universal 8 โมดูล & Specialized 7 ตำแหน่ง
           </p>
         </div>
 
-        {/* ---------------- Horizontal Sub-tabs (Swiss Style, no-scrollbar) ---------------- */}
-        <div className="pt-2.5 pb-2 border-b border-gray-200 shrink-0">
+        {/* ---------------- Horizontal Sub-tabs (Pinned/Sticky) ---------------- */}
+        <div className="pt-2 pb-1.5 border-b border-gray-200 shrink-0">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             <button
               type="button"
@@ -198,9 +198,14 @@ export function QuickFixCardModal({
                 {solution.categoryTag}
               </span>
             </div>
-            <p className="text-gray-900 leading-snug line-clamp-2 font-medium">
-              {rawDesc}
+            <p className="text-gray-900 font-bold leading-snug line-clamp-2">
+              {problem}
             </p>
+            {expectation && (
+              <p className="text-[11px] text-gray-500 font-normal mt-0.5 line-clamp-2">
+                เป้าหมาย: {expectation}
+              </p>
+            )}
           </div>
 
           {/* ========================================================================= */}
@@ -404,12 +409,12 @@ export function QuickFixCardModal({
           )}
         </div>
 
-        {/* ---------------- Sticky Bottom Close Button ---------------- */}
-        <div className="pt-3 pb-1 border-t border-gray-200 bg-white shrink-0 mt-auto">
+        {/* ---------------- Sticky Bottom Close Button (Fixed at bottom) ---------------- */}
+        <div className="pt-2.5 pb-0.5 border-t border-gray-200 bg-white shrink-0 mt-auto">
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-[0.98] cursor-pointer text-center shadow-md flex items-center justify-center gap-2"
+            className="w-full bg-gray-900 hover:bg-black text-white font-bold py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-[0.98] cursor-pointer text-center shadow-md flex items-center justify-center gap-2"
           >
             <span>เข้าใจแล้ว ปิดหน้านี้</span>
           </button>

@@ -10,9 +10,11 @@ import { prisma } from "@/lib/prisma";
 
 export async function getCurrentUser() {
   try {
-    // We fetch the first user in DB as our "mock logged-in user".
-    // If none exists, we create the Visionary User so the system never breaks.
-    let user = await prisma.user.findFirst();
+    // We fetch Makoto if available or the first user in DB as our "mock logged-in user".
+    let user = await prisma.user.findFirst({ where: { name: "Makoto" } });
+    if (!user) {
+      user = await prisma.user.findFirst();
+    }
     
     if (!user) {
       user = await prisma.user.create({
