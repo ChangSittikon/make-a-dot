@@ -516,6 +516,72 @@ export const SPECIALIZED_ROLES_CATALOG: SpecializedRoleItem[] = [
     sop: 'ส่งสรุป Daily Flash Report 1 หน้ากระดาษถึงท่านประธานก่อนเวลา 8.00 น. ของทุกวัน',
     script: 'ท่านประธานครับ สรุปความคืบหน้ารอบสัปดาห์ มีประเด็นที่ต้องตัดสินใจเร่งด่วน 1 เรื่องคือการอนุมัติซัพพลายเออร์ปูนเจ้าใหม่ ซึ่งจะช่วยประหยัดงบได้ 450,000 บาท ผมเตรียมเอกสารเปรียบเทียบไว้บนโต๊ะเรียบร้อยแล้วครับ',
   },
+  {
+    id: 'S08_WELLNESS_LIFE_COACH',
+    coordinateId: 'D3.02.01',
+    roleName: 'ที่ปรึกษาสุขภาพ พฤติกรรม และพัฒนาตนเอง (Wellness & Behavioral Coach)',
+    industry: 'สุขภาพ จิตวิทยา และการพัฒนาตนเอง',
+    philosophy: 'การแก้ปัญหาสมาธิและจิตใจ เริ่มต้นจากการจัดระเบียบสภาพแวดล้อมและสร้างวินัยทีละนิด ไม่ใช่การกดดันตัวเอง',
+    competencyFragments: [
+      'Habit Stacking & Focus Triggers: ออกแบบกิจวัตรและสภาพแวดล้อมตัดสิ่งรบกวน',
+      'Stress & Emotional Regulation: เทคนิคผ่อนคลายและจัดการความเครียดระยะสั้น',
+      'Accountability & Action Tracking: ระบบเพื่อนคู่คิดติดตามผลความก้าวหน้าอย่างเป็นมิตร',
+    ],
+    sixAxesMonetization: {
+      vertical: 'รับเป็นที่ปรึกษาด้านสุขภาพจิตและเพิ่มสมาธิให้พนักงานในองค์กร',
+      horizontal: 'เปิดรับให้คำปรึกษาแบบ 1-on-1 สำหรับคนที่มีปัญหาสมาธิสั้นหรือเครียดสะสม',
+      universal: 'ทำเทมเพลต Notion/ตารางจัดตารางชีวิตและแบบฝึกหัดสมาธิแจกและขาย',
+      local: 'จัดกลุ่มพบปะแลกเปลี่ยนประสบการณ์ (Support Group) ในชุมชนหรือร้านกาแฟ',
+      digital: 'เปิดคอร์สออนไลน์ฝึกสมาธิและการจัดการเวลาแบบไม่กดดันตัวเอง',
+      friction: 'บริการ Standby รับฟังปัญหาและช่วยดึงสติยามวิกฤตตลอด 24 ชม.',
+    },
+    sop: 'สำรวจช่วงเวลาที่หลุดโฟกัส -> กำหนดช่วงทำงาน 25 นาที (Pomodoro) -> บันทึกสิ่งที่ทำสำเร็จในแต่ละวัน',
+    script: 'เราจะเริ่มจากการตั้งเป้าหมายสั้นๆ 15-25 นาทีต่อวัน โดยปรับสภาพแวดล้อมรอบตัวก่อน เพื่อให้ทำได้ต่อเนื่องโดยไม่เครียดครับ',
+  },
+  {
+    id: 'S09_PERSONAL_FINANCE',
+    coordinateId: 'D3.02.02',
+    roleName: 'ที่ปรึกษาการเงินส่วนบุคคลและปลดหนี้ (Personal Finance & Cashflow)',
+    industry: 'การเงินและการบริหารสภาพคล่องส่วนบุคคล',
+    philosophy: 'การเงินที่ดีไม่ได้เริ่มจากหารายได้เพิ่ม แต่เริ่มจากการอุดรูรั่วและบริหารกระแสเงินสดให้เหลือทุกเดือน',
+    competencyFragments: [
+      'Debt Snowball & Restructuring: วางแผนจัดลำดับการชดใช้หนี้และเจรจาลดดอกเบี้ย',
+      'Cashflow Buffer Strategy: สร้างเงินสำรองฉุกเฉิน 3-6 เดือนเพื่อความมั่นคงในชีวิต',
+      'Expense Leak Audit: คัดกรองและตัดค่าใช้จ่ายแฝงที่ไม่จำเป็นในชีวิตประจำวัน',
+    ],
+    sixAxesMonetization: {
+      vertical: 'รับเป็นที่ปรึกษาการเงินและการออมให้พนักงานบริษัท',
+      horizontal: 'รับจ้างวางแผนปลดหนี้และจัดทำงบดุลส่วนบุคคลให้ผู้มีปัญหารายย่อย',
+      universal: 'ขายเทมเพลต Excel จัดการหนี้และคำนวณดอกเบี้ยเงินกู้ออนไลน์',
+      local: 'เปิดเวิร์กช็อปสอนชาวบ้านทำบัญชีครัวเรือนและวางแผนปลดหนี้นอกระบบ',
+      digital: 'ทำคลิปสั้นให้ความรู้การเงินและการแก้หนี้บน TikTok / YouTube',
+      friction: 'รับเป็นตัวกลางเจรจาไกล่เกลี่ยหนี้สินกับเจ้าหนี้เพื่อขอผ่อนผันดอกเบี้ย',
+    },
+    sop: 'จัดทำบัญชีรายรับ-รายจ่าย 30 วันย้อนหลัง -> แยกหนี้ดอกเบี้ยสูง -> เจรจารวมหนี้หรือพักชำระ',
+    script: 'เรามาลิสต์รายการหนี้และค่าใช้จ่ายประจำวันทั้งหมดลงตาราง เพื่อจัดลำดับการชำระที่เบาที่สุดและปลดภาระได้เร็วที่สุดกันครับ',
+  },
+  {
+    id: 'S10_DIGITAL_CREATIVE_TECH',
+    coordinateId: 'D3.02.03',
+    roleName: 'ผู้เชี่ยวชาญดิจิทัล ไอที และกราฟิกดีไซน์ (Digital IT & Creative)',
+    industry: 'เทคโนโลยีและงานสร้างสรรค์ดิจิทัล',
+    philosophy: 'เทคโนโลยีและดีไซน์ที่ดีต้องแก้ปัญหาให้ผู้ใช้ได้จริง ไม่ใช่แค่ความซับซ้อน',
+    competencyFragments: [
+      'UI/UX & Visual Asset: ออกแบบสื่อภาพ โปสเตอร์ และหน้าจอแอปพลิเคชันที่ใช้งานง่าย',
+      'Workflow Automation: เชื่อมต่อระบบอัตโนมัติลดเวลาทำงานซ้ำซ้อน',
+      'Rapid Prototyping: พัฒนาชิ้นงานต้นแบบหรือ MVP ให้พร้อมทดสอบภายในเวลาอันสั้น',
+    ],
+    sixAxesMonetization: {
+      vertical: 'รับตำแหน่ง Tech Lead หรือ Creative Director ให้โปรเจกต์',
+      horizontal: 'รับงานฟรีแลนซ์ออกแบบสื่อภาพ เว็บไซต์ หรือระบบอัตโนมัติ',
+      universal: 'ขาย Template เว็บไซต์, กราฟิก และสูตร Automation บนมาร์เก็ตเพลส',
+      local: 'รับทำเพจ ปักหมุด Google Maps และทำป้ายร้านให้ธุรกิจในท้องถิ่น',
+      digital: 'รับจ้างเขียนโค้ดและพัฒนาฟีเจอร์แอปพลิเคชันจากระยะไกล',
+      friction: 'บริการกู้ระบบ แก้บั๊กฉุกเฉิน และกู้คืนข้อมูลนอกเวลาทำการ 24 ชม.',
+    },
+    sop: 'สรุปขอบเขตงานและ Requirement -> ออกแบบ Draft แรกภายใน 24 ชม. -> ส่งมอบไฟล์ต้นฉบับ',
+    script: 'ผมจะสรุปฟังก์ชันหลักที่จำเป็นที่สุด 3 ข้อแรก และเริ่มส่งตัวอย่างดราฟต์ให้คุณตรวจภายในพรุ่งนี้เย็นครับ',
+  },
 ];
 
 // ============================================================================
@@ -777,5 +843,606 @@ export function getOpportunityMonetization(
       ],
       relatedUniversalModuleId: 'U07_HEALTH_OPS',
     },
+  };
+}
+
+// ============================================================================
+// 6. RESOLVE AI SOLUTION & QUICK-FIX SOP ENGINE
+// ============================================================================
+
+export interface AISolutionResult {
+  matchedRole: SpecializedRoleItem;
+  matchedModule: UniversalModuleItem;
+  categoryTag: string;
+  isCustomCategory: boolean;
+  philosophy: string;
+  competencies: string[];
+  sopSteps: Array<{
+    timeframe: string;
+    title: string;
+    tag: string;
+    description: string;
+  }>;
+  kpiPhases: Array<{
+    phase: string;
+    pct: string;
+    title: string;
+    desc: string;
+  }>;
+  resourceSwapOptions: string;
+  acceptanceCriteria: string[];
+}
+
+export function resolveAISolution(
+  rawDescription?: string | null,
+  targetOccupations: Array<{ id?: string; name: string }> = [],
+  targetSkills: Array<{ id?: string; name: string }> = []
+): AISolutionResult {
+  const text = (
+    (rawDescription || '') + ' ' +
+    targetOccupations.map((o) => o.name).join(' ') + ' ' +
+    targetSkills.map((s) => s.name).join(' ')
+  ).toLowerCase();
+
+  // 1. หมวดสุขภาพ / สุขภาพจิต / สมาธิสั้น / เครียด / ซึมเศร้า / นอนไม่หลับ / พัฒนาตัวเอง / ปรึกษา
+  if (
+    text.includes('สมาธิ') ||
+    text.includes('เครียด') ||
+    text.includes('จิต') ||
+    text.includes('นอนไม่หลับ') ||
+    text.includes('ซึมเศร้า') ||
+    text.includes('สุขภาพ') ||
+    text.includes('ออกกำลัง') ||
+    text.includes('ลดน้ำหนัก') ||
+    text.includes('ความรัก') ||
+    text.includes('แฟน') ||
+    text.includes('พัฒนาตัว') ||
+    text.includes('เรียน') ||
+    text.includes('อ่านหนังสือ') ||
+    text.includes('สอบ')
+  ) {
+    const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S08_WELLNESS_LIFE_COACH') || SPECIALIZED_ROLES_CATALOG[0];
+    const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U07_HEALTH_OPS') || UNIVERSAL_MODULES_CATALOG[6];
+    return {
+      matchedRole: role,
+      matchedModule: mod,
+      categoryTag: 'สุขภาพ & พัฒนาตนเอง',
+      isCustomCategory: true,
+      philosophy: role.philosophy,
+      competencies: [
+        'Habit Stacking & Focus Triggers: ออกแบบกิจวัตรและสภาพแวดล้อมตัดสิ่งรบกวน',
+        'Stress & Emotional Regulation: เทคนิคผ่อนคลายและจัดการความเครียดระยะสั้น',
+        'Accountability & Action Tracking: ระบบเพื่อนคู่คิดติดตามผลความก้าวหน้าอย่างเป็นมิตร',
+      ],
+      sopSteps: [
+        {
+          timeframe: 'ชม. 1-4',
+          title: 'Freeze & Audit: สำรวจจุดสะดุด',
+          tag: 'สกัดความเครียด',
+          description: 'สำรวจตัวกระตุ้นความเครียด บันทึกช่วงเวลาที่หลุดโฟกัส และตัดสิ่งรบกวนรอบตัวให้เหลือน้อยที่สุด',
+        },
+        {
+          timeframe: 'ชม. 5-12',
+          title: 'Match & Plan: วางกรอบเวลาสั้นๆ',
+          tag: 'โฟกัสทีละเรื่อง',
+          description: 'เลือกเทคนิคฝึกสมาธิช่วงสั้น เช่น ทำงาน 20-25 นาที แล้วพักสายตา 5 นาที ปรึกษาผู้มีประสบการณ์',
+        },
+        {
+          timeframe: 'ชม. 13-24',
+          title: 'Deploy & Routine: ทดลองปฏิบัติจริง',
+          tag: 'สร้างรูทีนใหม่',
+          description: 'เริ่มทำตามรูทีนวันแรกอย่างผ่อนคลาย ไม่กดดันตัวเอง และจดบันทึกผลเพื่อประเมินร่วมกัน',
+        },
+      ],
+      kpiPhases: [
+        {
+          phase: 'งวดที่ 1',
+          pct: '20% มัดจำ',
+          title: 'วางแผนและจัดรูทีน',
+          desc: 'ออกแบบตารางกิจวัตรและแผนปรับพฤติกรรมเฉพาะบุคคล',
+        },
+        {
+          phase: 'งวดที่ 2',
+          pct: '40% กลางงาน',
+          title: 'ติดตามผล 7-14 วัน',
+          desc: 'ประเมินจุดสะดุดและปรับลดความเครียดระหว่างทาง',
+        },
+        {
+          phase: 'งวดที่ 3',
+          pct: '40% ตรวจรับ',
+          title: 'ตรวจรับผล 30 วัน',
+          desc: 'ประเมินระดับสมาธิและความมั่นใจหลังปฏิบัติตามแผนครบกำหนด',
+        },
+      ],
+      resourceSwapOptions: 'สามารถแลกเปลี่ยนด้วยการช่วยสรุปความรู้, เป็นบัดดี้ออกกำลังกาย, หรือช่วยงานคอมพิวเตอร์/เอกสาร เพื่อหักลดเงินสดได้ 20-50%',
+      acceptanceCriteria: [
+        'มีตารางรูทีนและแผนปฏิบัติการรายสัปดาห์ที่ทำตามได้จริงโดยไม่เครียด',
+        'มีการติดตามผลและให้คำปรึกษาปรับจูนความก้าวหน้าต่อเนื่อง',
+        'ระดับสมาธิและสุขภาวะมีพัฒนาการดีขึ้นอย่างวัดผลได้หลังปฏิบัติตามแผน',
+      ],
+    };
+  }
+
+  // 2. หมวดการเงินส่วนบุคคล / หนี้สินส่วนตัว / ออมเงิน (ที่ไม่ใช่ BOQ ก่อสร้าง)
+  if (
+    (text.includes('หนี้') || text.includes('เงินเดือน') || text.includes('ออม') || text.includes('เงินฝืด') || text.includes('กู้')) &&
+    !text.includes('รับเหมา') && !text.includes('ก่อสร้าง') && !text.includes('boq')
+  ) {
+    const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S09_PERSONAL_FINANCE') || SPECIALIZED_ROLES_CATALOG[1];
+    const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U02_ACCOUNTING') || UNIVERSAL_MODULES_CATALOG[1];
+    return {
+      matchedRole: role,
+      matchedModule: mod,
+      categoryTag: 'การเงินส่วนบุคคล & ปลดหนี้',
+      isCustomCategory: true,
+      philosophy: role.philosophy,
+      competencies: [
+        'Debt Snowball & Restructuring: วางแผนจัดลำดับการชดใช้หนี้และเจรจาลดดอกเบี้ย',
+        'Cashflow Buffer Strategy: สร้างเงินสำรองฉุกเฉิน 3-6 เดือนเพื่อความมั่นคงในชีวิต',
+        'Expense Leak Audit: คัดกรองและตัดค่าใช้จ่ายแฝงที่ไม่จำเป็นในชีวิตประจำวัน',
+      ],
+      sopSteps: [
+        {
+          timeframe: 'ชม. 1-4',
+          title: 'Freeze & Audit: สกัดเงินรั่วไหล',
+          tag: 'หยุดค่าใช้จ่ายแฝง',
+          description: 'รวบรวมภาระหนี้สินและค่าใช้จ่ายประจำทั้งหมด ห้ามกู้หนี้ใหม่มาโปะหนี้เก่าโดยไม่วางแผน',
+        },
+        {
+          timeframe: 'ชม. 5-12',
+          title: 'Match & Restructure: จัดลำดับการชำระ',
+          tag: 'เจรจาลดดอกเบี้ย',
+          description: 'แยกหนี้ดอกเบี้ยสูงมาจัดการก่อน หรือเจรจาปรับโครงสร้างหนี้เพื่อลดยอดผ่อนต่อเดือน',
+        },
+        {
+          timeframe: 'ชม. 13-24',
+          title: 'Deploy & Action: ตั้งระบบคุมเงิน',
+          tag: 'คุมกระแสเงินสด',
+          description: 'ทำบัญชีรายวันและกำหนดเพดานใช้จ่ายอย่างเคร่งครัด พร้อมเงินสำรองฉุกเฉิน',
+        },
+      ],
+      kpiPhases: [
+        {
+          phase: 'งวดที่ 1',
+          pct: '20% มัดจำ',
+          title: 'วิเคราะห์หนี้ & งบดุล',
+          desc: 'รวบรวมข้อมูลและทำตารางแผนปลดหนี้รายเดือน',
+        },
+        {
+          phase: 'งวดที่ 2',
+          pct: '40% กลางงาน',
+          title: 'เจรจาลดดอกเบี้ย/รวมหนี้',
+          desc: 'ติดต่อสถาบันการเงินหรือเจ้าหนี้เพื่อปรับโครงสร้างหนี้สำเร็จ',
+        },
+        {
+          phase: 'งวดที่ 3',
+          pct: '40% ตรวจรับ',
+          title: 'สภาพคล่องกลับมาเป็นบวก',
+          desc: 'เงินเหลือเก็บต่อเดือนเพิ่มขึ้นและมีแผนคุมวินัยการเงินระยะยาว',
+        },
+      ],
+      resourceSwapOptions: 'สามารถแลกเปลี่ยนด้วยการนำของสะสมหรือของมือสองมาขายชำระหนี้ หรือช่วยงานรับจ้างเสริมเพื่อลดยอดเงินสด',
+      acceptanceCriteria: [
+        'มีตารางแจกแจงรายรับ-รายจ่าย และลำดับการชำระหนี้ที่ชัดเจน',
+        'ภาระดอกเบี้ยหรือยอดผ่อนต่อเดือนลดลงตามแผนที่วางไว้',
+        'มีเงินสดสำรองสภาพคล่องเพียงพอไม่สะดุดในรอบเดือน',
+      ],
+    };
+  }
+
+  // 3. หมวดเทคโนโลยี / โปรแกรม / แอป / กราฟิก / ไอที
+  if (
+    text.includes('แอป') ||
+    text.includes('เว็บ') ||
+    text.includes('โปรแกรม') ||
+    text.includes('ระบบ') ||
+    text.includes('ไอที') ||
+    text.includes('กราฟิก') ||
+    text.includes('ดีไซน์') ||
+    text.includes('โค้ด')
+  ) {
+    const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S10_DIGITAL_CREATIVE_TECH') || SPECIALIZED_ROLES_CATALOG[6];
+    const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U06_TECH_AI') || UNIVERSAL_MODULES_CATALOG[5];
+    return {
+      matchedRole: role,
+      matchedModule: mod,
+      categoryTag: 'เทคโนโลยี & งานสร้างสรรค์ดิจิทัล',
+      isCustomCategory: true,
+      philosophy: role.philosophy,
+      competencies: [
+        'UI/UX & Visual Asset: ออกแบบสื่อภาพและหน้าจอที่เข้าใจง่าย สวยงาม คมชัด',
+        'Workflow Automation: เชื่อมต่อระบบอัตโนมัติลดเวลาทำงานซ้ำซ้อน',
+        'Rapid Prototyping: พัฒนาชิ้นงานต้นแบบหรือ MVP ให้พร้อมทดสอบได้ทันที',
+      ],
+      sopSteps: [
+        {
+          timeframe: 'ชม. 1-4',
+          title: 'Scope & Brief: สรุปขอบเขตงาน',
+          tag: 'กำหนดสเปก',
+          description: 'ลิสต์ฟังก์ชันหรือชิ้นงานที่จำเป็นที่สุด 3 ข้อแรก พร้อมขนาดและสไตล์ที่ต้องการ',
+        },
+        {
+          timeframe: 'ชม. 5-12',
+          title: 'Wireframe & Draft: ส่งดราฟต์แรก',
+          tag: 'ดูงานร่าง',
+          description: 'ขึ้นโครงร่างหรือแบบร่างเบื้องต้น (Rough Draft) ให้ตรวจทิศทางก่อนลงรายละเอียด',
+        },
+        {
+          timeframe: 'ชม. 13-24',
+          title: 'Refine & Deliver: ปรับแก้และส่งมอบ',
+          tag: 'ส่งมอบไฟล์จริง',
+          description: 'เก็บรายละเอียด ตรวจสอบความถูกต้อง และส่งมอบไฟล์ต้นฉบับพร้อมใช้งาน',
+        },
+      ],
+      kpiPhases: [
+        {
+          phase: 'งวดที่ 1',
+          pct: '20% มัดจำ',
+          title: 'ส่งแบบร่างแรก (Draft)',
+          desc: 'ตรวจสอบสไตล์และโครงสร้างให้ตรงตามโจทย์',
+        },
+        {
+          phase: 'งวดที่ 2',
+          pct: '40% กลางงาน',
+          title: 'ปรับแก้ชิ้นงาน 60-80%',
+          desc: 'ใส่รายละเอียด ฟอนต์ สี และฟังก์ชันการใช้งานครบถ้วน',
+        },
+        {
+          phase: 'งวดที่ 3',
+          pct: '40% ตรวจรับ',
+          title: 'ส่งมอบงาน 100%',
+          desc: 'ทดสอบการแสดงผลและส่งมอบ Source Files ครบถ้วน',
+        },
+      ],
+      resourceSwapOptions: 'สามารถแลกเปลี่ยนด้วยการช่วยทดสอบระบบ (User Testing), รีวิวผลงาน, หรือโปรโมตบอกต่อ',
+      acceptanceCriteria: [
+        'ชิ้นงานตรงตามสเปกและข้อตกลงที่บรีฟไว้ 100%',
+        'ส่งมอบไฟล์ความละเอียดสูงและไฟล์ต้นฉบับครบถ้วน',
+        'รับประกันแก้ไขบั๊กหรือจุดบกพร่องฟรี 30 วันหลังส่งมอบ',
+      ],
+    };
+  }
+
+  // 4. หมวดการตลาด / ขาย / คอนเทนต์ / เพจ / ลูกค้า
+  if (
+    text.includes('ขาย') ||
+    text.includes('การตลาด') ||
+    text.includes('เพจ') ||
+    text.includes('โปรโมท') ||
+    text.includes('คอนเทนต์') ||
+    text.includes('ลูกค้า')
+  ) {
+    const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S05_REAL_ESTATE_MARKETER') || SPECIALIZED_ROLES_CATALOG[4];
+    const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U05_BRANDING') || UNIVERSAL_MODULES_CATALOG[4];
+    return {
+      matchedRole: role,
+      matchedModule: mod,
+      categoryTag: 'การตลาด & ปิดการขาย',
+      isCustomCategory: true,
+      philosophy: role.philosophy,
+      competencies: [
+        'Storytelling & Offer: สื่อสารคุณค่าจุดเด่นสินค้าให้ตรงกลุ่มเป้าหมาย',
+        'Funnel Optimization: ปรับปรุงขั้นตอนปิดการขายไม่ให้ลูกค้าหลุดไประหว่างทาง',
+        'Performance Attribution: วัดผลลัพธ์จากยอดขายและจำนวนการติดต่อจริง',
+      ],
+      sopSteps: [
+        {
+          timeframe: 'ชม. 1-4',
+          title: 'Audience & Angle: กำหนดกลุ่มเป้าหมาย',
+          tag: 'จุดขายคมชัด',
+          description: 'สำรวจคู่แข่งและระบุจุดขาย 3 ข้อที่แตกต่าง พร้อมกลุ่มลูกค้าที่มีกำลังซื้อจริง',
+        },
+        {
+          timeframe: 'ชม. 5-12',
+          title: 'Creative & Script: เตรียมสื่อและข้อความ',
+          tag: 'คอนเทนต์พร้อม',
+          description: 'เตรียมรูปภาพ วิดีโอสั้น และข้อความนำเสนอที่ดึงดูดสายตาและชวนทัก',
+        },
+        {
+          timeframe: 'ชม. 13-24',
+          title: 'Launch & Track: ยิงแคมเปญวัดผล',
+          tag: 'เปิดรับลูกค้า',
+          description: 'ปล่อยโพสต์หรือโปรโมตตรงกลุ่ม พร้อมระบบตอบแชตปิดการขายทันท่วงที',
+        },
+      ],
+      kpiPhases: [
+        {
+          phase: 'งวดที่ 1',
+          pct: '20% มัดจำ',
+          title: 'ส่งแผนคอนเทนต์และสเปก',
+          desc: 'อนุมัติ Mood & Tone และกลุ่มเป้าหมาย',
+        },
+        {
+          phase: 'งวดที่ 2',
+          pct: '40% กลางงาน',
+          title: 'ผลิตสื่อและเริ่มเผยแพร่',
+          desc: 'ส่งมอบชิ้นงานโฆษณาและเริ่มรันแคมเปญจริง',
+        },
+        {
+          phase: 'งวดที่ 3',
+          pct: '40% ตรวจรับ',
+          title: 'สรุปรายงานผลและยอดขาย',
+          desc: 'วัดผลยอดทัก ยอดขาย และปรับแผนขยายผล',
+        },
+      ],
+      resourceSwapOptions: 'สามารถเจรจาแบ่งส่วนแบ่งยอดขาย (Rev-Share / Commission 10-30%) แทนค่าจ้างเงินสดล่วงหน้า',
+      acceptanceCriteria: [
+        'ส่งมอบชิ้นงานและแคมเปญตรงตามเวลาที่กำหนด',
+        'มีการรายงานสถิติยอดการเข้าชมและการติดต่ออย่างโปร่งใส',
+        'ผลลัพธ์บรรลุเป้าหมายตัวชี้วัด (KPI) ที่ตกลงกันไว้',
+      ],
+    };
+  }
+
+  // 5. หมวดสัญญา / กฎหมาย / สิทธิ์ / โดนโกง / คดี
+  if (
+    text.includes('สัญญา') ||
+    text.includes('ฟ้อง') ||
+    text.includes('โกง') ||
+    text.includes('อนุญาต') ||
+    text.includes('สิทธิ์') ||
+    text.includes('เทศบาล')
+  ) {
+    const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S04_REAL_ESTATE_LEGAL') || SPECIALIZED_ROLES_CATALOG[3];
+    const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U04_LEGAL_RIGHTS') || UNIVERSAL_MODULES_CATALOG[3];
+    return {
+      matchedRole: role,
+      matchedModule: mod,
+      categoryTag: 'สัญญา & กฎหมาย',
+      isCustomCategory: false,
+      philosophy: role.philosophy,
+      competencies: [
+        'Construction Contract Vetting: อุดรอยรั่วค่าปรับล่าช้าและเหตุสุดวิสัยในสัญญา',
+        'Legal Rights Protection: ตรวจสอบหลักฐานคู่สัญญาและเงื่อนไขการบอกเลิกสัญญา',
+        'Escrow Enforcement: ใช้คนกลางพักเงินเพื่อความปลอดภัยของทั้งสองฝ่าย',
+      ],
+      sopSteps: [
+        {
+          timeframe: 'ชม. 1-4',
+          title: 'Evidence Freeze: รวบรวมหลักฐาน',
+          tag: 'รวบรวมหลักฐาน',
+          description: 'แคปเจอร์แชต บันทึกสลิปโอนเงิน เอกสารบัตรประชาชน และรูปหน้างานทั้งหมด',
+        },
+        {
+          timeframe: 'ชม. 5-12',
+          title: 'Agreement Draft: ร่างสัญญามาตรฐาน',
+          tag: 'ร่างสัญญา',
+          description: 'ร่างบันทึกข้อตกลง (MOU) ชัดเจน ระบุขอบเขตงาน วันส่งมอบ และค่าปรับกรณีผิดนัด',
+        },
+        {
+          timeframe: 'ชม. 13-24',
+          title: 'Sign & Lock: ลงนามผูกพันทั้งสองฝ่าย',
+          tag: 'ลงนามผูกพัน',
+          description: 'ส่งมอบสัญญาให้ทั้งสองฝ่ายลงชื่อรับทราบก่อนเริ่มงาน หรืองดจ่ายเงินจนกว่าสัญญาจะเรียบร้อย',
+        },
+      ],
+      kpiPhases: [
+        {
+          phase: 'งวดที่ 1',
+          pct: '20% มัดจำ',
+          title: 'ตรวจเอกสารและหลักฐาน',
+          desc: 'สรุปประเด็นความเสี่ยงทางกฎหมายและข้อควรระวัง',
+        },
+        {
+          phase: 'งวดที่ 2',
+          pct: '40% กลางงาน',
+          title: 'ส่งมอบร่างสัญญาฉบับแก้ไข',
+          desc: 'คู่สัญญาปรับแก้ข้อกำหนดร่วมกันจนได้ข้อสรุป',
+        },
+        {
+          phase: 'งวดที่ 3',
+          pct: '40% ตรวจรับ',
+          title: 'ลงนามสมบูรณ์ทั้งสองฝ่าย',
+          desc: 'จัดเก็บเอกสารสัญญาตัวจริงและเริ่มดำเนินการตามเงื่อนไข',
+        },
+      ],
+      resourceSwapOptions: 'สามารถแลกเปลี่ยนด้วยบริการทางวิชาชีพอื่น หรือสิ่งอำนวยความสะดวกในพื้นที่เพื่อลดค่าบริการทางกฎหมาย',
+      acceptanceCriteria: [
+        'ร่างสัญญามีความถูกต้อง รัดกุม และบังคับใช้ได้ตามกฎหมาย',
+        'อุดรอยรั่วความเสี่ยงเรื่องการทิ้งงานหรือค่าปรับล่าช้าครบถ้วน',
+        'ทั้งสองฝ่ายเข้าใจและยอมรับเงื่อนไขโดยไม่มีข้อโต้แย้ง',
+      ],
+    };
+  }
+
+  // 6. หมวดจัดซื้อ / บัญชีโครงการ / BOQ
+  if (
+    text.includes('จัดซื้อ') ||
+    text.includes('ภาษี') ||
+    text.includes('บิล') ||
+    text.includes('ค่างวด') ||
+    text.includes('boq')
+  ) {
+    const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S01_CONST_PROCUREMENT') || SPECIALIZED_ROLES_CATALOG[0];
+    const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U01_PROCUREMENT') || UNIVERSAL_MODULES_CATALOG[0];
+    return {
+      matchedRole: role,
+      matchedModule: mod,
+      categoryTag: 'จัดซื้อ & บัญชีโครงการ',
+      isCustomCategory: false,
+      philosophy: role.philosophy,
+      competencies: [
+        'BOQ Reverse Engineering: แกะรอยราคากลางหาช่องว่าง Volume Discount',
+        'Supplier Credit Leveraging: ขยายเครดิตเทอมร้านค้าจาก 30 เป็น 45-60 วัน',
+        'Alternative Material Sourcing: หาวัสดุตีเทียบเท่า มอก. ลดต้นทุนค่าแรง',
+      ],
+      sopSteps: [
+        {
+          timeframe: 'ชม. 1-4',
+          title: 'Freeze & Audit: สำรวจรายการของ',
+          tag: 'สกัดเงินรั่วไหล',
+          description: 'จดรายการวัสดุและสเปกที่ต้องการลงตาราง ห้ามสั่งของโดยไม่เช็กราคากลาง',
+        },
+        {
+          timeframe: 'ชม. 5-12',
+          title: 'Match & Procure: เทียบราคาร้านค้า 3 เจ้า',
+          tag: 'เทียบราคากลาง 3 เจ้า',
+          description: 'ขอใบเสนอราคาจากร้านวัสดุ 3 แห่ง รวมค่าขนส่งและเงื่อนไขเครดิตเทอม',
+        },
+        {
+          timeframe: 'ชม. 13-24',
+          title: 'Deploy & Lock: วางแผนสั่งของเป็นรอบ',
+          tag: 'ลดเงินจม',
+          description: 'สั่งของตามงวดงานจริงหน้างาน เพื่อไม่ให้ของกองตากแดดหรือสูญหาย',
+        },
+      ],
+      kpiPhases: [
+        {
+          phase: 'งวดที่ 1',
+          pct: '20% มัดจำ',
+          title: 'สรุปตารางเทียบราคากลาง',
+          desc: 'ส่งตารางเปรียบเทียบราคาวัสดุ 3 ร้านค้าพร้อมทางเลือกลดต้นทุน',
+        },
+        {
+          phase: 'งวดที่ 2',
+          pct: '40% กลางงาน',
+          title: 'ประสานงานจัดส่งของงวดแรก',
+          desc: 'ตรวจนับของเข้าหน้างานตรงสเปกและบันทึกใบส่งของ',
+        },
+        {
+          phase: 'งวดที่ 3',
+          pct: '40% ตรวจรับ',
+          title: 'เคลียร์บิลและปิดยอดจัดซื้อ',
+          desc: 'ตรวจสอบเอกสารภาษี ใบกำกับ และส่วนลดครบถ้วน',
+        },
+      ],
+      resourceSwapOptions: 'สามารถเจรจาขอยืมเครื่องมือ หรือใช้รถกระบะขนส่งเองเพื่อแลกเปลี่ยนเป็นส่วนลดค่าวัสดุ',
+      acceptanceCriteria: [
+        'วัสดุทุกรายการได้มาตรฐานและราคากลางไม่สูงกว่าท้องตลาด',
+        'จัดส่งถึงหน้างานตรงเวลาไม่ทำให้ทีมงานต้องหยุดรอของ',
+        'มีใบเสร็จและใบกำกับภาษีถูกต้องครบถ้วน',
+      ],
+    };
+  }
+
+  // 7. หมวดแรงงาน / จัดหาทีมงาน / ขาดคน
+  if (
+    text.includes('แรงงาน') ||
+    text.includes('หาคน') ||
+    text.includes('คนงาน') ||
+    text.includes('ขาดคน')
+  ) {
+    const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S03_CONSTRUCTION_HR') || SPECIALIZED_ROLES_CATALOG[2];
+    const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U03_ADMIN_OPS') || UNIVERSAL_MODULES_CATALOG[2];
+    return {
+      matchedRole: role,
+      matchedModule: mod,
+      categoryTag: 'แรงงาน & บริหารทีมช่าง',
+      isCustomCategory: false,
+      philosophy: role.philosophy,
+      competencies: [
+        'Subcontractor Vetting: การคัดเลือกและบริหารหัวหน้าช่างเหมาช่วงตามฝีมือจริง',
+        'Safety & Compliance: การจัดเตรียมอุปกรณ์เซฟตี้ลดอุบัติเหตุหน้างานเป็นศูนย์',
+        'Daily Output Tracking: ติดตามผลงานรายวันและประเมินประสิทธิภาพแรงงาน',
+      ],
+      sopSteps: [
+        {
+          timeframe: 'ชม. 1-4',
+          title: 'Scope Definition: ระบุทักษะที่ต้องการ',
+          tag: 'สรุปสกิล',
+          description: 'ระบุประเภทงาน จำนวนช่าง เครื่องมือที่ต้องเตรียมมา และค่าจ้างรายวัน/เหมา',
+        },
+        {
+          timeframe: 'ชม. 5-12',
+          title: 'Sourcing & Call: คัดเลือกหัวหน้าช่าง',
+          tag: 'เช็กประวัติ',
+          description: 'ติดต่อหัวหน้าช่าง 2-3 ทีม ขอดูผลงานเก่าและเช็กคิวความพร้อมเข้าหน้างาน',
+        },
+        {
+          timeframe: 'ชม. 13-24',
+          title: 'Deploy & Lock: เริ่มงานวันแรก',
+          tag: 'เริ่มงานหน้างาน',
+          description: 'นัดหมายหน้างาน มอบหมายขอบเขตงานชัดเจน และมีระบบตรวจรับผลงานรายวัน',
+        },
+      ],
+      kpiPhases: [
+        {
+          phase: 'งวดที่ 1',
+          pct: '20% มัดจำ',
+          title: 'ทีมช่างเข้าหน้างานวันแรก',
+          desc: 'จัดส่งแรงงานครบตามจำนวนพร้อมเครื่องมือเซฟตี้',
+        },
+        {
+          phase: 'งวดที่ 2',
+          pct: '40% กลางงาน',
+          title: 'ส่งมอบผลงาน 60%',
+          desc: 'ตรวจรับเนื้องานตามมาตรฐานความเรียบร้อย',
+        },
+        {
+          phase: 'งวดที่ 3',
+          pct: '40% ตรวจรับ',
+          title: 'ส่งมอบงาน 100% พร้อมเก็บกวาด',
+          desc: 'ตรวจรับงานขั้นสุดท้ายและเคลียร์พื้นที่หน้างาน',
+        },
+      ],
+      resourceSwapOptions: 'สามารถจัดหาที่พัก จัดหาน้ำดื่ม/อาหารกลางวัน หรือจัดหารถรับส่งเพื่อแลกเปลี่ยนเป็นส่วนลดค่าแรง',
+      acceptanceCriteria: [
+        'แรงงานเข้าทำงานตรงเวลาและปฏิบัติตามกฎความปลอดภัย',
+        'เนื้องานส่งมอบมีคุณภาพเรียบร้อยตามมาตรฐานช่าง',
+        'ไม่ทิ้งงานระหว่างดำเนินโครงการ',
+      ],
+    };
+  }
+
+  // 8. ค่าเริ่มต้น: หมวดงานช่าง / ก่อสร้าง / ซ่อมแซม / ปรับปรุงอาคาร
+  const role = SPECIALIZED_ROLES_CATALOG.find((r) => r.id === 'S06_PROPERTY_FACILITY_MANAGER') || SPECIALIZED_ROLES_CATALOG[0];
+  const mod = UNIVERSAL_MODULES_CATALOG.find((m) => m.id === 'U07_HEALTH_OPS') || UNIVERSAL_MODULES_CATALOG[0];
+  return {
+    matchedRole: role,
+    matchedModule: mod,
+    categoryTag: 'งานช่าง & ซ่อมบำรุงอาคาร',
+    isCustomCategory: false,
+    philosophy: 'งานช่างที่ปลอดภัยและคุ้มค่าถูกกำหนดตั้งแต่ตรวจเทียบราคาและสเปก ไม่ใช่ตอนเริ่มทุบทำ',
+    competencies: [
+      'Proof of Work: ขอดูรูปถ่ายและวิดีโอผลงานจริงที่เคยแก้เสร็จเพื่อดูความประณีต',
+      'Onsite Readiness: เครื่องมือและทีมงานพร้อมเข้าหน้างาน ไม่ต้องรอสั่งของนาน',
+      'Transparent BOQ: แจกแจงค่าของและค่าแรงชัดเจน จะได้ไม่โดนบวกเพิ่มหน้างาน',
+    ],
+    sopSteps: [
+      {
+        timeframe: 'ชม. 1-4',
+        title: 'Freeze & Audit: สำรวจจุดบกพร่อง',
+        tag: 'สกัดเงินรั่วไหล',
+        description: 'สำรวจจุดเสีย ถ่ายภาพมุมกว้างและโคลสอัป ทำ Defect Log ห้ามจ่ายเงินมัดจำก้อนโตเด็ดขาด',
+      },
+      {
+        timeframe: 'ชม. 5-12',
+        title: 'Match & Procure: เทียบราคากลาง 3 เจ้า',
+        tag: 'เทียบราคากลาง 3 เจ้า',
+        description: 'ส่งรูปปัญหาไปถามราคาและวิธีแก้จากช่าง 2-3 เจ้า เพื่อเทียบราคากลางและไม่โดนโก่งราคา',
+      },
+      {
+        timeframe: 'ชม. 13-24',
+        title: 'Deploy & Escrow: ล็อกความเสี่ยง',
+        tag: 'ล็อกความเสี่ยง',
+        description: 'ทำสัญญาย่อย แบ่งจ่าย 3 งวด พร้อมเงื่อนไขรับประกันงานซ่อมขั้นต่ำ 30-90 วัน',
+      },
+    ],
+    kpiPhases: [
+      {
+        phase: 'งวดที่ 1',
+        pct: '20% มัดจำ',
+        title: 'เริ่มจัดหาของ',
+        desc: 'เตรียมวัสดุและเริ่มเข้าเคลียร์พื้นที่หน้างาน',
+      },
+      {
+        phase: 'งวดที่ 2',
+        pct: '40% กลางงาน',
+        title: 'ตรวจรับ 60-70%',
+        desc: 'ตรวจรับงานโครงสร้างหรืองานระบบก่อนปิดผิว',
+      },
+      {
+        phase: 'งวดที่ 3',
+        pct: '40% ตรวจรับ',
+        title: 'Test Run 48 ชม.',
+        desc: 'ทดสอบการใช้งานจริง 48 ชม. โดยไม่มีข้อผิดพลาด',
+      },
+    ],
+    resourceSwapOptions: 'สามารถนำ "ทุนชีวิตที่มองไม่เห็น" เช่น เศษวัสดุเหลือใช้, ให้พื้นที่จอดพักของ, หรือช่วยงานส่วนอื่น มาหักลบยอดเงินสดได้ 20-50%',
+    acceptanceCriteria: [
+      'ส่งมอบงานตามสเปกและกรอบเวลาที่ตกลง 100% ไม่ทิ้งงาน',
+      'ผ่านการทดสอบ Defect Test Run ต่อเนื่อง 48 ชม. โดยไม่มีข้อผิดพลาด',
+      'มีการรับประกันผลงานและบริการแก้ไขปัญหาขั้นต่ำ 30-90 วัน',
+    ],
   };
 }
