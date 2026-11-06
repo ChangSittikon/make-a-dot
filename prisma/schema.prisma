@@ -816,6 +816,7 @@ model BountyNegotiation {
   bounty        ProblemNode @relation(fields: [bountyId], references: [id], onDelete: Cascade)
   solverId      String
   solver        User        @relation("SolverNegotiations", fields: [solverId], references: [id], onDelete: Cascade)
+  referrerId    String?     // ผู้ชี้เป้า/แนะนำ (Finder's Fee Referrer)
   proposedKPI   String      // สิ่งที่จะส่งมอบ (KPI / Deliverables)
   timeframeDays Int         // ระยะเวลา (วัน)
   priceSatang   Int         // ราคาเสนอ (สตางค์)

@@ -97,7 +97,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     // Note: Requesters are allowed to submit KPI proposals / self-assign on their own bounties
 
     // 4. Validate Fields
-    const { proposedKPI, timeframeDays, priceSatang, priceTHB } = body;
+    const { proposedKPI, timeframeDays, priceSatang, priceTHB, referrerId } = body;
 
     if (!proposedKPI || typeof proposedKPI !== "string" || !proposedKPI.trim()) {
       return NextResponse.json(
@@ -124,6 +124,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       data: {
         bountyId: bounty.id,
         solverId: user.id,
+        referrerId: (typeof referrerId === "string" && referrerId.trim()) ? referrerId.trim() : null,
         proposedKPI: proposedKPI.trim(),
         timeframeDays: Math.max(1, safeDays),
         priceSatang: safeSatang,

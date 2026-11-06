@@ -23,6 +23,62 @@ function BoardContent() {
   const [bounties, setBounties] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user?.id) setCurrentUserId(data.user.id);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleShareBounty = async (bounty: any) => {
+    const origin = typeof window !== 'undefined' && window.location?.origin 
+      ? window.location.origin 
+      : 'http://localhost:3000';
+    
+    // ตรวจสอบว่าผู้ใช้ปัจจุบันล็อกอินอยู่หรือไม่ ถ้ารู้จัก User ID ให้ต่อท้าย ?ref=[USER_ID]
+    const targetUrl = `${origin}/profile/bounty/${bounty.id}${currentUserId ? `?ref=${encodeURIComponent(currentUserId)}` : ''}`;
+    
+    let scoutText: string | null = null;
+    if (bounty.deepAttributes) {
+      try {
+        const parsed = typeof bounty.deepAttributes === 'string' ? JSON.parse(bounty.deepAttributes) : bounty.deepAttributes;
+        if (parsed?.scoutReward) scoutText = parsed.scoutReward;
+      } catch {}
+    }
+
+    const prize = bounty.bountyPrizeSatang > 0 
+      ? `฿${(bounty.bountyPrizeSatang / 100).toLocaleString()}` 
+      : 'ตามตกลง';
+    const scoutLine = scoutText ? `\n📢 ค่าชี้เป้า (ผู้ช่วยแชร์/แนะนำ): ${scoutText}` : '';
+    const desc = bounty.rawDescription || bounty.title || 'ภารกิจด่วน';
+
+    const shareCaption = `🚨 ภารกิจด่วนจาก MAKE A DOT\n🎯 ปัญหา: ${desc}\n💰 ค่าตอบแทน: ${prize}${scoutLine}\n👉 รับงานหรือชี้เป้าคนช่วยได้ที่:\n${targetUrl}`;
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareCaption);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareCaption;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setToastMessage(currentUserId 
+        ? '📋 คัดลอกข้อความแชร์พร้อมรหัสชี้เป้าของคุณแล้ว!' 
+        : '📋 คัดลอกข้อความแชร์แล้ว!'
+      );
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -77,6 +133,14 @@ function BoardContent() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 font-prompt sm:py-10">
       <div className="w-full h-screen sm:w-[430px] sm:h-[900px] sm:rounded-[48px] sm:border-[14px] sm:border-black bg-[#fdfdfd] relative flex flex-col overflow-hidden shadow-2xl">
+        {/* Toast Alert Feedback */}
+        {toastMessage && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 text-white text-xs px-4 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-2 pointer-events-none transition-all">
+            <i className="fa-solid fa-circle-check text-emerald-400 text-xs"></i>
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
         <main className="flex-1 overflow-y-auto hide-scrollbar px-4 pt-4 pb-20">
           <div className="mx-auto">
             {/* Search, Filter & Auth */}
@@ -197,12 +261,23 @@ function BoardContent() {
                               )}
                             </div>
                           </div>
-                          <Link 
-                            href={`/profile/bounty/${bounty.id}`} 
-                            className="bg-brand-red text-white text-[10px] px-4 py-1.5 rounded-full font-bold hover:bg-red-700 transition shadow-sm shadow-red-200"
-                          >
-                            รับงาน (เจรจา)
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleShareBounty(bounty)}
+                              className="bg-gray-50 hover:bg-gray-100 active:scale-95 text-gray-700 text-[10px] px-3 py-1.5 rounded-full font-bold border border-gray-200 transition flex items-center gap-1 cursor-pointer"
+                              title="แชร์เพื่อชี้เป้า (Auto-Copy พร้อมรหัสแนะนำ)"
+                            >
+                              <i className="fa-solid fa-share-nodes text-brand-red text-xs"></i>
+                              <span>แชร์</span>
+                            </button>
+                            <Link 
+                              href={`/profile/bounty/${bounty.id}`} 
+                              className="bg-brand-red text-white text-[10px] px-4 py-1.5 rounded-full font-bold hover:bg-red-700 transition shadow-sm shadow-red-200"
+                            >
+                              รับงาน (เจรจา)
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     );

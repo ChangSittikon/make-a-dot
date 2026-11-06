@@ -922,6 +922,7 @@ export function BountyFlowApp() {
                       isConfirmed={false}
                       onEdit={handleEdit}
                       profileUrl={createdBountyId ? `/profile/bounty/${createdBountyId}` : "/profile"}
+                      currentUserId={userProfileId || null}
                     />
                   </motion.div>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { NongDot } from '@/components/flow/NongDot';
@@ -28,6 +28,7 @@ export interface BountySummaryCardProps {
   onConfirm?: (scoutReward?: string) => void;
   profileUrl?: string;
   scoutReward?: string | null;
+  currentUserId?: string | null;
 }
 
 export function parseProblemSections(text?: string | null) {
@@ -217,8 +218,22 @@ export function BountySummaryCard({
   onConfirm,
   profileUrl,
   scoutReward: initialScoutReward,
+  currentUserId,
 }: BountySummaryCardProps) {
   const router = useRouter();
+  // รหัสผู้ใช้ปัจจุบันสำหรับการทำ Referral Tracking (?ref=...)
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentUserId) return;
+    fetch('/api/auth/session')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user?.id) setSessionUserId(data.user.id);
+      })
+      .catch(() => {});
+  }, [currentUserId]);
+
   // สถานะการยืนยันข้อมูล
   const [confirmedState, setConfirmedState] = useState<boolean>(isConfirmed);
   // สถานะ 'ค่าชี้เป้า' (Scout Reward)
@@ -297,12 +312,17 @@ export function BountySummaryCard({
   // ลิงก์ปลายทางโปรไฟล์
   const resolvedProfileUrl = profileUrl || (bountyId ? `/profile/bounty/${bountyId}` : "/profile");
 
-  // จัดการแชร์การ์ด
+  // จัดการแชร์การ์ด (ฝังรหัสผู้แนะนำ ?ref=[USER_ID])
   const getShareUrl = () => {
     const origin = typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
       : 'http://localhost:3000';
-    return `${origin}/profile/bounty/${bountyId || 'preview'}`;
+    const baseUrl = `${origin}/profile/bounty/${bountyId || 'preview'}`;
+    const activeUserId = currentUserId || sessionUserId;
+    if (activeUserId) {
+      return `${baseUrl}?ref=${encodeURIComponent(activeUserId)}`;
+    }
+    return baseUrl;
   };
 
   const getShareMessage = () => {
