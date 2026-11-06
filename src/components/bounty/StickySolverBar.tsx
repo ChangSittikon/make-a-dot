@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import NegotiationModal from "./NegotiationModal";
 
 interface StickySolverBarProps {
@@ -11,6 +11,10 @@ interface StickySolverBarProps {
   bountyStatus: string;
   currentUserRole?: string;
   myNegotiationStatus?: string | null;
+  referrerId?: string | null;
+  rawDescription?: string | null;
+  targetOccupations?: Array<{ id?: string; name: string }>;
+  targetSkills?: Array<{ id?: string; name: string }>;
 }
 
 export default function StickySolverBar({
@@ -20,9 +24,24 @@ export default function StickySolverBar({
   bountyStatus,
   currentUserRole = "USER",
   myNegotiationStatus,
+  referrerId: initialReferrerId,
+  rawDescription,
+  targetOccupations,
+  targetSkills,
 }: StickySolverBarProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlRef = searchParams?.get("ref");
+  const [referrerId, setReferrerId] = useState<string | null>(initialReferrerId || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (urlRef) {
+      setReferrerId(urlRef);
+    } else if (initialReferrerId) {
+      setReferrerId(initialReferrerId);
+    }
+  }, [urlRef, initialReferrerId]);
 
   const isCompleted = bountyStatus === "COMPLETED";
   const isActive = bountyStatus === "ACTIVE";
@@ -83,6 +102,10 @@ export default function StickySolverBar({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         currentUserRole={currentUserRole}
+        referrerId={referrerId}
+        rawDescription={rawDescription}
+        targetOccupations={targetOccupations}
+        targetSkills={targetSkills}
         onSuccess={() => {
           router.refresh();
         }}

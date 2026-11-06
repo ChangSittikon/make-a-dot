@@ -4,6 +4,23 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import MarketPulseWidget from "./MarketPulseWidget";
 import { AIWhisperWidget } from "./AIWhisperWidget";
+import { resolveAISolution } from "@/lib/career-core";
+import {
+  Handshake,
+  Rocket,
+  X,
+  User,
+  Check,
+  CheckCircle2,
+  AlertCircle,
+  Coins,
+  GitMerge,
+  Repeat,
+  ShieldCheck,
+  FileText,
+  ArrowRight,
+  Layers,
+} from "lucide-react";
 
 interface NegotiationModalProps {
   bountyId: string;
@@ -14,6 +31,10 @@ interface NegotiationModalProps {
   currentUserRole?: string;
   initialProposedKPI?: string;
   initialOfferPriceTHB?: number;
+  referrerId?: string | null;
+  rawDescription?: string | null;
+  targetOccupations?: Array<{ id?: string; name: string }>;
+  targetSkills?: Array<{ id?: string; name: string }>;
 }
 
 export default function NegotiationModal({
@@ -25,6 +46,10 @@ export default function NegotiationModal({
   currentUserRole = "USER",
   initialProposedKPI = "",
   initialOfferPriceTHB,
+  referrerId,
+  rawDescription,
+  targetOccupations,
+  targetSkills,
 }: NegotiationModalProps) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"KPI" | "UPGRADE">("KPI");
@@ -37,6 +62,7 @@ export default function NegotiationModal({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [autoFillSuccess, setAutoFillSuccess] = useState(false);
 
   // State สำหรับข้อเสนออัปเกรดเป็นโครงการ (Project Upgrade)
   const [vision, setVision] = useState("");
@@ -79,7 +105,35 @@ export default function NegotiationModal({
 
   if (!isOpen || !mounted) return null;
 
+  // ดึงสมองกล AI Solution & Quick-Fix SOP สำหรับโจทย์งานนี้
+  const aiSolution = resolveAISolution(
+    rawDescription,
+    targetOccupations,
+    targetSkills
+  );
+
   const quickDays = [3, 7, 14, 30];
+
+  // ฟังก์ชันดึงเกณฑ์ KPI แนะนำ 3 งวดลงช่องกรอกข้อเสนออัตโนมัติ
+  const handleApplyAISolutionKPI = () => {
+    const p1 = aiSolution.kpiPhases[0];
+    const p2 = aiSolution.kpiPhases[1];
+    const p3 = aiSolution.kpiPhases[2];
+    const formatted = [
+      `งวดที่ 1 (${p1.pct}): ${p1.title} - ${p1.desc}`,
+      `งวดที่ 2 (${p2.pct}): ${p2.title} - ${p2.desc}`,
+      `งวดที่ 3 (${p3.pct}): ${p3.title} - ${p3.desc}`,
+      ``,
+      `เกณฑ์การตรวจรับผลงาน:`,
+      ...aiSolution.acceptanceCriteria.map((c) => `- ${c}`),
+      ``,
+      `ทางเลือกประหยัดทุน: ${aiSolution.resourceSwapOptions}`,
+    ].join("\n");
+
+    setProposedKPI(formatted);
+    setAutoFillSuccess(true);
+    setTimeout(() => setAutoFillSuccess(false), 2500);
+  };
 
   // จัดการส่งข้อเสนอ KPI
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,6 +165,7 @@ export default function NegotiationModal({
           timeframeDays: Number(timeframeDays),
           priceTHB: Number(priceTHB),
           priceSatang: Math.round(Number(priceTHB) * 100),
+          referrerId: referrerId || null,
         }),
       });
 
@@ -124,7 +179,8 @@ export default function NegotiationModal({
         onSuccess();
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการส่งข้อเสนอ";
+      const message =
+        err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการส่งข้อเสนอ";
       setErrorMsg(message);
     } finally {
       setIsSubmitting(false);
@@ -157,7 +213,7 @@ export default function NegotiationModal({
         throw new Error(data.error || "เกิดข้อผิดพลาดในการส่งข้อเสนออัปเกรด");
       }
 
-      setUpgradeMsg("✅ ยื่นข้อเสนออัปเกรดโครงการสำเร็จ! รอเจ้าของงานพิจารณา");
+      setUpgradeMsg("ยื่นข้อเสนออัปเกรดโครงการสำเร็จ รอเจ้าของงานพิจารณา");
       setTimeout(() => {
         onClose();
         if (onSuccess) {
@@ -165,7 +221,8 @@ export default function NegotiationModal({
         }
       }, 1500);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการส่งข้อเสนอ";
+      const message =
+        err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการส่งข้อเสนอ";
       setUpgradeMsg(message);
     } finally {
       setIsSubmittingUpgrade(false);
@@ -181,28 +238,34 @@ export default function NegotiationModal({
 
   const modalContent = (
     <div
-      className="absolute inset-0 z-50 flex flex-col justify-end bg-slate-900/80 backdrop-blur-xs animate-fadeIn font-prompt"
+      className="fixed inset-0 z-[99999] flex flex-col justify-end bg-black/80 backdrop-blur-xs animate-fade-in font-prompt"
       onClick={onClose}
     >
-      {/* Modal Sheet - Expanded full-width frame like Image 2 */}
+      {/* Modal Sheet - Strict Swiss Style (ขาว-ดำ-แดง, คมชัด 100%) */}
       <div
-        className="bg-white w-full rounded-t-3xl h-[95%] flex flex-col animate-slide-up relative z-10 border-t border-slate-200 overflow-hidden shadow-2xl"
+        className="bg-white w-full max-w-[430px] mx-auto rounded-t-[32px] h-[92%] flex flex-col relative z-10 border-t-2 border-gray-900 overflow-hidden shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white rounded-t-3xl z-10 shadow-xs shrink-0">
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-[32px] z-10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-inner shrink-0">
-              <i className={`fa-solid ${activeTab === "KPI" ? "fa-handshake" : "fa-rocket"} text-sm`}></i>
+            <div className="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center shrink-0">
+              {activeTab === "KPI" ? (
+                <Handshake className="w-4 h-4 text-white" />
+              ) : (
+                <Rocket className="w-4 h-4 text-white" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="w-2 h-2 rounded-full bg-brand-red"></span>
-                <h3 className="font-bold text-slate-900 leading-none text-sm sm:text-base">
-                  {activeTab === "KPI" ? "พื้นที่เจรจางานและตั้ง KPI" : "ยื่นข้อเสนออัปเกรดโครงการ"}
+                <h3 className="font-black text-gray-900 leading-none text-sm sm:text-base">
+                  {activeTab === "KPI"
+                    ? "พื้นที่เจรจางานและตั้ง KPI"
+                    : "ยื่นข้อเสนออัปเกรดโครงการ"}
                 </h3>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 leading-none">
+              <p className="text-[10.5px] text-gray-500 leading-none">
                 {activeTab === "KPI"
                   ? "ยื่นข้อเสนอตัวชี้วัดความสำเร็จและระยะเวลาส่งมอบงาน (Negotiation Sandbox)"
                   : "ยกระดับจากเควสต์เดี่ยวเป็นโครงการระยะยาว พร้อมขอร่วมถือหุ้น"}
@@ -212,62 +275,145 @@ export default function NegotiationModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition cursor-pointer shrink-0 ml-2"
+            className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-900 rounded-full hover:bg-gray-200 transition cursor-pointer shrink-0 ml-2"
             aria-label="Close"
           >
-            <i className="fa-solid fa-xmark text-sm"></i>
+            <X className="w-4 h-4 text-gray-900" />
           </button>
         </div>
 
-        {/* Dual Tab Switcher */}
-        <div className="px-5 pt-3 pb-2 bg-slate-50/80 border-b border-slate-200 flex items-center gap-2 shrink-0">
+        {/* Dual Tab Switcher (Swiss Style) */}
+        <div className="px-5 pt-3 pb-2 bg-gray-50 border-b border-gray-200 flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab("KPI")}
             className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "KPI"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-gray-900 text-white shadow-xs"
+                : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
             }`}
           >
-            <span>🛠️ เสนอรับงาน & KPI</span>
+            <Handshake className="w-3.5 h-3.5" />
+            <span>เสนอรับงาน & KPI</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("UPGRADE")}
             className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "UPGRADE"
-                ? "bg-brand-red text-white shadow-xs shadow-red-500/20"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-brand-red text-white shadow-xs"
+                : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
             }`}
           >
-            <span>🚀 ยื่นข้อเสนออัปเกรด</span>
+            <Rocket className="w-3.5 h-3.5" />
+            <span>ยื่นข้อเสนออัปเกรด</span>
           </button>
         </div>
 
         {/* ========================================================================= */}
-        {/* TAB 1: ฟอร์มเจรจางานและตั้ง KPI (พร้อม AI Whisper & Market Pulse)          */}
+        {/* TAB 1: ฟอร์มเจรจางานและตั้ง KPI (พร้อม AI KPI Guideline Helper)            */}
         {/* ========================================================================= */}
         {activeTab === "KPI" ? (
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-5 overflow-y-auto flex-1 space-y-5 hide-scrollbar">
+          <form
+            onSubmit={handleSubmit}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 no-scrollbar">
               {/* Solver Identity Banner */}
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700 shadow-2xs">
-                    <i className="fa-regular fa-user text-[11px]"></i>
+                  <div className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-700 shadow-2xs">
+                    <User className="w-3.5 h-3.5 text-gray-700" />
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 block font-medium">ระดับผู้รับงานของคุณ</span>
-                    <span className="text-xs font-bold text-slate-800">{tierLabel}</span>
+                    <span className="text-[9px] text-gray-400 block font-medium">
+                      ระดับผู้รับงานของคุณ
+                    </span>
+                    <span className="text-xs font-bold text-gray-900">
+                      {tierLabel}
+                    </span>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-600 font-medium">
+                <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-white border border-gray-200 text-gray-700 font-medium">
                   สถานะ: ได้รับสิทธิ์เสนอ KPI
                 </span>
               </div>
 
-              {/* ⚡ AI Whisper Widget (6-Axis Monetization Advisor) */}
+              {/* ========================================================================= */}
+              {/* จุดที่ 2: ไกด์ไลน์ผู้ช่วย (ค) เกณฑ์ KPI 3 งวด & แนวทางแลกเปลี่ยน             */}
+              {/* ========================================================================= */}
+              <div className="bg-white rounded-2xl p-3.5 border-2 border-gray-900 shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-brand-red shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-black text-gray-900 leading-tight">
+                        (ค) เกณฑ์ KPI แนะนำ 3 งวด & แนวทางแลกเปลี่ยน
+                      </h4>
+                      <p className="text-[10px] text-gray-500 mt-0.5">
+                        ระบบสมองกลคำนวณตามโมดูล: {aiSolution.categoryTag}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-brand-red bg-red-50 border border-red-200 px-2 py-0.5 rounded-full shrink-0">
+                    Smart Escrow
+                  </span>
+                </div>
+
+                {/* แผนผังงวดงาน 3 งวด (20% / 40% / 40%) */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {aiSolution.kpiPhases.map((phase, pIdx) => (
+                    <div
+                      key={pIdx}
+                      className="bg-gray-50 p-2 rounded-xl border border-gray-200 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="text-[8.5px] font-bold text-gray-500 uppercase">
+                          {phase.phase}
+                        </div>
+                        <div className="text-xs font-black text-gray-900 mt-0.5">
+                          {phase.pct}
+                        </div>
+                      </div>
+                      <div className="text-[8.5px] text-gray-600 mt-1 leading-tight font-medium">
+                        {phase.title}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ทางเลือกแลกเปลี่ยนทรัพยากร (Resource / Sweat Swap) */}
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-200 space-y-0.5">
+                  <div className="font-bold text-gray-900 text-[10.5px] flex items-center gap-1">
+                    <Repeat className="w-3 h-3 text-brand-red shrink-0" />
+                    <span>ทางเลือกประหยัดทุน (Resource / Sweat Swap):</span>
+                  </div>
+                  <p className="text-gray-600 text-[10px] leading-snug">
+                    {aiSolution.resourceSwapOptions}
+                  </p>
+                </div>
+
+                {/* ปุ่มคลิกเพื่อดึงข้อตกลง KPI นี้ลงช่องข้อเสนอทันที */}
+                <button
+                  type="button"
+                  onClick={handleApplyAISolutionKPI}
+                  className="w-full bg-red-50 hover:bg-red-100 text-brand-red border border-red-200 text-xs font-bold py-2.5 px-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98]"
+                >
+                  {autoFillSuccess ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-brand-red" />
+                      <span>ดึงข้อมูลข้อตกลงสำเร็จ!</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-3.5 h-3.5 text-brand-red" />
+                      <span>ดึงข้อตกลง KPI 3 งวดนี้ลงช่องข้อเสนอ (Auto-fill)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* AI Whisper Widget (6-Axis Monetization Advisor) */}
               <AIWhisperWidget
                 initialPrizeTHB={initialPrizeTHB}
                 onApplyToNegotiation={(script, price) => {
@@ -278,29 +424,31 @@ export default function NegotiationModal({
 
               {/* Field 1: สิ่งที่จะส่งมอบ (KPI / Deliverables) */}
               <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  1. สิ่งที่จะส่งมอบ (KPI / Deliverables) <span className="text-brand-red">*</span>
+                <label className="block text-xs font-bold text-gray-900 mb-1">
+                  1. สิ่งที่จะส่งมอบ (KPI / Deliverables){" "}
+                  <span className="text-brand-red">*</span>
                 </label>
-                <p className="text-[10px] text-slate-400 mb-1.5">
+                <p className="text-[10px] text-gray-400 mb-1.5">
                   ระบุผลงานที่วัดผลได้จริง ว่าเมื่อทำสิ่งนี้เสร็จจะถือว่างวดงานสมบูรณ์
                 </p>
                 <textarea
-                  rows={3}
+                  rows={4}
                   required
                   value={proposedKPI}
                   onChange={(e) => setProposedKPI(e.target.value)}
-                  placeholder="เช่น จัดทำเอกสารสรุป 1 ชุด, ส่งมอบระบบตามขอบเขตข้อกำหนด พร้อมทดสอบการทำงาน 100%..."
-                  className="w-full text-xs p-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white focus:ring-2 focus:ring-red-500/10 transition leading-relaxed text-slate-800 placeholder:text-slate-400 min-h-[90px]"
+                  placeholder="เช่น งวดที่ 1 (20%): วางแผนและเริ่มจัดเตรียมของ..."
+                  className="w-full text-xs p-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white focus:ring-1 focus:ring-brand-red transition leading-relaxed text-gray-900 placeholder:text-gray-400 min-h-[110px]"
                 />
               </div>
 
               {/* Field 2: ระยะเวลาทำงาน (Timeframe) */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-slate-800">
-                    2. ระยะเวลาทำงาน (วัน) <span className="text-brand-red">*</span>
+                  <label className="text-xs font-bold text-gray-900">
+                    2. ระยะเวลาทำงาน (วัน){" "}
+                    <span className="text-brand-red">*</span>
                   </label>
-                  <span className="text-[11px] font-mono font-bold text-slate-600">
+                  <span className="text-[11px] font-mono font-bold text-gray-700">
                     {timeframeDays > 0 ? `${timeframeDays} วัน` : "ยังไม่กำหนด"}
                   </span>
                 </div>
@@ -314,8 +462,8 @@ export default function NegotiationModal({
                       onClick={() => setTimeframeDays(d)}
                       className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition cursor-pointer ${
                         timeframeDays === d
-                          ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                          ? "bg-gray-900 text-white border-gray-900 shadow-2xs"
+                          : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
                       }`}
                     >
                       {d} วัน
@@ -328,8 +476,12 @@ export default function NegotiationModal({
                   min={1}
                   required
                   value={timeframeDays}
-                  onChange={(e) => setTimeframeDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                  className="w-full text-xs px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white text-slate-800 font-mono font-bold"
+                  onChange={(e) =>
+                    setTimeframeDays(
+                      Math.max(1, parseInt(e.target.value, 10) || 1)
+                    )
+                  }
+                  className="w-full text-xs px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white text-gray-900 font-mono font-bold"
                   placeholder="จำนวนวันทำงาน"
                 />
               </div>
@@ -337,15 +489,15 @@ export default function NegotiationModal({
               {/* Field 3: ราคาเสนอ (Proposed Price) */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-slate-800">
+                  <label className="text-xs font-bold text-gray-900">
                     3. ราคาเสนอ (บาท) <span className="text-brand-red">*</span>
                   </label>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-gray-500">
                     งบประมาณตั้งต้น: ฿{initialPrizeTHB.toLocaleString()}
                   </span>
                 </div>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">
                     ฿
                   </span>
                   <input
@@ -353,12 +505,16 @@ export default function NegotiationModal({
                     min={0}
                     required
                     value={priceTHB}
-                    onChange={(e) => setPriceTHB(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                    className="w-full text-sm pl-8 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white font-mono font-black text-slate-900"
+                    onChange={(e) =>
+                      setPriceTHB(
+                        Math.max(0, parseInt(e.target.value, 10) || 0)
+                      )
+                    }
+                    className="w-full text-sm pl-8 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white font-mono font-black text-gray-900"
                     placeholder="ระบุราคาที่เสนอ"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">
+                <p className="text-[10px] text-gray-400 mt-1">
                   คุณสามารถคงราคาเดิมไว้ หรือเสนอราคาใหม่เพื่อเจรจากับเจ้าของปัญหาได้
                 </p>
 
@@ -366,10 +522,12 @@ export default function NegotiationModal({
                 <MarketPulseWidget bountyId={bountyId} className="mt-3" />
               </div>
 
-              {/* Banner ชวนอัปเกรดเป็นโครงการ */}
-              <div className="p-3.5 bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 rounded-2xl flex items-center justify-between gap-2.5">
+              {/* Banner ชวนอัปเกรดเป็นโครงการ (Swiss Style) */}
+              <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-base">🚀</span>
+                  <div className="w-7 h-7 rounded-lg bg-gray-900 text-white flex items-center justify-center shrink-0">
+                    <Rocket className="w-3.5 h-3.5" />
+                  </div>
                   <div>
                     <span className="text-xs font-bold text-gray-900 block leading-tight">
                       ต้องการขับเคลื่อนเป็นโครงการระยะยาว?
@@ -382,28 +540,29 @@ export default function NegotiationModal({
                 <button
                   type="button"
                   onClick={() => setActiveTab("UPGRADE")}
-                  className="text-xs font-bold text-brand-red bg-white hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition shrink-0 cursor-pointer shadow-2xs"
+                  className="text-xs font-bold text-brand-red bg-white hover:bg-red-50 px-3 py-1.5 rounded-xl border border-red-200 transition shrink-0 cursor-pointer shadow-2xs flex items-center gap-1"
                 >
-                  ยื่นข้อเสนออัปเกรด →
+                  <span>ยื่นข้อเสนอ</span>
+                  <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
 
               {/* Error Message */}
               {errorMsg && (
                 <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-brand-red text-xs font-medium flex items-center gap-2">
-                  <i className="fa-solid fa-circle-exclamation shrink-0"></i>
+                  <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
             </div>
 
             {/* Sticky Bottom Footer Actions */}
-            <div className="p-4 sm:p-5 border-t border-slate-200 bg-white flex items-center justify-end gap-3 shrink-0 shadow-sm">
+            <div className="p-4 sm:p-5 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0 shadow-sm">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition cursor-pointer"
               >
                 ยกเลิก
               </button>
@@ -427,13 +586,16 @@ export default function NegotiationModal({
           /* ========================================================================= */
           /* TAB 2: ฟอร์มยื่นข้อเสนออัปเกรดเป็นโครงการ (Upgrade to Project)             */
           /* ========================================================================= */
-          <form onSubmit={handleUpgradeSubmit} className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-5 overflow-y-auto flex-1 space-y-5 hide-scrollbar">
+          <form
+            onSubmit={handleUpgradeSubmit}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 no-scrollbar">
               {/* Upgrade Info Card */}
-              <div className="p-4 bg-gradient-to-br from-rose-50 via-white to-amber-50 border border-rose-200 rounded-2xl space-y-1.5 shadow-2xs">
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl space-y-1.5 shadow-2xs">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-brand-red text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <i className="fa-solid fa-rocket text-xs"></i>
+                  <div className="w-8 h-8 rounded-xl bg-brand-red text-white flex items-center justify-center shrink-0">
+                    <Rocket className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     <h4 className="text-xs sm:text-sm font-bold text-gray-900">
@@ -447,27 +609,32 @@ export default function NegotiationModal({
               </div>
 
               {/* Solver Identity Banner */}
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-700 shadow-2xs">
-                    <i className="fa-regular fa-user text-[11px]"></i>
+                  <div className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-700 shadow-2xs">
+                    <User className="w-3.5 h-3.5 text-gray-700" />
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 block font-medium">ระดับของคุณ</span>
-                    <span className="text-xs font-bold text-slate-800">{tierLabel}</span>
+                    <span className="text-[9px] text-gray-400 block font-medium">
+                      ระดับของคุณ
+                    </span>
+                    <span className="text-xs font-bold text-gray-900">
+                      {tierLabel}
+                    </span>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-600 font-medium">
+                <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-white border border-gray-200 text-gray-700 font-medium">
                   สิทธิ์: ยื่นข้อเสนอโครงการ
                 </span>
               </div>
 
               {/* Field 1: วิสัยทัศน์ (Vision) */}
               <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  1. วิสัยทัศน์และแนวทางพัฒนา (Vision) <span className="text-brand-red">*</span>
+                <label className="block text-xs font-bold text-gray-900 mb-1">
+                  1. วิสัยทัศน์และแนวทางพัฒนา (Vision){" "}
+                  <span className="text-brand-red">*</span>
                 </label>
-                <p className="text-[10px] text-slate-400 mb-1.5">
+                <p className="text-[10px] text-gray-400 mb-1.5">
                   อธิบายว่าทำไมงานนี้ถึงควรสเกลอัป และคุณจะนำความเชี่ยวชาญใดมาร่วมขับเคลื่อน
                 </p>
                 <textarea
@@ -476,16 +643,17 @@ export default function NegotiationModal({
                   value={vision}
                   onChange={(e) => setVision(e.target.value)}
                   placeholder="เช่น ผมมองว่าปัญหานี้สามารถต่อยอดเป็นแพลตฟอร์มที่แก้ปัญหาให้คนทั้งประเทศได้ ผมมีทีมพัฒนาพร้อมลงแรง (Sweat Equity) และขอเสนอแผนขยายผลดังนี้..."
-                  className="w-full text-xs p-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white focus:ring-2 focus:ring-red-500/10 transition leading-relaxed text-slate-800 placeholder:text-slate-400 min-h-[110px]"
+                  className="w-full text-xs p-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:border-brand-red focus:bg-white focus:ring-1 focus:ring-brand-red transition leading-relaxed text-gray-900 placeholder:text-gray-400 min-h-[110px]"
                 />
               </div>
 
               {/* Field 2: บทบาทของคุณ (Proposed Role) */}
               <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  2. บทบาทที่คุณเสนอตัวเข้าร่วม (Proposed Role) <span className="text-brand-red">*</span>
+                <label className="block text-xs font-bold text-gray-900 mb-1">
+                  2. บทบาทที่คุณเสนอตัวเข้าร่วม (Proposed Role){" "}
+                  <span className="text-brand-red">*</span>
                 </label>
-                <p className="text-[10px] text-slate-400 mb-2">
+                <p className="text-[10px] text-gray-400 mb-2">
                   เลือกรูปแบบที่คุณต้องการมีส่วนร่วมในโครงการ
                 </p>
                 <div className="space-y-2">
@@ -494,48 +662,51 @@ export default function NegotiationModal({
                       id: "SWEAT_SHARE",
                       title: "ผู้ร่วมก่อตั้ง / ลงแรงแลกหุ้น (Sweat Share / Tech Lead)",
                       desc: "นำทักษะเฉพาะทางมาร่วมลงแรงเพื่อแลกกับส่วนแบ่งความสำเร็จของโครงการ",
-                      icon: "fa-solid fa-code",
+                      Icon: GitMerge,
                     },
                     {
                       id: "INVESTOR",
                       title: "นักลงทุน / สปอนเซอร์ตั้งต้น (Seed Sponsor)",
                       desc: "สนับสนุนเงินทุนตั้งต้น อุปกรณ์ หรือทรัพยากรเพื่อเร่งการเติบโต",
-                      icon: "fa-solid fa-coins",
+                      Icon: Coins,
                     },
                     {
                       id: "PROJECT_MANAGER",
                       title: "สถาปนิกและผู้คุมโครงการ (Project Manager)",
                       desc: "วางโร้ดแมป บริหารจัดการทีม และควบคุมงบประมาณให้สำเร็จตามเป้า",
-                      icon: "fa-solid fa-diagram-project",
+                      Icon: Layers,
                     },
                   ].map((r) => {
                     const isSelected = proposedRole === r.id;
+                    const IconComponent = r.Icon;
                     return (
                       <div
                         key={r.id}
                         onClick={() => setProposedRole(r.id)}
                         className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
                           isSelected
-                            ? "bg-rose-50/60 border-brand-red shadow-xs ring-1 ring-brand-red/30"
-                            : "bg-white border-slate-200 hover:bg-slate-50"
+                            ? "bg-red-50/50 border-brand-red shadow-xs ring-1 ring-brand-red/30"
+                            : "bg-white border-gray-200 hover:bg-gray-50"
                         }`}
                       >
                         <div
                           className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs mt-0.5 ${
-                            isSelected ? "bg-brand-red text-white" : "bg-slate-100 text-slate-500"
+                            isSelected
+                              ? "bg-brand-red text-white"
+                              : "bg-gray-100 text-gray-600"
                           }`}
                         >
-                          <i className={r.icon}></i>
+                          <IconComponent className="w-3.5 h-3.5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <span
                             className={`text-xs font-bold block ${
-                              isSelected ? "text-slate-900" : "text-slate-700"
+                              isSelected ? "text-gray-900" : "text-gray-700"
                             }`}
                           >
                             {r.title}
                           </span>
-                          <span className="text-[10px] text-slate-400 block mt-0.5 leading-snug">
+                          <span className="text-[10px] text-gray-500 block mt-0.5 leading-snug">
                             {r.desc}
                           </span>
                         </div>
@@ -550,7 +721,7 @@ export default function NegotiationModal({
                 <button
                   type="button"
                   onClick={() => setActiveTab("KPI")}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-800 underline transition cursor-pointer"
+                  className="text-xs font-bold text-gray-600 hover:text-gray-900 underline transition cursor-pointer"
                 >
                   ← ต้องการรับงานแก้ปัญหาแบบเดี่ยว? (กลับไปหน้าเสนอ KPI)
                 </button>
@@ -561,34 +732,30 @@ export default function NegotiationModal({
                 <div
                   className={`p-3 rounded-2xl border text-xs font-medium flex items-center gap-2 ${
                     upgradeMsg.includes("สำเร็จ")
-                      ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                      ? "bg-gray-900 border-gray-900 text-white"
                       : "bg-red-50 border-red-200 text-brand-red"
                   }`}
                 >
-                  <i
-                    className={`fa-solid ${
-                      upgradeMsg.includes("สำเร็จ") ? "fa-circle-check text-emerald-600" : "fa-circle-exclamation"
-                    } shrink-0`}
-                  ></i>
+                  <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
                   <span>{upgradeMsg}</span>
                 </div>
               )}
             </div>
 
             {/* Sticky Bottom Footer Actions for Upgrade */}
-            <div className="p-4 sm:p-5 border-t border-slate-200 bg-white flex items-center justify-end gap-3 shrink-0 shadow-sm">
+            <div className="p-4 sm:p-5 border-t border-gray-200 bg-white flex items-center justify-end gap-3 shrink-0 shadow-sm">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmittingUpgrade}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition cursor-pointer"
               >
                 ยกเลิก
               </button>
               <button
                 type="submit"
                 disabled={isSubmittingUpgrade}
-                className="px-6 py-2.5 bg-brand-red text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-red-600 transition shadow-sm shadow-red-500/20 disabled:opacity-50 flex items-center gap-2 cursor-pointer active:scale-95"
+                className="px-6 py-2.5 bg-brand-red text-white text-xs sm:text-sm font-bold rounded-xl hover:bg-red-600 transition shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer active:scale-95"
               >
                 {isSubmittingUpgrade ? (
                   <>
@@ -606,10 +773,5 @@ export default function NegotiationModal({
     </div>
   );
 
-  const targetEl = typeof document !== "undefined" ? document.getElementById("mobile-phone-frame") : null;
-  if (targetEl) {
-    return createPortal(modalContent, targetEl);
-  }
-
-  return modalContent;
+  return mounted ? createPortal(modalContent, document.body) : null;
 }

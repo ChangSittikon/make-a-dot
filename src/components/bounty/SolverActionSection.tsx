@@ -12,6 +12,9 @@ interface SolverActionSectionProps {
   isRequester: boolean;
   bountyStatus: string;
   myNegotiationStatus?: string | null;
+  rawDescription?: string | null;
+  targetOccupations?: Array<{ id?: string; name: string }>;
+  targetSkills?: Array<{ id?: string; name: string }>;
 }
 
 export default function SolverActionSection({
@@ -21,6 +24,9 @@ export default function SolverActionSection({
   isRequester,
   bountyStatus,
   myNegotiationStatus,
+  rawDescription,
+  targetOccupations,
+  targetSkills,
 }: SolverActionSectionProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,6 +123,9 @@ export default function SolverActionSection({
         currentUserRole={currentUserRole}
         initialProposedKPI={prefilledKPI}
         initialOfferPriceTHB={prefilledPrice}
+        rawDescription={rawDescription}
+        targetOccupations={targetOccupations}
+        targetSkills={targetSkills}
         onSuccess={() => {
           router.refresh();
         }}

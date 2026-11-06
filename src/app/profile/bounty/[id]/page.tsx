@@ -5,8 +5,16 @@ import { prisma } from '@/lib/prisma';
 import BountySummaryCard from '@/components/bounty/BountySummaryCard';
 import StickySolverBar from '@/components/bounty/StickySolverBar';
 
-export default async function BountyDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BountyDetailPage({ 
+  params,
+  searchParams,
+}: { 
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ ref?: string; [key: string]: string | string[] | undefined }>;
+}) {
   const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const referrerId = typeof resolvedSearchParams?.ref === 'string' ? resolvedSearchParams.ref : null;
   const user = await getCurrentUser();
   
   const bountyInclude = {
@@ -240,6 +248,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
               isConfirmed={true}
               profileUrl="/profile"
               scoutReward={scoutReward}
+              currentUserId={user?.id || null}
             />
           </div>
         </main>
@@ -251,6 +260,10 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
           prizeText={rewardText}
           bountyStatus={bounty.status}
           currentUserRole={user?.role || "USER"}
+          referrerId={referrerId}
+          rawDescription={bounty.rawDescription}
+          targetOccupations={targetOccupations}
+          targetSkills={targetSkills}
           myNegotiationStatus={
             bounty.negotiations?.find((n) => n.solverId === user?.id)?.status || null
           }
